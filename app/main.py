@@ -1,6 +1,7 @@
 """שרת האתר המקומי."""
 
 import logging
+import os
 import shutil
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -46,6 +47,7 @@ def status():
         "compute_type": compute_type,
         "diarization_installed": diarizer.is_available(),
         "hf_token": bool(config.HF_TOKEN),
+        "cpu_count": os.cpu_count(),
         "low_confidence": config.LOW_CONFIDENCE,
     }
 
@@ -56,6 +58,7 @@ def create_job(
     url: str = Form(""),
     diarize: bool = Form(False),
     num_speakers: int = Form(0),
+    quality: str = Form("accurate"),
 ):
     url = url.strip()
     if not file and not url:
@@ -63,7 +66,9 @@ def create_job(
     if diarize and not diarizer.is_available():
         raise HTTPException(400, "זיהוי דוברים לא מותקן. הריצו את install-diarization.")
 
-    options = {"diarize": diarize, "num_speakers": num_speakers or None}
+    if quality not in ("accurate", "fast"):
+        raise HTTPException(400, "מצב איכות לא תקין")
+    options = {"diarize": diarize, "num_speakers": num_speakers or None, "quality": quality}
     if file:
         title = Path(file.filename or "קובץ").stem
         job = jobs.create_job(title, {"type": "file", "filename": file.filename}, options)

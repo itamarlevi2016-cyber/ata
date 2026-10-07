@@ -43,7 +43,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "JOBS_DIR", tmp_path / "jobs")
     monkeypatch.setattr(transcriber, "load_audio", lambda p: np.zeros(16000 * 2, dtype=np.float32))
     monkeypatch.setattr(transcriber, "get_model", lambda: None)
-    monkeypatch.setattr(transcriber, "transcribe", lambda audio, cb=None: {
+    monkeypatch.setattr(transcriber, "transcribe", lambda audio, cb=None, beam_size=None: {
         "duration": 2.0, "language": "he", "model": "fake",
         "segments": [_seg(0, 2, [(0, 1, " שלום", 0.95), (1, 2, " עולם", 0.3)])]})
     jobs._jobs.clear()
@@ -52,7 +52,7 @@ def client(tmp_path, monkeypatch):
 
 
 def test_upload_transcribe_edit_export(client):
-    r = client.post("/api/jobs", files={"file": ("הקלטה.mp3", b"fake", "audio/mpeg")})
+    r = client.post("/api/jobs", files={"file": ("הקלטה.mp3", b"fake", "audio/mpeg")}, data={"quality": "fast"})
     assert r.status_code == 200, r.text
     job_id = r.json()["id"]
     for _ in range(50):
@@ -75,3 +75,4 @@ def test_upload_transcribe_edit_export(client):
 
 def test_requires_input(client):
     assert client.post("/api/jobs", data={"url": ""}).status_code == 400
+    assert client.post("/api/jobs", data={"url": "https://x.y", "quality": "bad"}).status_code == 400

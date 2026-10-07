@@ -30,6 +30,8 @@ DEVICE = os.environ.get("ATA_DEVICE", "auto")
 # auto / float16 / int8_float16 / int8
 COMPUTE_TYPE = os.environ.get("ATA_COMPUTE_TYPE", "auto")
 BEAM_SIZE = int(os.environ.get("ATA_BEAM_SIZE", "5"))
+# מצב "מהיר": חיפוש חמדני — בערך פי 2 מהר יותר על מעבד רגיל, בדיוק מעט נמוך יותר
+FAST_BEAM_SIZE = int(os.environ.get("ATA_FAST_BEAM_SIZE", "1"))
 
 # טוקן של Hugging Face — נדרש רק פעם אחת, להורדת מודל זיהוי הדוברים
 HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("ATA_HF_TOKEN")

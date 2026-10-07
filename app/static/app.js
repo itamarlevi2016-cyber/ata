@@ -93,6 +93,7 @@ function setupForm() {
     if (f) fd.append("file", f); else fd.append("url", url);
     fd.append("diarize", $("diarize").checked);
     fd.append("num_speakers", $("num-speakers").value || "0");
+    fd.append("quality", $("quality").value);
 
     // XHR כדי להציג התקדמות העלאה של קבצים גדולים
     const xhr = new XMLHttpRequest();
@@ -132,7 +133,16 @@ async function refreshJobs() {
     info.append(el("div", { class: "title" }, title));
 
     let statusText = STATUS_LABELS[job.status] || job.status;
-    if (job.status === "transcribing") statusText += ` ${Math.round(job.progress * 100)}%`;
+    if (job.status === "transcribing") {
+      statusText += ` ${Math.round(job.progress * 100)}%`;
+      // הערכת זמן לפי הקצב עד כה (שרת ודפדפן על אותו מחשב — אותו שעון)
+      const elapsed = Date.now() / 1000 - (job.stage_started || 0);
+      if (job.stage_started && job.progress > 0.03 && elapsed > 20) {
+        const left = elapsed * (1 - job.progress) / job.progress;
+        statusText += ` · נותרו כ-${fmtTime(left)}`;
+      }
+    }
+    if (job.status === "diarizing") statusText += " (יכול לקחת כמה דקות)";
     if (job.status === "done" && job.duration) statusText += ` · ${fmtTime(job.duration)}`;
     const st = el("div", { class: job.status === "error" ? "hint error" : "hint" }, statusText);
     if (job.error) st.append(` — ${job.error}`);

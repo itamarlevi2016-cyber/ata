@@ -28,6 +28,12 @@
             <label>מספר דוברים (אם ידוע):
               <input type="number" id="num-speakers" min="0" max="20" value="0" class="small">
             </label>
+            <label>מצב:
+              <select id="quality">
+                <option value="accurate">מדויק (מומלץ)</option>
+                <option value="fast">מהיר — בערך פי 2, מעט פחות מדויק</option>
+              </select>
+            </label>
             <span id="diarize-hint" class="hint"></span>
           </div>
           <button type="submit" id="submit">התחל תמלול</button>

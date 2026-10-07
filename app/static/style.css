@@ -74,6 +74,14 @@ input[type=url], input[type=number] {
   font-size: 1rem;
 }
 input.small { width: 70px; }
+select#quality {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: .95rem;
+}
 .options { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 12px 0; }
 button, .btn {
   background: var(--accent);

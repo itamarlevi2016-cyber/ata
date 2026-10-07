@@ -115,7 +115,7 @@ def _process(job_id: str) -> None:
     audio = transcriber.load_audio(str(d / job["audio_file"]))
     transcriber.get_model()
 
-    _update(job_id, status="transcribing")
+    _update(job_id, status="transcribing", stage_started=time.time())
     last = [0.0]
 
     def on_progress(p: float) -> None:
@@ -123,7 +123,9 @@ def _process(job_id: str) -> None:
             last[0] = p
             _update(job_id, progress=round(p, 3))
 
-    result = transcriber.transcribe(audio, on_progress)
+    fast = job["options"].get("quality") == "fast"
+    beam = config.FAST_BEAM_SIZE if fast else config.BEAM_SIZE
+    result = transcriber.transcribe(audio, on_progress, beam_size=beam)
 
     if job["options"].get("diarize"):
         _update(job_id, status="diarizing", progress=1.0)
@@ -132,7 +134,7 @@ def _process(job_id: str) -> None:
     result["speakers"] = diarizer.speaker_names(result["segments"])
 
     save_result(job_id, result)
-    _update(job_id, status="done", progress=1.0, duration=result["duration"])
+    _update(job_id, status="done", progress=1.0, duration=result["duration"], finished=time.time())
 
 
 def _worker() -> None:

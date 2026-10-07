@@ -1,6 +1,7 @@
 """תמלול מקומי בעזרת faster-whisper ומודל עברי של ivrit.ai."""
 
 import logging
+import os
 import threading
 from typing import Callable
 
@@ -40,6 +41,8 @@ def get_model():
                 config.WHISPER_MODEL,
                 device=device,
                 compute_type=compute_type,
+                # על מעבד רגיל — שימוש בכל הליבות
+                cpu_threads=(os.cpu_count() or 4) if device == "cpu" else 0,
                 download_root=str(config.MODELS_DIR),
             )
         return _model
@@ -52,8 +55,13 @@ def load_audio(path: str) -> np.ndarray:
     return decode_audio(path, sampling_rate=SAMPLE_RATE)
 
 
-def transcribe(audio: np.ndarray, on_progress: Callable[[float], None] | None = None) -> dict:
+def transcribe(
+    audio: np.ndarray,
+    on_progress: Callable[[float], None] | None = None,
+    beam_size: int | None = None,
+) -> dict:
     model = get_model()
+    beam_size = beam_size or config.BEAM_SIZE
     duration = len(audio) / SAMPLE_RATE
 
     # ההגדרות כאן נבחרו לטובת אמינות: חיפוש קרן, סינון שקט (VAD) כדי שהמודל
@@ -62,8 +70,8 @@ def transcribe(audio: np.ndarray, on_progress: Callable[[float], None] | None = 
         audio,
         language="he",
         task="transcribe",
-        beam_size=config.BEAM_SIZE,
-        best_of=config.BEAM_SIZE,
+        beam_size=beam_size,
+        best_of=beam_size,
         temperature=[0.0, 0.2, 0.4, 0.6],
         compression_ratio_threshold=2.4,
         log_prob_threshold=-1.0,
