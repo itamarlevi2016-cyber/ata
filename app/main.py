@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, diarizer, exporters, jobs, transcriber
+from . import cloud, config, diarizer, exporters, jobs, transcriber
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -48,6 +48,7 @@ def status():
         "diarization_installed": diarizer.is_available(),
         "hf_token": bool(config.HF_TOKEN),
         "cpu_count": os.cpu_count(),
+        "cloud_configured": cloud.is_configured(),
         "low_confidence": config.LOW_CONFIDENCE,
     }
 
@@ -59,6 +60,7 @@ def create_job(
     diarize: bool = Form(False),
     num_speakers: int = Form(0),
     quality: str = Form("accurate"),
+    engine: str = Form("local"),
 ):
     url = url.strip()
     if not file and not url:
@@ -68,7 +70,11 @@ def create_job(
 
     if quality not in ("accurate", "fast"):
         raise HTTPException(400, "מצב איכות לא תקין")
-    options = {"diarize": diarize, "num_speakers": num_speakers or None, "quality": quality}
+    if engine not in ("local", "cloud"):
+        raise HTTPException(400, "מנוע תמלול לא תקין")
+    if engine == "cloud" and not cloud.is_configured():
+        raise HTTPException(400, "תמלול בענן לא הוגדר. הוסיפו RUNPOD_API_KEY ו-RUNPOD_ENDPOINT_ID לקובץ .env")
+    options = {"diarize": diarize, "num_speakers": num_speakers or None, "quality": quality, "engine": engine}
     if file:
         title = Path(file.filename or "קובץ").stem
         job = jobs.create_job(title, {"type": "file", "filename": file.filename}, options)

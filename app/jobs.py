@@ -10,7 +10,7 @@ import traceback
 import uuid
 from pathlib import Path
 
-from . import config, diarizer, downloader, transcriber
+from . import cloud, config, diarizer, downloader, transcriber
 
 log = logging.getLogger(__name__)
 
@@ -111,9 +111,11 @@ def _process(job_id: str) -> None:
         _update(job_id, audio_file=path.name, title=title)
         job = get_job(job_id)
 
+    use_cloud = job["options"].get("engine") == "cloud"
     _update(job_id, status="loading", progress=0.0)
     audio = transcriber.load_audio(str(d / job["audio_file"]))
-    transcriber.get_model()
+    if not use_cloud:
+        transcriber.get_model()
 
     _update(job_id, status="transcribing", stage_started=time.time())
     last = [0.0]
@@ -123,9 +125,12 @@ def _process(job_id: str) -> None:
             last[0] = p
             _update(job_id, progress=round(p, 3))
 
-    fast = job["options"].get("quality") == "fast"
-    beam = config.FAST_BEAM_SIZE if fast else config.BEAM_SIZE
-    result = transcriber.transcribe(audio, on_progress, beam_size=beam)
+    if use_cloud:
+        result = cloud.transcribe(audio, on_progress)
+    else:
+        fast = job["options"].get("quality") == "fast"
+        beam = config.FAST_BEAM_SIZE if fast else config.BEAM_SIZE
+        result = transcriber.transcribe(audio, on_progress, beam_size=beam)
 
     if job["options"].get("diarize"):
         _update(job_id, status="diarizing", progress=1.0)

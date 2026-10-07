@@ -37,6 +37,11 @@ FAST_BEAM_SIZE = int(os.environ.get("ATA_FAST_BEAM_SIZE", "1"))
 HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("ATA_HF_TOKEN")
 DIARIZATION_MODEL = os.environ.get("ATA_DIARIZATION_MODEL", "pyannote/speaker-diarization-3.1")
 
+# תמלול בענן (אופציונלי): נקודת קצה של RunPod שמריצה את התבנית של ivrit.ai
+RUNPOD_API_KEY = os.environ.get("RUNPOD_API_KEY", "")
+RUNPOD_ENDPOINT_ID = os.environ.get("RUNPOD_ENDPOINT_ID", "")
+CLOUD_MODEL = os.environ.get("ATA_CLOUD_MODEL", "ivrit-ai/whisper-large-v3-turbo-ct2")
+
 # כברירת מחדל האתר זמין רק מהמחשב הזה
 HOST = os.environ.get("ATA_HOST", "127.0.0.1")
 PORT = int(os.environ.get("ATA_PORT", "8000"))

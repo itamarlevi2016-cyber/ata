@@ -54,6 +54,24 @@ async function loadStatus() {
   s.append(`מודל: ${serverStatus.model} · `);
   s.append(el("span", { class: gpu ? "" : "warn" }, gpu ? "מעבד גרפי (GPU)" : "מעבד רגיל (CPU) — התמלול יהיה איטי"));
 
+  const engine = $("engine");
+  const cloudOpt = engine.querySelector('option[value="cloud"]');
+  if (!serverStatus.cloud_configured) {
+    cloudOpt.disabled = true;
+    cloudOpt.textContent += " — לא הוגדר (ראו README)";
+  }
+  try {
+    const saved = localStorage.getItem("engine");
+    if (saved && !engine.querySelector(`option[value="${saved}"]`).disabled) engine.value = saved;
+  } catch (_) {}
+  const syncEngine = () => {
+    // מצב "מהיר" רלוונטי רק לתמלול במחשב
+    $("quality-label").hidden = engine.value === "cloud";
+    try { localStorage.setItem("engine", engine.value); } catch (_) {}
+  };
+  engine.addEventListener("change", syncEngine);
+  syncEngine();
+
   const hint = $("diarize-hint");
   if (!serverStatus.diarization_installed) {
     $("diarize").disabled = true;
@@ -94,6 +112,7 @@ function setupForm() {
     fd.append("diarize", $("diarize").checked);
     fd.append("num_speakers", $("num-speakers").value || "0");
     fd.append("quality", $("quality").value);
+    fd.append("engine", $("engine").value);
 
     // XHR כדי להציג התקדמות העלאה של קבצים גדולים
     const xhr = new XMLHttpRequest();
@@ -133,6 +152,7 @@ async function refreshJobs() {
     info.append(el("div", { class: "title" }, title));
 
     let statusText = STATUS_LABELS[job.status] || job.status;
+    if (job.options && job.options.engine === "cloud" && job.status !== "done") statusText += " (בענן)";
     if (job.status === "transcribing") {
       statusText += ` ${Math.round(job.progress * 100)}%`;
       // הערכת זמן לפי הקצב עד כה (שרת ודפדפן על אותו מחשב — אותו שעון)
@@ -220,8 +240,9 @@ function renderTranscript() {
       text.textContent = seg.text;
     } else {
       for (const w of seg.words) {
-        const span = el("span", { class: w.p < threshold ? "w low" : "w" }, w.word);
-        span.title = `ביטחון: ${Math.round(w.p * 100)}%`;
+        const known = typeof w.p === "number";
+        const span = el("span", { class: known && w.p < threshold ? "w low" : "w" }, w.word);
+        if (known) span.title = `ביטחון: ${Math.round(w.p * 100)}%`;
         span.addEventListener("click", () => { player.currentTime = w.start; player.play(); });
         text.append(span);
         current.words.push({ start: w.start, end: w.end, el: span });

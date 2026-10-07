@@ -28,7 +28,13 @@
             <label>מספר דוברים (אם ידוע):
               <input type="number" id="num-speakers" min="0" max="20" value="0" class="small">
             </label>
-            <label>מצב:
+            <label>מנוע:
+              <select id="engine">
+                <option value="local">במחשב (חינם, ללא אינטרנט)</option>
+                <option value="cloud">בענן — ivrit.ai (מהיר, בתשלום)</option>
+              </select>
+            </label>
+            <label id="quality-label">מצב:
               <select id="quality">
                 <option value="accurate">מדויק (מומלץ)</option>
                 <option value="fast">מהיר — בערך פי 2, מעט פחות מדויק</option>

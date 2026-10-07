@@ -6,3 +6,5 @@ uvicorn[standard]>=0.29
 python-multipart>=0.0.9
 yt-dlp>=2024.8.6
 python-docx>=1.1
+# לקוח לתמלול בענן דרך RunPod (אופציונלי, קל משקל)
+ivrit>=0.2.7

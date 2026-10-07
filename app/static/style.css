@@ -74,7 +74,7 @@ input[type=url], input[type=number] {
   font-size: 1rem;
 }
 input.small { width: 70px; }
-select#quality {
+select#quality, select#engine {
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
