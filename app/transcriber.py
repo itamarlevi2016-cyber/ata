@@ -41,8 +41,8 @@ def get_model():
                 config.WHISPER_MODEL,
                 device=device,
                 compute_type=compute_type,
-                # על מעבד רגיל — שימוש בכל הליבות
-                cpu_threads=(os.cpu_count() or 4) if device == "cpu" else 0,
+                # על מעבד רגיל — עד 4 תהליכונים ולא יותר מחצי מהליבות, כדי שהמחשב יישאר זמין
+                cpu_threads=min(4, max(1, (os.cpu_count() or 2) // 2)) if device == "cpu" else 0,
                 download_root=str(config.MODELS_DIR),
             )
         return _model
