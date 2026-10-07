@@ -458,7 +458,7 @@
 
   /* ---------- Speech recognition ---------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recog = null, recording = false, baseText = '', finalText = '';
+  let recog = null, recording = false, baseText = '';
   if (!SR) { $('srWarn').hidden = false; $('recBtn').disabled = true; }
 
   function setRecUi(on, label) {
@@ -472,42 +472,47 @@
   function startRecording() {
     if (!SR || recording) return;
     const ta = $('transcript');
-    baseText = ta.value; finalText = '';
-    recog = new SR();
-    recog.lang = 'he-IL'; recog.continuous = true; recog.interimResults = true; recog.maxAlternatives = 1;
-    recog.onresult = e => {
-      let interim = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) finalText = joinText(finalText, r[0].transcript.trim());
-        else interim += r[0].transcript;
-      }
-      ta.value = joinText(joinText(baseText, finalText), interim.trim());
-      ta.scrollTop = ta.scrollHeight;
-    };
-    recog.onerror = e => {
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        toast('אין הרשאה למיקרופון'); stopRecording();
-      } else if (e.error === 'audio-capture') {
-        toast('לא נמצא מיקרופון'); stopRecording();
-      } else if (e.error === 'network') {
-        toast('שגיאת רשת בזיהוי הדיבור'); stopRecording();
-      }
-    };
-    recog.onend = () => {
-      // Mobile browsers end sessions on silence; keep going while the toggle is on.
-      if (recording) {
-        baseText = ta.value; finalText = '';
-        try { recog.start(); } catch (e) { stopRecording(); }
-      }
-    };
-    try { recog.start(); recording = true; setRecUi(true); }
-    catch (e) { toast('לא ניתן להתחיל הקלטה'); recog = null; }
+    recording = true;
+    baseText = ta.value;           // text already in the preview before this utterance
+    listen();
+    setRecUi(true);
+
+    // One short session per utterance (continuous = false). Each session's result
+    // list is rebuilt from scratch on every event, so the preview is overwritten
+    // with base + current utterance and can never accumulate duplicate finals.
+    function listen() {
+      const r = new SR();
+      recog = r;
+      r.lang = 'he-IL'; r.continuous = false; r.interimResults = true; r.maxAlternatives = 1;
+      r.onresult = e => {
+        if (recog !== r) return;   // ignore events from a stale session
+        let text = '';
+        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+        ta.value = joinText(baseText, text.trim());
+        ta.scrollTop = ta.scrollHeight;
+      };
+      r.onerror = e => {
+        if (recog !== r) return;
+        const fatal = { 'not-allowed': 'אין הרשאה למיקרופון', 'service-not-allowed': 'אין הרשאה למיקרופון',
+                        'audio-capture': 'לא נמצא מיקרופון', 'network': 'שגיאת רשת בזיהוי הדיבור' }[e.error];
+        if (fatal) { toast(fatal); stopRecording(); }
+      };
+      r.onend = () => {
+        if (recog !== r || !recording) return;
+        baseText = ta.value;       // commit the finished utterance, then listen again
+        setTimeout(() => {
+          if (!recording) return;
+          try { listen(); } catch (err) { stopRecording(); }
+        }, 150);
+      };
+      try { r.start(); }
+      catch (err) { recog = null; recording = false; setRecUi(false); toast('לא ניתן להתחיל הקלטה'); }
+    }
   }
   function stopRecording() {
     if (!recording && !recog) return;
     recording = false;
-    if (recog) { recog.onend = null; try { recog.stop(); } catch (e) {} recog = null; }
+    if (recog) { const r = recog; recog = null; try { r.stop(); } catch (e) {} }
     setRecUi(false);
   }
   $('recBtn').onclick = () => recording ? stopRecording() : startRecording();
