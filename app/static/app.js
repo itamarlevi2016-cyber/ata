@@ -16,6 +16,16 @@ const ACTIVE = new Set(["new", "queued", "downloading", "loading", "transcribing
 let serverStatus = { low_confidence: 0.6 };
 let pollTimer = null;
 let current = null; // { job, result, words: [{start,end,el}] }
+const liveText = {}; // jobId -> [segment text], טקסט ביניים שכבר נטען
+
+async function loadLive(jobId) {
+  const have = liveText[jobId] || (liveText[jobId] = []);
+  try {
+    const segs = await api(`/api/jobs/${jobId}/live?since=${have.length}`);
+    for (const s of segs) have.push(`[${fmtTime(s.start)}] ${s.text}`);
+  } catch (_) {}
+  return have;
+}
 
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
@@ -153,7 +163,9 @@ async function refreshJobs() {
 
     let statusText = STATUS_LABELS[job.status] || job.status;
     if (job.options && job.options.engine === "cloud" && job.status !== "done") statusText += " (בענן)";
-    if (job.status === "transcribing") {
+    if (job.status === "transcribing" && job.paused) {
+      statusText = `מושהה · ${Math.round(job.progress * 100)}%`;
+    } else if (job.status === "transcribing") {
       statusText += ` ${Math.round(job.progress * 100)}%`;
       // הערכת זמן לפי הקצב עד כה (שרת ודפדפן על אותו מחשב — אותו שעון)
       const elapsed = Date.now() / 1000 - (job.stage_started || 0);
@@ -172,6 +184,31 @@ async function refreshJobs() {
       info.append(el("div", { class: "bar" }, el("div", { style: `width:${pct}%` })));
     }
 
+    const isLocal = !(job.options && job.options.engine === "cloud");
+    const buttons = el("div", { class: "actions" });
+    if (job.status === "transcribing" && isLocal) {
+      const action = job.paused ? "resume" : "pause";
+      buttons.append(el("button", { class: "small-btn", onclick: async (e) => {
+        e.target.disabled = true;
+        try { await api(`/api/jobs/${job.id}/${action}`, { method: "POST" }); }
+        catch (err) { alert(err.message); }
+        refreshJobs();
+      } }, job.paused ? "▶ המשך" : "⏸ השהה"));
+
+      // טקסט ביניים: מה שתומלל עד עכשיו
+      const lines = await loadLive(job.id);
+      if (lines.length) {
+        const box = el("div", { class: "live", dir: "rtl" });
+        for (const line of lines) box.append(el("div", {}, line));
+        info.append(box);
+        requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+      } else {
+        info.append(el("div", { class: "hint" }, "הטקסט יופיע כאן כשהקטע הראשון יתומלל..."));
+      }
+    } else if (job.status === "done") {
+      delete liveText[job.id];
+    }
+
     const del = el("button", { class: "danger", title: "מחיקה", onclick: async () => {
       if (!confirm(`למחוק את "${job.title}"?`)) return;
       try { await api(`/api/jobs/${job.id}`, { method: "DELETE" }); refreshJobs(); }
@@ -179,7 +216,8 @@ async function refreshJobs() {
     } }, "מחיקה");
     if (ACTIVE.has(job.status) && job.status !== "queued") del.disabled = true;
 
-    ul.append(el("li", {}, info, del));
+    buttons.append(del);
+    ul.append(el("li", {}, info, buttons));
   }
 
   clearTimeout(pollTimer);

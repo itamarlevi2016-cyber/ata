@@ -112,3 +112,52 @@ def test_cloud_maps_timestamps_back_to_original(monkeypatch):
 def test_cloud_rejected_when_not_configured(client):
     r = client.post("/api/jobs", data={"url": "https://x.y", "engine": "cloud"})
     assert r.status_code == 400
+
+
+def test_pause_and_live_only_for_running_job(client):
+    r = client.post("/api/jobs", files={"file": ("a.mp3", b"fake", "audio/mpeg")})
+    job_id = r.json()["id"]
+    for _ in range(50):
+        if client.get(f"/api/jobs/{job_id}").json()["status"] == "done":
+            break
+        time.sleep(0.05)
+    assert client.post(f"/api/jobs/{job_id}/pause").status_code == 409
+    assert client.post(f"/api/jobs/{job_id}/resume").status_code == 409
+    assert client.get(f"/api/jobs/{job_id}/live").json() == []
+
+
+def test_pause_resume_real_loop(tmp_path, monkeypatch):
+    import threading
+    import types
+
+    from app import config, jobs, transcriber
+
+    monkeypatch.setattr(config, "JOBS_DIR", tmp_path / "jobs")
+    gate = threading.Event()
+
+    def gen():
+        for i in range(3):
+            if i == 1:
+                gate.wait(2)
+            yield types.SimpleNamespace(start=i, end=i + 1, text=f" קטע {i}", words=[],
+                                        avg_logprob=-0.1, no_speech_prob=0.0)
+
+    model = types.SimpleNamespace(transcribe=lambda *a, **k: (gen(), types.SimpleNamespace(language="he")))
+    monkeypatch.setattr(transcriber, "get_model", lambda: model)
+    monkeypatch.setattr(transcriber, "load_audio", lambda p: np.zeros(16000 * 3, dtype=np.float32))
+    jobs._jobs.clear()
+    job = jobs.create_job("t", {"type": "file"}, {})
+    jobs._update(job["id"], audio_file="x", status="queued")
+    t = threading.Thread(target=jobs._process, args=(job["id"],))
+    t.start()
+    for _ in range(100):
+        if jobs.live_segments(job["id"]):
+            break
+        time.sleep(0.01)
+    assert jobs.pause_job(job["id"])
+    gate.set()
+    time.sleep(0.2)
+    assert t.is_alive() and len(jobs.live_segments(job["id"])) == 2
+    assert jobs.resume_job(job["id"])
+    t.join(2)
+    assert jobs.get_job(job["id"])["status"] == "done" and not transcriber.is_paused()

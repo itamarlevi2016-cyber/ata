@@ -19,6 +19,8 @@ ACTIVE_STATES = {"queued", "downloading", "loading", "transcribing", "diarizing"
 _lock = threading.RLock()
 _jobs: dict[str, dict] = {}
 _queue: "queue.Queue[str]" = queue.Queue()
+# העבודה שמתומללת כרגע במחשב (רק לה אפשר להשהות ולהציג טקסט ביניים)
+_current: str | None = None
 
 
 def job_dir(job_id: str) -> Path:
@@ -60,7 +62,7 @@ def create_job(title: str, source: dict, options: dict) -> dict:
 
 
 def enqueue(job_id: str) -> None:
-    _update(job_id, status="queued")
+    _update(job_id, status="queued", paused=False, paused_at=None)
     _queue.put(job_id)
 
 
@@ -83,6 +85,35 @@ def delete_job(job_id: str) -> bool:
         del _jobs[job_id]
     shutil.rmtree(job_dir(job_id), ignore_errors=True)
     return True
+
+
+def pause_job(job_id: str) -> bool:
+    with _lock:
+        job = _jobs.get(job_id)
+        if _current != job_id or not job or job["status"] != "transcribing" or job.get("paused"):
+            return False
+        transcriber.pause()
+        _update(job_id, paused=True, paused_at=time.time())
+        return True
+
+
+def resume_job(job_id: str) -> bool:
+    with _lock:
+        job = _jobs.get(job_id)
+        if not job or not job.get("paused"):
+            return False
+        transcriber.resume()
+        # זמן ההשהיה לא נספר בהערכת הזמן שנותר
+        paused_for = time.time() - (job.get("paused_at") or time.time())
+        _update(job_id, paused=False, paused_at=None,
+                stage_started=(job.get("stage_started") or time.time()) + paused_for)
+        return True
+
+
+def live_segments(job_id: str, since: int = 0) -> list[dict]:
+    if _current != job_id:
+        return []
+    return transcriber.live_segments(since)
 
 
 def load_result(job_id: str) -> dict | None:
@@ -130,7 +161,17 @@ def _process(job_id: str) -> None:
     else:
         fast = job["options"].get("quality") == "fast"
         beam = config.FAST_BEAM_SIZE if fast else config.BEAM_SIZE
-        result = transcriber.transcribe(audio, on_progress, beam_size=beam)
+        global _current
+        transcriber.resume()  # ליתר ביטחון — לא להתחיל עבודה חדשה במצב מושהה
+        _current = job_id
+        try:
+            result = transcriber.transcribe(audio, on_progress, beam_size=beam)
+        finally:
+            with _lock:
+                _current = None
+                transcriber.resume()
+                if get_job(job_id):
+                    _update(job_id, paused=False, paused_at=None)
 
     if job["options"].get("diarize"):
         _update(job_id, status="diarizing", progress=1.0)

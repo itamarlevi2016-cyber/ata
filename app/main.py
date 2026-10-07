@@ -120,6 +120,29 @@ def delete_job(job_id: str):
     return {"ok": True}
 
 
+@app.post("/api/jobs/{job_id}/pause")
+def pause_job(job_id: str):
+    _job_or_404(job_id)
+    if not jobs.pause_job(job_id):
+        raise HTTPException(409, "אפשר להשהות רק תמלול במחשב שרץ כרגע")
+    return jobs.get_job(job_id)
+
+
+@app.post("/api/jobs/{job_id}/resume")
+def resume_job(job_id: str):
+    _job_or_404(job_id)
+    if not jobs.resume_job(job_id):
+        raise HTTPException(409, "העבודה אינה מושהית")
+    return jobs.get_job(job_id)
+
+
+@app.get("/api/jobs/{job_id}/live")
+def live(job_id: str, since: int = 0):
+    """קטעי הביניים שכבר תומללו (החל מקטע מספר since)."""
+    _job_or_404(job_id)
+    return jobs.live_segments(job_id, max(0, since))
+
+
 def _result_or_404(job_id: str) -> dict:
     result = jobs.load_result(job_id)
     if result is None:
