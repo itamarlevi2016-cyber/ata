@@ -21,6 +21,18 @@ _jobs: dict[str, dict] = {}
 _queue: "queue.Queue[str]" = queue.Queue()
 # העבודה שמתומללת כרגע במחשב (רק לה אפשר להשהות ולהציג טקסט ביניים)
 _current: str | None = None
+# העבודה שהתהליך מטפל בה כרגע (בכל שלב), ועבודות שהמשתמש ביקש לבטל
+_active: str | None = None
+_cancel_requested: set[str] = set()
+
+
+class JobCancelled(Exception):
+    pass
+
+
+def _check_cancel(job_id: str) -> None:
+    if job_id in _cancel_requested:
+        raise JobCancelled()
 
 
 def job_dir(job_id: str) -> Path:
@@ -77,14 +89,29 @@ def list_jobs() -> list[dict]:
         return sorted((dict(j) for j in _jobs.values()), key=lambda j: j["created"], reverse=True)
 
 
-def delete_job(job_id: str) -> bool:
+def delete_job(job_id: str) -> str | None:
+    """מוחק עבודה. אם היא בעיבוד כרגע — מבקש לבטל אותה, והיא תימחק כשהעיבוד ייעצר.
+
+    מחזיר "deleted", "canceling" או None אם העבודה לא קיימת. עבודה שתקועה במצב
+    "בעיבוד" אבל לא מעובדת בפועל (למשל אחרי קריסה) נמחקת מיד.
+    """
     with _lock:
         job = _jobs.get(job_id)
-        if not job or job["status"] in ACTIVE_STATES - {"queued"}:
-            return False
+        if not job:
+            return None
+        if job_id == _active:
+            _cancel_requested.add(job_id)
+            if job_id == _current:
+                transcriber.cancel()
+            _update(job_id, status="canceling", paused=False)
+            return "canceling"
         del _jobs[job_id]
+    _remove_dir(job_id)
+    return "deleted"
+
+
+def _remove_dir(job_id: str) -> None:
     shutil.rmtree(job_dir(job_id), ignore_errors=True)
-    return True
 
 
 def pause_job(job_id: str) -> bool:
@@ -138,7 +165,7 @@ def _process(job_id: str) -> None:
 
     if job["source"]["type"] == "url" and not job["audio_file"]:
         _update(job_id, status="downloading", progress=0.0)
-        path, title = downloader.download_audio(job["source"]["url"], d)
+        path, title = downloader.download_audio(job["source"]["url"], d, lambda: _check_cancel(job_id))
         _update(job_id, audio_file=path.name, title=title)
         job = get_job(job_id)
 
@@ -147,11 +174,13 @@ def _process(job_id: str) -> None:
     audio = transcriber.load_audio(str(d / job["audio_file"]))
     if not use_cloud:
         transcriber.get_model()
+    _check_cancel(job_id)
 
     _update(job_id, status="transcribing", stage_started=time.time())
     last = [0.0]
 
     def on_progress(p: float) -> None:
+        _check_cancel(job_id)
         if p - last[0] >= 0.01:
             last[0] = p
             _update(job_id, progress=round(p, 3))
@@ -170,8 +199,9 @@ def _process(job_id: str) -> None:
             with _lock:
                 _current = None
                 transcriber.resume()
-                if get_job(job_id):
+                if get_job(job_id) and job_id not in _cancel_requested:
                     _update(job_id, paused=False, paused_at=None)
+    _check_cancel(job_id)
 
     if job["options"].get("diarize"):
         _update(job_id, status="diarizing", progress=1.0)
@@ -179,20 +209,34 @@ def _process(job_id: str) -> None:
         result["segments"] = diarizer.assign_speakers(result["segments"], turns)
     result["speakers"] = diarizer.speaker_names(result["segments"])
 
+    _check_cancel(job_id)
     save_result(job_id, result)
     _update(job_id, status="done", progress=1.0, duration=result["duration"], finished=time.time())
 
 
 def _worker() -> None:
+    global _active
     while True:
         job_id = _queue.get()
+        with _lock:
+            _active = job_id
         try:
             _process(job_id)
         except Exception as e:  # noqa: BLE001
-            log.error("העבודה %s נכשלה:\n%s", job_id, traceback.format_exc())
-            if get_job(job_id):
-                _update(job_id, status="error", error=str(e) or e.__class__.__name__)
+            if job_id not in _cancel_requested:
+                log.error("העבודה %s נכשלה:\n%s", job_id, traceback.format_exc())
+                if get_job(job_id):
+                    _update(job_id, status="error", error=str(e) or e.__class__.__name__)
         finally:
+            with _lock:
+                _active = None
+                cancelled = job_id in _cancel_requested
+                _cancel_requested.discard(job_id)
+                if cancelled:
+                    _jobs.pop(job_id, None)
+            if cancelled:
+                log.info("העבודה %s בוטלה ונמחקה", job_id)
+                _remove_dir(job_id)
             _queue.task_done()
 
 
@@ -204,6 +248,9 @@ def start() -> None:
         try:
             job = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            continue
+        if job["status"] == "canceling":
+            _remove_dir(job["id"])
             continue
         _jobs[job["id"]] = job
         if job["status"] in ACTIVE_STATES:

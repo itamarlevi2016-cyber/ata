@@ -1,10 +1,14 @@
 """הורדת שמע מקישור (יוטיוב ואתרים נוספים) בעזרת yt-dlp. זה השלב היחיד שדורש אינטרנט."""
 
 from pathlib import Path
+from typing import Callable
 
 
-def download_audio(url: str, dest_dir: Path) -> tuple[Path, str]:
-    """מוריד את ערוץ השמע הטוב ביותר. מחזיר (נתיב הקובץ, כותרת)."""
+def download_audio(url: str, dest_dir: Path, check_cancel: Callable[[], None] | None = None) -> tuple[Path, str]:
+    """מוריד את ערוץ השמע הטוב ביותר. מחזיר (נתיב הקובץ, כותרת).
+
+    check_cancel נקרא במהלך ההורדה ויכול לזרוק חריגה כדי לעצור אותה.
+    """
     import yt_dlp
 
     opts = {
@@ -13,6 +17,7 @@ def download_audio(url: str, dest_dir: Path) -> tuple[Path, str]:
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
+        "progress_hooks": [lambda _d: check_cancel()] if check_cancel else [],
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=True)

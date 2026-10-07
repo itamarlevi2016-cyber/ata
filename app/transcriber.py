@@ -21,6 +21,14 @@ _model_lock = threading.Lock()
 _running = threading.Event()
 _running.set()
 
+# ביטול: נבדק בין קטע לקטע (גם בזמן השהיה)
+_cancel = threading.Event()
+
+
+class Cancelled(Exception):
+    """התמלול בוטל על ידי המשתמש."""
+
+
 # טקסט ביניים: הקטעים שכבר תומללו בעבודה הנוכחית, לתצוגה חיה
 _live_lock = threading.Lock()
 _live_segments: list[dict] = []
@@ -35,6 +43,12 @@ def pause() -> None:
 def resume() -> None:
     _running.set()
     log.info("התמלול ממשיך")
+
+
+def cancel() -> None:
+    """מבטל את התמלול הנוכחי (משחרר גם השהיה)."""
+    _cancel.set()
+    _running.set()
 
 
 def is_paused() -> bool:
@@ -120,6 +134,7 @@ def transcribe(
         vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
     )
 
+    _cancel.clear()
     with _live_lock:
         _live_segments.clear()
 
@@ -129,6 +144,8 @@ def transcribe(
     while True:
         if not _running.is_set():
             _running.wait()
+        if _cancel.is_set():
+            raise Cancelled()
         seg = next(segments_iter, None)
         if seg is None:
             break

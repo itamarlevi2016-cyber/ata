@@ -4,75 +4,154 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>תמלול עברית</title>
-  <link rel="stylesheet" href="/static/style.css?v=3">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="/static/icon-192.png">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
 <body>
-  <header>
-    <h1>תמלול עברית</h1>
-    <div id="status" class="status"></div>
+  <header class="appbar">
+    <div class="brand">
+      <img src="/static/icon-192.png" alt="" class="brand-logo">
+      <div>
+        <div class="brand-name">תמלול עברית</div>
+        <div class="brand-sub">תמלול מקומי ואמין</div>
+      </div>
+    </div>
+    <div id="status" class="chips"></div>
   </header>
 
   <main>
-    <section id="home">
-      <div class="card">
-        <h2>תמלול חדש</h2>
-        <form id="new-job">
+    <!-- מסך הבית -->
+    <section id="home" class="home">
+      <aside class="panel new-panel">
+        <h2 class="panel-title">תמלול חדש</h2>
+        <form id="new-job" novalidate>
           <label id="drop" class="drop">
             <input type="file" id="file" accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.opus,.flac,.wma,.amr,.webm,.mp4,.mkv,.mov,.avi">
-            <span id="drop-text">גררו לכאן קובץ שמע או וידאו, או לחצו לבחירה</span>
+            <span class="drop-icon" data-icon="upload"></span>
+            <span id="drop-title" class="drop-title">גררו קובץ לכאן</span>
+            <span id="drop-sub" class="drop-sub">או לחצו לבחירה · שמע או וידאו</span>
           </label>
-          <div class="or">או</div>
-          <input type="url" id="url" placeholder="הדביקו קישור (יוטיוב, פייסבוק וכו')" dir="ltr">
-          <div class="options">
-            <label><input type="checkbox" id="diarize"> זיהוי דוברים</label>
-            <label>מספר דוברים (אם ידוע):
-              <input type="number" id="num-speakers" min="0" max="20" value="0" class="small">
-            </label>
-            <label>מנוע:
-              <select id="engine">
-                <option value="local">במחשב (חינם, ללא אינטרנט)</option>
-                <option value="cloud">בענן — ivrit.ai (מהיר, בתשלום)</option>
-              </select>
-            </label>
-            <label id="quality-label">מצב:
-              <select id="quality">
-                <option value="accurate">מדויק (מומלץ)</option>
-                <option value="fast">מהיר — בערך פי 2, מעט פחות מדויק</option>
-              </select>
-            </label>
-            <span id="diarize-hint" class="hint"></span>
-          </div>
-          <button type="submit" id="submit">התחל תמלול</button>
-          <div id="upload-progress" class="hint"></div>
-        </form>
-      </div>
 
-      <div class="card">
-        <h2>תמלולים</h2>
+          <div class="divider"><span>או</span></div>
+
+          <div class="input-icon">
+            <span data-icon="link"></span>
+            <input type="url" id="url" placeholder="קישור ליוטיוב או לאתר אחר" dir="ltr">
+          </div>
+
+          <div class="field">
+            <div class="field-label">מנוע תמלול</div>
+            <div class="segmented" id="engine" role="radiogroup">
+              <button type="button" data-value="local" class="active">
+                <span data-icon="cpu"></span>במחשב
+              </button>
+              <button type="button" data-value="cloud">
+                <span data-icon="cloud"></span>בענן
+              </button>
+            </div>
+            <div id="engine-hint" class="field-hint">חינם, ללא אינטרנט</div>
+          </div>
+
+          <div class="field" id="quality-field">
+            <div class="field-label">דיוק</div>
+            <div class="segmented" id="quality" role="radiogroup">
+              <button type="button" data-value="accurate" class="active">מדויק</button>
+              <button type="button" data-value="fast">מהיר</button>
+            </div>
+            <div id="quality-hint" class="field-hint">הכי אמין (מומלץ)</div>
+          </div>
+
+          <div class="field">
+            <label class="switch-row">
+              <span>
+                <span class="field-label">זיהוי דוברים</span>
+                <span id="diarize-hint" class="field-hint"></span>
+              </span>
+              <span class="switch"><input type="checkbox" id="diarize"><span></span></span>
+            </label>
+            <div id="speakers-row" class="speakers-row" hidden>
+              <span>מספר דוברים</span>
+              <input type="number" id="num-speakers" min="0" max="20" value="0" class="num">
+              <span class="field-hint">0 = זיהוי אוטומטי</span>
+            </div>
+          </div>
+
+          <button type="submit" id="submit" class="btn btn-primary btn-block">
+            <span data-icon="wave"></span>התחל תמלול
+          </button>
+          <div id="upload" class="upload" hidden>
+            <div class="progress"><div id="upload-bar"></div></div>
+            <div id="upload-text" class="field-hint"></div>
+          </div>
+          <div id="form-error" class="form-error" hidden></div>
+        </form>
+      </aside>
+
+      <section class="panel library">
+        <div class="library-head">
+          <h2 class="panel-title">התמלולים שלי <span id="count" class="count"></span></h2>
+          <div class="input-icon search">
+            <span data-icon="search"></span>
+            <input type="search" id="search" placeholder="חיפוש">
+          </div>
+        </div>
         <ul id="jobs" class="jobs"></ul>
-      </div>
+        <div id="empty" class="empty" hidden>
+          <span data-icon="wave"></span>
+          <div>עדיין אין תמלולים</div>
+          <div class="field-hint">העלו קובץ או הדביקו קישור כדי להתחיל</div>
+        </div>
+      </section>
     </section>
 
-    <section id="viewer" hidden>
-      <div class="viewer-top">
-        <button id="back" class="link">→ חזרה לרשימה</button>
-        <h2 id="v-title"></h2>
-        <audio id="player" controls preload="metadata"></audio>
-        <div class="toolbar">
-          <span>ייצוא:</span>
-          <a id="exp-docx" class="btn">Word</a>
-          <a id="exp-txt" class="btn">טקסט</a>
-          <a id="exp-srt" class="btn">כתוביות SRT</a>
-          <label><input type="checkbox" id="show-low" checked> סמן מילים לבדיקה</label>
-          <label><input type="checkbox" id="follow" checked> עקוב אחרי ההשמעה</label>
+    <!-- מסך התמלול -->
+    <section id="viewer" class="viewer" hidden>
+      <div class="viewer-head">
+        <button id="back" class="btn btn-ghost icon-btn" title="חזרה"><span data-icon="back"></span></button>
+        <div class="viewer-title">
+          <h2 id="v-title"></h2>
+          <div id="v-meta" class="field-hint"></div>
         </div>
-        <div id="speakers" class="speakers"></div>
-        <div class="hint">לחיצה על מילה מנגנת אותה. לחיצה כפולה על פסקה פותחת עריכה. מילים <span class="low">מסומנות</span> הן מילים שהמודל פחות בטוח בהן.</div>
+        <div class="export">
+          <a id="exp-docx" class="btn btn-secondary"><span data-icon="download"></span>Word</a>
+          <a id="exp-txt" class="btn btn-secondary">טקסט</a>
+          <a id="exp-srt" class="btn btn-secondary">כתוביות</a>
+        </div>
       </div>
-      <div id="transcript" class="transcript"></div>
+
+      <div class="player-card">
+        <audio id="player" controls preload="metadata"></audio>
+        <div class="player-tools">
+          <label class="chip-toggle"><input type="checkbox" id="show-low" checked><span>סמן מילים לבדיקה</span></label>
+          <label class="chip-toggle"><input type="checkbox" id="follow" checked><span>עקוב אחרי ההשמעה</span></label>
+          <div id="speakers" class="speaker-chips"></div>
+        </div>
+      </div>
+
+      <div class="tip">
+        <span data-icon="info"></span>
+        לחיצה על מילה מנגנת אותה · לחיצה כפולה על פסקה פותחת עריכה · מילים <span class="w low">מסומנות</span> הן מילים שהמודל פחות בטוח בהן
+      </div>
+
+      <article id="transcript" class="transcript show-low"></article>
     </section>
   </main>
 
-  <script src="/static/app.js?v=3"></script>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <dialog id="confirm" class="dialog">
+    <form method="dialog">
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-text"></p>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn btn-secondary">ביטול</button>
+        <button value="ok" id="confirm-ok" class="btn btn-danger">מחיקה</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js?v=4"></script>
 </body>
 </html>

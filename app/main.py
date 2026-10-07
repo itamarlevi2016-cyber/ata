@@ -1,6 +1,7 @@
 """שרת האתר המקומי."""
 
 import logging
+import mimetypes
 import os
 import shutil
 from contextlib import asynccontextmanager
@@ -17,6 +18,7 @@ from . import cloud, config, diarizer, exporters, jobs, transcriber
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 STATIC_DIR = Path(__file__).parent / "static"
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 
@@ -115,9 +117,7 @@ def get_job(job_id: str):
 @app.delete("/api/jobs/{job_id}")
 def delete_job(job_id: str):
     _job_or_404(job_id)
-    if not jobs.delete_job(job_id):
-        raise HTTPException(409, "לא ניתן למחוק עבודה שנמצאת בעיבוד")
-    return {"ok": True}
+    return {"ok": True, "state": jobs.delete_job(job_id)}
 
 
 @app.post("/api/jobs/{job_id}/pause")

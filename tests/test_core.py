@@ -161,3 +161,50 @@ def test_pause_resume_real_loop(tmp_path, monkeypatch):
     assert jobs.resume_job(job["id"])
     t.join(2)
     assert jobs.get_job(job["id"])["status"] == "done" and not transcriber.is_paused()
+
+
+def test_stale_active_job_can_be_deleted(client):
+    from app import jobs
+
+    job = jobs.create_job("תקוע", {"type": "file"}, {})
+    jobs._update(job["id"], status="transcribing")  # מצב שנשאר מריצה קודמת
+    r = client.delete(f"/api/jobs/{job['id']}")
+    assert r.json()["state"] == "deleted"
+    assert client.get(f"/api/jobs/{job['id']}").status_code == 404
+    assert not jobs.job_dir(job["id"]).exists()
+
+
+def test_cancel_running_job_while_paused(tmp_path, monkeypatch):
+    import threading
+    import types
+
+    from app import config, jobs, transcriber
+
+    monkeypatch.setattr(config, "JOBS_DIR", tmp_path / "jobs")
+
+    def gen():
+        for i in range(100):
+            time.sleep(0.02)
+            yield types.SimpleNamespace(start=i, end=i + 1, text=f" {i}", words=[],
+                                        avg_logprob=-0.1, no_speech_prob=0.0)
+
+    model = types.SimpleNamespace(transcribe=lambda *a, **k: (gen(), types.SimpleNamespace(language="he")))
+    monkeypatch.setattr(transcriber, "get_model", lambda: model)
+    monkeypatch.setattr(transcriber, "load_audio", lambda p: np.zeros(16000 * 100, dtype=np.float32))
+    jobs._jobs.clear()
+    job = jobs.create_job("t", {"type": "file"}, {})
+    jobs._update(job["id"], audio_file="x")
+    threading.Thread(target=jobs._worker, daemon=True).start()
+    jobs.enqueue(job["id"])
+    for _ in range(200):
+        if jobs.live_segments(job["id"]):
+            break
+        time.sleep(0.01)
+    assert jobs.pause_job(job["id"])
+    assert jobs.delete_job(job["id"]) == "canceling"
+    for _ in range(200):
+        if jobs.get_job(job["id"]) is None:
+            break
+        time.sleep(0.01)
+    assert jobs.get_job(job["id"]) is None and not jobs.job_dir(job["id"]).exists()
+    assert not transcriber.is_paused()
