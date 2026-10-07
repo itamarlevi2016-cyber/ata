@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>תמלול עברית</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>תמלול עברית</h1>
+    <div id="status" class="status"></div>
+  </header>
+
+  <main>
+    <section id="home">
+      <div class="card">
+        <h2>תמלול חדש</h2>
+        <form id="new-job">
+          <label id="drop" class="drop">
+            <input type="file" id="file" accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.opus,.flac,.wma,.amr,.webm,.mp4,.mkv,.mov,.avi">
+            <span id="drop-text">גררו לכאן קובץ שמע או וידאו, או לחצו לבחירה</span>
+          </label>
+          <div class="or">או</div>
+          <input type="url" id="url" placeholder="הדביקו קישור (יוטיוב, פייסבוק וכו')" dir="ltr">
+          <div class="options">
+            <label><input type="checkbox" id="diarize"> זיהוי דוברים</label>
+            <label>מספר דוברים (אם ידוע):
+              <input type="number" id="num-speakers" min="0" max="20" value="0" class="small">
+            </label>
+            <span id="diarize-hint" class="hint"></span>
+          </div>
+          <button type="submit" id="submit">התחל תמלול</button>
+          <div id="upload-progress" class="hint"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>תמלולים</h2>
+        <ul id="jobs" class="jobs"></ul>
+      </div>
+    </section>
+
+    <section id="viewer" hidden>
+      <div class="viewer-top">
+        <button id="back" class="link">→ חזרה לרשימה</button>
+        <h2 id="v-title"></h2>
+        <audio id="player" controls preload="metadata"></audio>
+        <div class="toolbar">
+          <span>ייצוא:</span>
+          <a id="exp-docx" class="btn">Word</a>
+          <a id="exp-txt" class="btn">טקסט</a>
+          <a id="exp-srt" class="btn">כתוביות SRT</a>
+          <label><input type="checkbox" id="show-low" checked> סמן מילים לבדיקה</label>
+          <label><input type="checkbox" id="follow" checked> עקוב אחרי ההשמעה</label>
+        </div>
+        <div id="speakers" class="speakers"></div>
+        <div class="hint">לחיצה על מילה מנגנת אותה. לחיצה כפולה על פסקה פותחת עריכה. מילים <span class="low">מסומנות</span> הן מילים שהמודל פחות בטוח בהן.</div>
+      </div>
+      <div id="transcript" class="transcript"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

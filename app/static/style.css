@@ -1,0 +1,148 @@
+:root {
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --text: #1d2330;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --border: #e2e5ea;
+  --low: #fde68a;
+  --current: #bfdbfe;
+  --error: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c;
+    --card: #1d2128;
+    --text: #e6e8eb;
+    --muted: #9aa1ac;
+    --accent: #60a5fa;
+    --border: #2e333c;
+    --low: #6b5310;
+    --current: #1e3a5f;
+    --error: #f87171;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, "Noto Sans Hebrew", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { margin: 0; font-size: 1.4rem; }
+main { max-width: 960px; margin: 0 auto; padding: 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.card h2 { margin-top: 0; font-size: 1.15rem; }
+.status { font-size: .85rem; color: var(--muted); }
+.status .warn { color: var(--error); }
+.drop {
+  display: block;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 28px 12px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--muted);
+}
+.drop.over, .drop.has-file { border-color: var(--accent); color: var(--text); }
+.drop input { display: none; }
+.or { text-align: center; color: var(--muted); margin: 8px 0; }
+input[type=url], input[type=number] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+input.small { width: 70px; }
+.options { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 12px 0; }
+button, .btn {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button:disabled { opacity: .5; cursor: default; }
+button.link { background: none; color: var(--accent); padding: 0; }
+button.danger { background: none; color: var(--error); padding: 2px 6px; font-size: .85rem; }
+.hint { font-size: .85rem; color: var(--muted); }
+.error { color: var(--error); }
+
+.jobs { list-style: none; padding: 0; margin: 0; }
+.jobs li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.jobs li:last-child { border-bottom: 0; }
+.jobs .info { flex: 1; min-width: 0; }
+.jobs .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jobs .title a { color: var(--text); }
+.bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.bar div { height: 100%; background: var(--accent); transition: width .5s; }
+
+.viewer-top {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding-bottom: 8px;
+  z-index: 2;
+  border-bottom: 1px solid var(--border);
+}
+.viewer-top h2 { margin: 6px 0; }
+#player { width: 100%; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0; }
+.toolbar .btn { padding: 4px 12px; font-size: .9rem; }
+.speakers { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; }
+.speakers input {
+  width: 130px;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.transcript { padding: 12px 0 80px; }
+.seg {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.seg .meta { font-size: .8rem; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+.seg .meta .ts { cursor: pointer; color: var(--accent); direction: ltr; }
+.seg .meta select { font-size: .8rem; background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.seg .text { font-size: 1.1rem; margin-top: 4px; }
+.seg .text[contenteditable=true] { outline: 2px solid var(--accent); border-radius: 4px; padding: 4px; }
+.w { cursor: pointer; border-radius: 3px; }
+.show-low .w.low, span.low { background: var(--low); }
+.w.current { background: var(--current) !important; }
+.edited-tag { font-size: .75rem; color: var(--muted); }
