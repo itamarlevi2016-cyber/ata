@@ -38,19 +38,16 @@
 
   /* ---------- Screens ---------- */
   .screen {
-    position: fixed; inset: 0;
-    display: flex; flex-direction: column;
+    position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+    display: none; flex-direction: column;
+    padding: 16px 18px;
     padding: max(env(safe-area-inset-top), 16px) 18px max(env(safe-area-inset-bottom), 16px);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
-    opacity: 0; visibility: hidden; pointer-events: none;
-    transform: translateX(-24px);
-    transition: opacity .35s var(--ease), transform .35s var(--ease), visibility 0s .35s;
   }
-  .screen.active {
-    opacity: 1; visibility: visible; pointer-events: auto; transform: none;
-    transition: opacity .35s var(--ease), transform .35s var(--ease), visibility 0s;
-  }
-  .screen.behind { transform: translateX(24px); }
+  .screen.active { display: flex; animation: screenIn .35s var(--ease); }
+  .screen.back.active { animation-name: screenBack; }
+  @keyframes screenIn { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+  @keyframes screenBack { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
   .container { width: 100%; max-width: 560px; margin: 0 auto; flex: 1; display: flex; flex-direction: column; }
 
   /* ---------- Lock ---------- */
@@ -181,6 +178,7 @@
   @media (max-width: 380px) { .key { font-size: 1.4rem; } .keypad { gap: 10px; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01s !important; } }
 </style>
+<noscript><style>body::after{content:"יש להפעיל JavaScript";display:block;text-align:center;padding:20px}</style></noscript>
 </head>
 <body>
 
@@ -205,7 +203,7 @@
 </section>
 
 <!-- Dashboard -->
-<section class="screen behind" id="dashboard" aria-label="רשימת מטופלים">
+<section class="screen" id="dashboard" aria-label="רשימת מטופלים">
   <div class="container">
     <div class="topbar">
       <h1 class="title">המטופלים שלי</h1>
@@ -220,7 +218,7 @@
 </section>
 
 <!-- Patient file -->
-<section class="screen behind" id="patient" aria-label="תיק מטופל">
+<section class="screen" id="patient" aria-label="תיק מטופל">
   <div class="container">
     <div class="topbar">
       <button class="btn btn-soft btn-back" id="backBtn">→ חזרה</button>
@@ -295,14 +293,13 @@
 
   const screens = ['lock', 'dashboard', 'patient'];
   function show(name) {
-    const idx = screens.indexOf(name);
-    screens.forEach((s, i) => {
-      const el = $(s);
-      el.classList.toggle('active', i === idx);
-      el.classList.toggle('behind', i > idx);
-      if (i < idx) el.classList.remove('behind');
+    const back = screens.indexOf(name) < screens.findIndex(x => $(x).classList.contains('active'));
+    screens.forEach(x => {
+      const el = $(x);
+      el.classList.toggle('back', back);
+      el.classList.toggle('active', x === name);
     });
-    const act = $(name); act.scrollTop = 0;
+    $(name).scrollTop = 0;
   }
 
   /* ---------- Modal ---------- */
