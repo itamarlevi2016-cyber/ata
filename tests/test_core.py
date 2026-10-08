@@ -39,13 +39,21 @@ def test_longest_name_is_replaced_first(env):
     assert db.apply("see Katz III and Katz II") == "see כץ ג and כץ ב"
 
 
-def test_progress_log_gives_the_segment_map(env):
+def test_book_map_gives_segments_and_the_log_gives_their_status(env):
     segs, src = mapping.load_segments(env / "materials")
-    assert "יומן" in src
+    assert "מיפוי הספר.md" in src and "יומן התקדמות.md" in src
     by = {s.n: s for s in segs}
     assert (by[9].start, by[9].end) == (331, 379) and by[9].status == "partial"
     assert by[8].status == "done_outside" and by[8].end == 330
     assert mapping.next_todo(segs).n == 9
+    assert len(segs) == 32 and (by[13].start, by[13].end, by[13].chapter, by[13].status) == (505, 553, 3, "todo")
+    assert (by[27].start, by[27].end, by[27].chapter) == (1086, 1130, 5) and by[0].status == "done_outside"
+
+
+def test_log_alone_still_gives_a_map_when_the_map_file_is_missing(env):
+    (env / "materials" / "מיפוי הספר.md").unlink()
+    segs, src = mapping.load_segments(env / "materials")
+    assert len(segs) == 13 and "לא נמצא" in src
 
 
 def test_hebrew_numerals_and_excursus_labels():
@@ -160,8 +168,9 @@ def test_end_to_end_with_checkpoints_and_report(env):
     ids = {c["id"]: c["status"] for c in rep["checks"]}
     assert ids[7] == "pass" and ids[8] == "pass" and ids[3] == "pass"
     assert (book.out_dir / "דוח בקרה – קטע – עמ' 3–6.md").exists()
-    log = (env / "materials" / "יומן התקדמות.md").read_text(encoding="utf-8")
+    log = (env / "work" / "יומן התקדמות (מדומה).md").read_text(encoding="utf-8")
     assert "תרגום אוטומטי, עמ' 3–6" in log and "Zalman Test = זלמן טסט" in log
+    assert "Zalman" not in (env / "materials" / "יומן התקדמות.md").read_text(encoding="utf-8")   # the real log is untouched
 
 
 class Flaky(MockLLM):

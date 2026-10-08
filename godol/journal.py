@@ -17,7 +17,15 @@ def _today() -> str:
 
 
 def log_path() -> Path:
-    return config.MATERIALS / "יומן התקדמות.md"
+    """The real log, except in mock mode: demo and test runs write to a copy under the work dir."""
+    real = config.MATERIALS / "יומן התקדמות.md"
+    if not config.USE_MOCK:
+        return real
+    mock = config.WORK / "יומן התקדמות (מדומה).md"
+    if not mock.exists():
+        config.ensure_dirs()
+        mock.write_text(real.read_text(encoding="utf-8") if real.exists() else "# יומן התקדמות\n\n## רישום עבודה\n", encoding="utf-8")
+    return mock
 
 
 def update_table_row(text: str, seg_n: int | None, start: int, end: int, status_text: str, file_name: str) -> tuple[str, bool]:
