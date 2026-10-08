@@ -18,6 +18,7 @@
       <button class="tab" role="tab" data-tab="report" aria-selected="false">דוח בקרה</button>
       <button class="tab" role="tab" data-tab="names" aria-selected="false">שמות חדשים <span class="badge" id="namesBadge"></span></button>
       <button class="tab" role="tab" data-tab="log" aria-selected="false">יומן</button>
+      <button class="tab" role="tab" data-tab="settings" aria-selected="false">הגדרות וחיוב</button>
     </nav>
   </div>
 </header>
@@ -90,6 +91,33 @@
       <h2>שמות חדשים שהמודל פגש</h2>
       <p class="hint">המילון לא משתנה בלי אישור. שם שאושר נכנס למילון של העמודים הבאים.</p>
       <div id="namesBody"></div>
+    </div>
+  </section>
+
+  <section id="tab-settings" class="panel" hidden>
+    <div class="grid2">
+      <div class="card">
+        <h2>הגדרות תרגום</h2>
+        <p class="hint" id="keyState"></p>
+        <div class="form">
+          <label class="field">מודל
+            <select id="setModel"></select>
+          </label>
+          <label class="field">עומק חשיבה
+            <select id="setEffort"></select>
+          </label>
+          <label class="chk"><input type="checkbox" id="setVerify"> הפעלת הבודק העצמאי כברירת מחדל (עולה כחמישית נוספת)</label>
+          <label class="field">תקרת תקציב בדולרים (0 = בלי תקרה)
+            <input type="number" id="setBudget" min="0" step="1" inputmode="decimal">
+          </label>
+          <div class="row"><button class="btn primary" id="saveSettings">שמירה</button><span class="hint" id="settingsMsg" role="status"></span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>הוצאה</h2>
+        <p class="hint">החיוב כאן הוא על יתרת ה-API של המפתח שהוגדר ב-ANTHROPIC_API_KEY, ולא על מכסת המנוי. הסכומים הם הערכה לפי מספר הטוקנים שדווחו ומחירון רשמי. הסכום הקובע הוא ב-Console.</p>
+        <div id="costBody"></div>
+      </div>
     </div>
   </section>
 

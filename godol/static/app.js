@@ -17,6 +17,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   document.querySelectorAll(".panel").forEach(p => p.hidden = p.id !== "tab-" + t.dataset.tab);
   if (t.dataset.tab === "names") loadNames();
   if (t.dataset.tab === "log") loadLog();
+  if (t.dataset.tab === "settings") loadSettings();
   if (t.dataset.tab === "report" && !$("#rFrom").value && selSeg) { $("#rFrom").value = selSeg.start; $("#rTo").value = selSeg.end; }
 }));
 
@@ -189,12 +190,41 @@ async function loadNames(badgeOnly) {
   row.append(ok, no); box.appendChild(row);
 }
 
+/* ---- settings and spend ---- */
+const usd = x => "$" + (x || 0).toFixed(2);
+async function loadSettings() {
+  const [st, cost, status] = await Promise.all([api("/api/settings"), api("/api/cost"), api("/api/status")]);
+  const m = $("#setModel"); m.textContent = ""; Object.entries(st.models).forEach(([k, v]) => m.appendChild(new Option(v, k))); m.value = st.model;
+  const e = $("#setEffort"); e.textContent = ""; st.efforts.forEach(x => e.appendChild(new Option({ low: "נמוך (זול)", medium: "בינוני", high: "גבוה (ברירת מחדל)" }[x], x))); e.value = st.effort;
+  $("#setVerify").checked = st.verify; $("#setBudget").value = st.budget_usd || 0;
+  $("#keyState").textContent = status.has_credentials ? "מפתח API מוגדר בשרת." : "לא הוגדר מפתח API. הגדירו ANTHROPIC_API_KEY לפני הפעלת השרת.";
+  const box = $("#costBody"); box.textContent = "";
+  const dl = el("dl", "cost");
+  const row = (k, v) => { dl.appendChild(el("dt", null, k)); dl.appendChild(el("dd", null, v)); };
+  row("הוצאה מוערכת עד כה", usd(cost.spent));
+  Object.entries(cost.by_kind).forEach(([k, v]) => row({ translate: "תרגום", verify: "בודק עצמאי" }[k] || k, usd(v)));
+  row("עמודים שתורגמו", String(cost.pages));
+  row("ממוצע לעמוד", cost.avg_per_page ? usd(cost.avg_per_page) : "עוד אין נתון");
+  if (cost.budget) row("נשאר בתקציב", usd(cost.remaining));
+  box.appendChild(dl);
+  if (cost.budget) { const mt = el("div", "meter" + (cost.spent >= cost.budget ? " over" : "")); const i = el("i"); i.style.width = Math.min(100, cost.spent / cost.budget * 100) + "%"; mt.appendChild(i); box.appendChild(mt); }
+  if (cost.avg_per_page && cost.budget) box.appendChild(el("p", "hint", `בקצב הזה היתרה מספיקה לעוד כ-${Math.max(0, Math.floor(cost.remaining / cost.avg_per_page))} עמודים.`));
+  $("#verify").checked = st.verify;
+}
+$("#saveSettings").onclick = async () => {
+  try {
+    await post("/api/settings", { model: $("#setModel").value, effort: $("#setEffort").value, verify: $("#setVerify").checked, budget_usd: +$("#setBudget").value || 0 });
+    $("#settingsMsg").textContent = "נשמר. ההגדרות חלות על הריצה הבאה."; loadSettings();
+  } catch (e) { $("#settingsMsg").textContent = "השמירה נכשלה: " + e.message; }
+};
+
 /* ---- journal ---- */
 async function loadLog() { $("#logText").textContent = (await api("/api/journal")).text || "היומן ריק."; }
 
 /* ---- boot ---- */
 (async () => {
   try { await loadStatus(); await loadSegs(); await loadBooks();
+    api("/api/settings").then(st => { $("#verify").checked = st.verify; }).catch(() => {});
     if (bookId) { const j = await api(`/api/books/${bookId}/jobs/latest`).catch(() => null); if (j) { setJobUi(j); if (j.status === "running") startPoll(); } }
   } catch (e) { $("#banner").hidden = false; $("#banner").textContent = "שגיאה בטעינה: " + e.message; }
 })();

@@ -87,3 +87,9 @@ table.names{border-collapse:collapse;width:100%}
 .names bdi{unicode-bidi:isolate}
 @media (max-width:860px){.grid2{grid-template-columns:1fr}.tabs{margin-inline-start:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.form{display:grid;gap:14px;max-width:420px}
+.cost{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;font-variant-numeric:tabular-nums}
+.cost dt{color:var(--muted)} .cost dd{margin:0;font-weight:600;text-align:end}
+.meter{height:8px;border-radius:5px;background:var(--rule);overflow:hidden;margin:10px 0}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter.over i{background:var(--bad)}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from . import config, prompts
+from . import config, costs, prompts
 from .assemble import Assembled, strip_tokens
 from .docx_check import validate_docx
 from .llm import LLMError
@@ -167,6 +167,7 @@ def verify_pages(book, pages: list[int], asm_by_page: dict[int, str], llm, on_ev
             try:
                 rep = llm.verify(prompts.VERIFIER_SYSTEM, prompts.verifier_blocks(n, img, mt, heb))
                 results.append({"page": n, "differences": rep.data.get("differences", []), "usage": rep.usage.to_dict()})
+                costs.record(book.id, "verify", config.VERIFIER_MODEL, rep.usage.to_dict(), n)
                 last = None
                 break
             except LLMError as e:

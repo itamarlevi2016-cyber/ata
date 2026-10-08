@@ -296,3 +296,50 @@ def test_system_prompt_without_style_still_caches_the_guide():
     from godol import prompts
     b = prompts.translator_system("GUIDE")
     assert len(b) == 2 and b[1]["cache_control"] == {"type": "ephemeral"}
+
+
+# ---- settings, cost and budget ----------------------------------------------------------------
+def test_cost_estimate_uses_the_models_price_list():
+    from godol import costs
+    u = {"input_tokens": 1_000_000, "output_tokens": 1_000_000, "cache_read": 1_000_000, "cache_write": 0}
+    assert costs.cost_usd("claude-sonnet-5-5", u) == pytest.approx(2 + 10 + 0.20)
+    assert costs.cost_usd("claude-opus-5-5", u) == pytest.approx(4 + 20 + 0.20)
+    assert costs.cost_usd("some-future-model", u) == costs.cost_usd("claude-opus-5-5", u)   # unknown: never priced lower
+
+
+def test_settings_choose_model_and_verifier_and_apply_to_the_run(env):
+    from godol import config, settings
+    assert settings.get()["model"] == "claude-sonnet-5-5" and settings.get()["verify"] is False
+    settings.save({"model": "claude-opus-5-5", "effort": "medium", "verify": True, "budget_usd": 77})
+    settings.save({"model": "not-a-model", "effort": "nonsense"})               # ignored
+    s = settings.apply()
+    assert (s["model"], s["effort"], s["verify"], s["budget_usd"]) == ("claude-opus-5-5", "medium", True, 77.0)
+    assert config.MODEL == "claude-opus-5-5" and config.VERIFIER_MODEL == "claude-opus-5-5" and config.EFFORT == "medium"
+
+
+def test_budget_stops_the_run_before_the_money_is_gone(env):
+    from godol import costs, settings
+    settings.save({"model": "claude-sonnet-5-5", "budget_usd": 0.002})
+    settings.apply()
+    book = _book(env)
+    with pytest.raises(PageFailed) as e:
+        translate_range(book, 2, 9, MockLLM(), None)
+    assert e.value.kind == "budget" and "תקרת התקציב" in str(e.value)
+    done = book.done_pages()
+    assert 1 <= len(done) < 8 and costs.summary()["pages"] == len(done)
+    assert costs.summary()["spent"] >= 0.002 and costs.summary()["by_kind"]["translate"] > 0
+    settings.save({"budget_usd": 0})                                            # no ceiling: the run continues where it stopped
+    translate_range(book, 2, 9, MockLLM(), None)
+    assert book.done_pages() == list(range(2, 10))
+
+
+def test_settings_api(env):
+    from fastapi.testclient import TestClient
+    from godol.server import app
+    c = TestClient(app)
+    r = c.post("/api/settings", json={"model": "claude-opus-5-5", "verify": True, "budget_usd": 77}).json()
+    assert r["model"] == "claude-opus-5-5" and r["budget_usd"] == 77 and "claude-sonnet-5-5" in r["models"]
+    assert c.get("/api/settings").json()["verify"] is True
+    k = c.get("/api/cost").json()
+    assert k["spent"] == 0 and k["budget"] == 77 and k["remaining"] == 77
+    assert c.get("/api/status").json()["settings"]["model"] == "claude-opus-5-5"

@@ -8,7 +8,7 @@ import time
 import traceback
 import uuid
 
-from . import config
+from . import config, settings
 from .book import Book
 from .llm import make_llm
 from .pipeline import PageFailed, Stopped, translate_range
@@ -79,6 +79,7 @@ def start_job(book: Book, kind: str, start: int, end: int, opts: dict | None = N
 
 
 def _run(job: Job, llm) -> None:
+    settings.apply()
     try:
         llm = llm or make_llm()
     except Exception as e:  # noqa: BLE001  (missing key, SDK problem)

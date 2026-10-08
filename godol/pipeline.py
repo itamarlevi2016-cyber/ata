@@ -5,7 +5,7 @@ import threading
 import time
 from typing import Callable
 
-from . import config, names as names_mod
+from . import config, costs, names as names_mod, settings
 from .book import Book
 from .llm import LLMError, Usage
 from .prompts import load_guide, translator_system, user_blocks
@@ -72,6 +72,11 @@ def translate_range(book: Book, start: int, end: int, llm, on_event: Event | Non
     for group in chunks(pages, config.PAGES_PER_CALL):
         if stop and stop.is_set():
             raise Stopped()
+        try:
+            settings.check_budget()
+        except settings.BudgetReached as e:
+            emit({"type": "page_failed", "pages": group, "message": str(e)})
+            raise PageFailed(group, str(e), "budget")
         db = names_mod.load_names(config.MATERIALS, book.dir)
         text_all = ""
         payload = []
@@ -104,6 +109,8 @@ def translate_range(book: Book, start: int, end: int, llm, on_event: Event | Non
                 _sleep(wait, stop)
                 continue
             total.add(reply.usage)
+            for n in group:   # the call's cost is shared by its pages
+                costs.record(book.id, "translate", config.MODEL, {k: v / len(group) for k, v in reply.usage.to_dict().items()}, n)
             got = {p.get("page"): p for p in reply.data.get("pages", [])}
             problems = []
             if set(got) != set(group):

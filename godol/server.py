@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, journal, names as names_mod
+from . import config, costs, journal, names as names_mod, settings
 from .book import Book
 from .jobs import JOBS, start_job
 from .service import page_hebrew, segments
@@ -46,8 +46,33 @@ def status():
     has_key = bool(__import__("os").environ.get("ANTHROPIC_API_KEY")) or config.USE_MOCK
     materials = {n: (config.MATERIALS / n).exists() for n in ("מדריך תרגום.md", "מיפוי הספר.md", "יומן התקדמות.md", "פיילוט.docx")}
     materials["שמות חדשים"] = bool(list(config.MATERIALS.glob("שמות חדשים*.md")))
-    return {"mock": config.USE_MOCK, "has_credentials": has_key, "model": config.MODEL, "dpi": config.DPI,
+    st = settings.get()
+    return {"settings": st, "mock": config.USE_MOCK, "has_credentials": has_key, "model": config.MODEL, "dpi": config.DPI,
             "pages_per_call": config.PAGES_PER_CALL, "materials": materials, "segments_source": src, "segments": len(segs)}
+
+
+class SettingsIn(BaseModel):
+    model: str | None = None
+    effort: str | None = None
+    verify: bool | None = None
+    budget_usd: float | None = None
+
+
+@app.get("/api/settings")
+def get_settings():
+    return {**settings.get(), "models": costs.MODELS, "efforts": settings.EFFORTS}
+
+
+@app.post("/api/settings")
+def set_settings(s: SettingsIn):
+    return {**settings.save(s.model_dump(exclude_none=True)), "models": costs.MODELS, "efforts": settings.EFFORTS}
+
+
+@app.get("/api/cost")
+def get_cost():
+    c = costs.summary()
+    b = settings.get()["budget_usd"]
+    return {**c, "budget": b, "remaining": round(b - c["spent"], 4) if b else None}
 
 
 @app.get("/api/books")

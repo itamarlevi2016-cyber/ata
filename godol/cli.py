@@ -24,6 +24,7 @@ def main(argv=None) -> int:
     r.add_argument("--start", type=int, required=True)
     r.add_argument("--end", type=int, required=True)
     r.add_argument("--chapter", type=int)
+    r.add_argument("--verify", action="store_true", help="run the independent checker (default: as set in the app's settings)")
     r.add_argument("--no-verify", action="store_true")
     r.add_argument("--mock", action="store_true", help="deterministic fake model, for plumbing tests only")
     a = ap.parse_args(argv)
@@ -39,6 +40,9 @@ def main(argv=None) -> int:
     from .llm import make_llm
     from .pipeline import PageFailed, translate_range
     from .service import build_segment, segments
+    from . import settings
+    st = settings.apply()
+    verify = True if a.verify else False if a.no_verify else st["verify"]
 
     book = Book.open(a.book) if a.book else Book.create(Path(a.pdf).name, Path(a.pdf).read_bytes())
     llm = make_llm()
@@ -53,7 +57,7 @@ def main(argv=None) -> int:
     except PageFailed as e:
         print(f"נכשל בעמ' {e.pages}: {e}", file=sys.stderr)
         return 2
-    rep = build_segment(book, a.start, a.end, llm=llm, verify=not a.no_verify, seg=seg, chapter=a.chapter, on_event=ev)
+    rep = build_segment(book, a.start, a.end, llm=llm, verify=verify, seg=seg, chapter=a.chapter, on_event=ev)
     print("\n" + (book.out_dir / f"דוח בקרה – {rep['segment']}.md").read_text(encoding="utf-8"))
     print("book id:", book.id, "| file:", book.out_dir / rep["file"])
     return 0 if rep["summary"]["ready"] else 1
