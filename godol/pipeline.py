@@ -9,6 +9,7 @@ from . import config, names as names_mod
 from .book import Book
 from .llm import LLMError, Usage
 from .prompts import load_guide, translator_system, user_blocks
+from .style import load_style
 from .schema import TOKEN, validate_page
 
 Event = Callable[[dict], None]
@@ -63,7 +64,7 @@ def translate_range(book: Book, start: int, end: int, llm, on_event: Event | Non
     emit = on_event or (lambda e: None)
     total = Usage()
     guide = load_guide(config.MATERIALS)
-    system = translator_system(guide)
+    system = translator_system(guide, load_style())
     pages = [n for n in range(start, end + 1) if force or book.load_page(n) is None]
     for n in range(start, end + 1):
         if n not in pages:

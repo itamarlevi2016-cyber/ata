@@ -267,3 +267,32 @@ def test_api_roundtrip(env):
     assert c.get(f"/api/books/{bid}/files/..%2Fmeta.json").status_code in (400, 404)
     assert c.get("/api/mapping").json()["segments"][9]["start"] == 331
     assert c.get("/").status_code == 200
+
+
+# ---- style reference ------------------------------------------------------------------------
+def _heb_para(i):
+    return ("הפסקה מספר %d מדגימה עברית ספרותית תורנית קרובה למקור, עם משפטים ארוכים ומקפים בשמות כגון ר' יצחק-אלחנן, " % i) * 4
+
+
+def test_style_reference_is_sampled_from_an_existing_translation(env):
+    import docx
+    from godol import style, prompts
+    d = docx.Document()
+    for i in range(80):
+        d.add_paragraph(_heb_para(i))
+    d.add_paragraph("Making of a Godol")                              # short / Latin: never picked
+    d.save(str(env / "materials" / "פיילוט.docx"))
+    s = style.load_style(env / "materials")
+    parts = s.split("\n\n")
+    assert 5 <= len(parts) <= 7 and len(s) <= 5800 and not any("Making" in p for p in parts)
+    sysblocks = prompts.translator_system("GUIDE", s)
+    assert sysblocks[-1]["cache_control"] == {"type": "ephemeral"} and "STYLE REFERENCE" in sysblocks[-1]["text"]
+    assert "cache_control" not in sysblocks[1]                         # one breakpoint, after the style block
+    (env / "materials" / "דוגמת סגנון.md").write_text("ידני", encoding="utf-8")
+    assert style.load_style(env / "materials") == "ידני"             # a hand-picked file wins
+
+
+def test_system_prompt_without_style_still_caches_the_guide():
+    from godol import prompts
+    b = prompts.translator_system("GUIDE")
+    assert len(b) == 2 and b[1]["cache_control"] == {"type": "ephemeral"}

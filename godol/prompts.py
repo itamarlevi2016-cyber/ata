@@ -29,14 +29,22 @@ Rules for the structure:
 """
 
 
-def translator_system(guide_text: str) -> list[dict]:
-    """System prompt as blocks. The guide block carries the cache breakpoint, so every page call after the
-    first one reads the whole prefix from the cache."""
-    return [
+STYLE_INTRO = ("STYLE REFERENCE. These paragraphs are from the approved Hebrew translation of earlier pages of this same book. "
+               "Write in exactly this register: vocabulary, sentence rhythm, and how names, titles, quotations and punctuation are rendered. "
+               "Match the voice. Do not copy their content.\n\n")
+
+
+def translator_system(guide_text: str, style_text: str = "") -> list[dict]:
+    """System prompt as blocks. The last block carries the cache breakpoint (guide, then style reference), so
+    every page call after the first one reads the whole prefix from the cache."""
+    blocks = [
         {"type": "text", "text": TRANSLATOR_RULES},
-        {"type": "text", "text": "TRANSLATION GUIDE (binding):\n\n" + guide_text,
-         "cache_control": {"type": "ephemeral"}},
+        {"type": "text", "text": "TRANSLATION GUIDE (binding):\n\n" + guide_text},
     ]
+    if style_text.strip():
+        blocks.append({"type": "text", "text": STYLE_INTRO + style_text.strip()})
+    blocks[-1]["cache_control"] = {"type": "ephemeral"}
+    return blocks
 
 
 VERIFIER_SYSTEM = """You check a Hebrew translation of one printed page against the page image.
