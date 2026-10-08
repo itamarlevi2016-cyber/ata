@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מתרגם Making of a Godol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Frank+Ruhl+Libre:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <div class="brand"><span class="mark">ג</span><span>מתרגם הכרך</span></div>
+    <nav class="tabs" role="tablist" aria-label="אזורים">
+      <button class="tab" role="tab" data-tab="translate" aria-selected="true">תרגום</button>
+      <button class="tab" role="tab" data-tab="report" aria-selected="false">דוח בקרה</button>
+      <button class="tab" role="tab" data-tab="names" aria-selected="false">שמות חדשים <span class="badge" id="namesBadge"></span></button>
+      <button class="tab" role="tab" data-tab="log" aria-selected="false">יומן</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="card" id="bookCard">
+    <div class="row">
+      <label class="field">ספר
+        <select id="bookSel"></select>
+      </label>
+      <label class="btn" for="pdfFile" tabindex="0" id="pdfBtn">העלאת PDF</label>
+      <input type="file" id="pdfFile" accept="application/pdf" class="sr">
+      <span class="hint" id="bookInfo"></span>
+    </div>
+  </section>
+
+  <section id="tab-translate" class="panel">
+    <div class="grid2">
+      <div class="card">
+        <h2>קטע לתרגום</h2>
+        <p class="hint" id="mapSource"></p>
+        <div class="seglist" id="segList" role="listbox" aria-label="קטעים מתוך מיפוי הספר"></div>
+        <div class="row gap">
+          <label class="field small">מעמוד <input type="number" id="from" min="1" inputmode="numeric"></label>
+          <label class="field small">עד עמוד <input type="number" id="to" min="1" inputmode="numeric"></label>
+          <label class="chk"><input type="checkbox" id="verify" checked> בודק עצמאי מול התמונה</label>
+        </div>
+        <div class="row gap">
+          <button class="btn primary" id="go">תרגם</button>
+          <button class="btn" id="build">בנה מחדש את ה-Word והבקרה</button>
+          <button class="btn danger" id="stop" hidden>עצירה</button>
+        </div>
+        <p class="err" id="jobErr" role="alert" hidden></p>
+      </div>
+      <div class="card">
+        <h2>התקדמות לפי עמוד</h2>
+        <div class="status" id="jobStatus">אין עבודה פעילה</div>
+        <div class="pages" id="pageGrid" aria-label="עמודים"></div>
+        <ul class="events" id="events" aria-live="polite"></ul>
+      </div>
+    </div>
+    <div class="card" id="viewer" hidden>
+      <div class="row between"><h2 id="viewerTitle"></h2><div class="row gap"><button class="btn" id="redo">תרגם עמוד זה מחדש</button><button class="btn quiet" id="closeViewer">סגירה</button></div></div>
+      <div class="grid2 viewer">
+        <img id="pageImg" alt="תמונת העמוד במקור">
+        <pre id="pageHe" class="he"></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h2>קבצים</h2>
+      <ul class="files" id="fileList"></ul>
+    </div>
+  </section>
+
+  <section id="tab-report" class="panel" hidden>
+    <div class="card">
+      <div class="row gap">
+        <label class="field small">מעמוד <input type="number" id="rFrom" min="1"></label>
+        <label class="field small">עד עמוד <input type="number" id="rTo" min="1"></label>
+        <button class="btn" id="loadReport">הצגת הדוח</button>
+      </div>
+      <div id="reportBody"><p class="hint">בחרו טווח שכבר נבנה כדי לראות את דוח הבקרה.</p></div>
+    </div>
+  </section>
+
+  <section id="tab-names" class="panel" hidden>
+    <div class="card">
+      <h2>שמות חדשים שהמודל פגש</h2>
+      <p class="hint">המילון לא משתנה בלי אישור. שם שאושר נכנס למילון של העמודים הבאים.</p>
+      <div id="namesBody"></div>
+    </div>
+  </section>
+
+  <section id="tab-log" class="panel" hidden>
+    <div class="card"><pre id="logText" class="he"></pre></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
