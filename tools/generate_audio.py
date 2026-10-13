@@ -6,10 +6,12 @@
     python tools/generate_audio.py --force    # יוצר הכול מחדש
     python tools/generate_audio.py --dry-run  # רק מציג מה היה נוצר
 
-מנוע הקול:
-  * אם מוגדרים AZURE_SPEECH_KEY ו-AZURE_SPEECH_REGION: שירות Azure Speech הרשמי (מומלץ לאתר ציבורי).
-  * אחרת: edge-tts (pip install edge-tts), שירות הקראה חינמי של Microsoft Edge שאינו API רשמי.
-קול ברירת המחדל: he-IL-AvriNeural (גברי). אפשר לשנות עם המשתנה TTS_VOICE.
+מנוע הקול (לפי הסדר, הראשון שמוגדר):
+  * AZURE_SPEECH_KEY + AZURE_SPEECH_REGION: שירות Azure Speech הרשמי, קול he-IL-AvriNeural (גברי).
+    הכי מתאים לעברית. יש מכסה חינמית גדולה, ודרוש חשבון Azure.
+  * OPENAI_API_KEY: ‏OpenAI Text-to-Speech. עולה כמה סנטים לכל הקורס. קול ברירת מחדל: onyx.
+  * אחרת: edge-tts (pip install edge-tts). שירות חינמי שאינו API רשמי, ולרוב חסום מהשרתים של GitHub.
+אפשר לשנות קול עם TTS_VOICE (Azure) או OPENAI_TTS_VOICE (OpenAI).
 """
 import argparse
 import asyncio
@@ -23,7 +25,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 AUDIO = ROOT / "audio"
-VOICE = os.environ.get("TTS_VOICE", "he-IL-AvriNeural")
+AZURE_VOICE = os.environ.get("TTS_VOICE", "he-IL-AvriNeural")
+OPENAI_VOICE = os.environ.get("OPENAI_TTS_VOICE", "onyx")
+if os.environ.get("AZURE_SPEECH_KEY"):
+    ENGINE, VOICE = "azure", AZURE_VOICE
+elif os.environ.get("OPENAI_API_KEY"):
+    ENGINE, VOICE = "openai", f"openai:{OPENAI_VOICE}"
+else:
+    ENGINE, VOICE = "edge", AZURE_VOICE
 RATE = os.environ.get("TTS_RATE", "-6%")  # קצב רגוע יותר, מתאים להדרכה
 
 
@@ -47,6 +56,23 @@ def synth_azure(text, path):
         },
     )
     with urllib.request.urlopen(req, timeout=60) as r:
+        path.write_bytes(r.read())
+
+
+def synth_openai(text, path):
+    body = json.dumps({
+        "model": os.environ.get("OPENAI_TTS_MODEL", "gpt-4o-mini-tts"),
+        "voice": OPENAI_VOICE,
+        "input": text,
+        "response_format": "mp3",
+        "instructions": "דברו בעברית טבעית וברורה, בקול חם וסבלני של מורה לקול שמדריך תרגיל. קצב רגוע, הגייה מדויקת.",
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.openai.com/v1/audio/speech",
+        data=body,
+        headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=90) as r:
         path.write_bytes(r.read())
 
 
@@ -83,8 +109,8 @@ def main():
             print("-", it["key"], it["text"][:60])
         return
 
-    synth = synth_azure if os.environ.get("AZURE_SPEECH_KEY") else synth_edge
-    print("מנוע:", "Azure Speech" if synth is synth_azure else "edge-tts", "| קול:", VOICE)
+    synth = {"azure": synth_azure, "openai": synth_openai, "edge": synth_edge}[ENGINE]
+    print("מנוע:", ENGINE, "| קול:", VOICE)
     failed = 0
     streak = 0  # כשלים רצופים: אם השירות לא נגיש, עוצרים מהר במקום להמתין בלי סוף
     for n, it in enumerate(todo, 1):
@@ -106,7 +132,7 @@ def main():
             streak += 1
             f.unlink(missing_ok=True)
             if streak >= 3:
-                print("שירות ההקראה לא נגיש: 3 כשלים רצופים. עוצרים. אפשר להגדיר AZURE_SPEECH_KEY ו-AZURE_SPEECH_REGION.", file=sys.stderr)
+                print("שירות ההקראה לא נגיש: 3 כשלים רצופים. עוצרים. הגדירו AZURE_SPEECH_KEY + AZURE_SPEECH_REGION או OPENAI_API_KEY.", file=sys.stderr)
                 break
         time.sleep(0.3)
 
@@ -115,7 +141,8 @@ def main():
     for f in AUDIO.glob("*.mp3"):
         if f.name not in keep:
             f.unlink()
-    manifest_path.write_text(json.dumps({"voice": VOICE, "items": new_items}, ensure_ascii=False, indent=1), "utf-8")
+    if new_items:  # לא כותבים רשימה ריקה
+        manifest_path.write_text(json.dumps({"voice": VOICE, "items": new_items}, ensure_ascii=False, indent=1), "utf-8")
     print(f"סיום. נכשלו: {failed}")
     sys.exit(1 if failed else 0)
 

@@ -33,7 +33,10 @@
 
 - **אוטומטית ב-GitHub:** בכל פעם שמשתנה תוכן השיעורים או מילון ההגייה, תהליך אוטומטי (`.github/workflows/audio.yml`) יוצר את ההקלטות החסרות ומוסיף אותן לענף. אפשר גם להפעיל אותו ידנית מלשונית **Actions**.
 - **במחשב:** `pip install edge-tts` ואז `python tools/generate_audio.py`. נדרש Node.js.
-- **שירות רשמי (מומלץ לאתר ציבורי):** הגדירו סודות `AZURE_SPEECH_KEY` ו-`AZURE_SPEECH_REGION` ב-GitHub (Settings ← Secrets and variables ← Actions), והתהליך ישתמש ב-Azure Speech הרשמי, עם מכסה חינמית. בלעדיהם נעשה שימוש ב-`edge-tts`, שאינו API רשמי של Microsoft.
+- **צריך מפתח של שירות הקראה (פעם אחת):** השירות החינמי `edge-tts` חסום גם מהשרתים של GitHub, ולכן נדרש מפתח של אחד משני שירותים רשמיים. מוסיפים אותו ב-GitHub: **Settings ← Secrets and variables ← Actions ← New repository secret**.
+  - **Azure Speech** (הכי מתאים לעברית, קול גברי `he-IL-AvriNeural`, מכסה חינמית): שני סודות, `AZURE_SPEECH_KEY` ו-`AZURE_SPEECH_REGION`.
+  - **OpenAI** (עולה כמה סנטים לכל הקורס): סוד אחד, `OPENAI_API_KEY`.
+  - אחרי הוספת הסוד: **Actions ← ההרצה האחרונה ← Re-run all jobs**. ההקלטות ייווצרו ויתווספו לענף.
 - **תיקון הגייה שגויה:** מוסיפים שורה ב-`js/pronounce.js` (אפשר עם ניקוד), וההקלטה של השלבים הרלוונטיים נוצרת מחדש.
 - אם הקובץ של שלב לא תואם לטקסט הנוכחי, האתר מתעלם ממנו ומקריא בקול של הדפדפן.
 
