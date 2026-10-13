@@ -168,6 +168,23 @@ export const tts = {
     speechSynthesis.speak(u);
     return true;
   },
+  // הקראה בקטעים קצרים (משפט-משפט): הדפדפנים נוטים לקטוע הקראה ארוכה באמצע
+  speakAll(text, { rate = 0.95, onstart, onend } = {}) {
+    if (!this.available) return false;
+    this.cancel();
+    const chunks = text.split(/(?<=[.!?:])\s+/).filter(Boolean);
+    chunks.forEach((chunk, i) => {
+      const u = new SpeechSynthesisUtterance(chunk);
+      u.voice = this.voice;
+      u.lang = this.voice.lang || "he-IL";
+      u.rate = rate;
+      u.pitch = 1.0;
+      if (i === 0) u.onstart = () => onstart && onstart();
+      if (i === chunks.length - 1) u.onend = u.onerror = () => onend && onend();
+      speechSynthesis.speak(u);
+    });
+    return true;
+  },
   cancel() {
     if (this.supported) speechSynthesis.cancel();
   },

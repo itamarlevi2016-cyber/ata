@@ -6,7 +6,7 @@ import { detectPitch, rms, level, freqToMidi, noteName, isNatural } from "./pitc
 const HISTORY_SEC = 8;
 const SPAN = 26; // כמה חצאי טונים מוצגים בגרף
 
-export function createMeter(host, { show = "both", rootMidi = 52 } = {}) {
+export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {}) {
   const showPitch = show !== "volume";
   const noteEl = h("div", { class: "name" }, "—");
   const subEl = h("div", { class: "sub" }, "הפעילו את המיקרופון והתחילו לדבר או להמהם");
@@ -44,6 +44,8 @@ export function createMeter(host, { show = "both", rootMidi = 52 } = {}) {
   let lastSeen = 0;
   const buf = new Float32Array(4096);
   const recent = [];
+  let voicedMs = 0;
+  let voicedDone = false;
 
   const ctx2d = canvas.getContext && canvas.getContext("2d");
 
@@ -114,6 +116,13 @@ export function createMeter(host, { show = "both", rootMidi = 52 } = {}) {
     const now = performance.now();
     mic.analyser.getFloatTimeDomainData(buf);
     const r = rms(buf);
+    if (onVoiced && !voicedDone) {
+      if (r > 0.02) voicedMs += 33;
+      if (voicedMs >= 3000) {
+        voicedDone = true;
+        onVoiced();
+      }
+    }
     volFill.style.width = `${Math.round(level(r, Number(gainInput.value) - 10) * 100)}%`;
 
     if (showPitch) {

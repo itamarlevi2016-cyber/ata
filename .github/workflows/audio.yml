@@ -1,0 +1,44 @@
+name: יצירת הקלטות קול אנושיות
+
+# רץ אוטומטית כשמשתנה תוכן השיעורים, מילון ההגייה או כלי ההקלטה,
+# ומוסיף לענף את קבצי ה-mp3 החדשים. אפשר גם להריץ ידנית מלשונית Actions.
+on:
+  push:
+    paths:
+      - "js/data.js"
+      - "js/narration.js"
+      - "js/pronounce.js"
+      - "tools/**"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "ליצור את כל ההקלטות מחדש"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install edge-tts
+      - name: Generate audio
+        env:
+          AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
+          AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
+        run: python tools/generate_audio.py ${{ inputs.force && '--force' || '' }}
+      - name: Commit audio
+        run: |
+          git config user.name "voice-bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add audio
+          if git diff --cached --quiet; then echo "אין שינויים"; else git commit -m "Update narration audio" && git push; fi

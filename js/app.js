@@ -7,6 +7,7 @@ import { tts, playSequence } from "./audio.js";
 import { mountPlayer } from "./player.js";
 import { createMeter } from "./meter.js";
 import { midiToFreq, noteName } from "./pitch.js";
+import { TASK_TYPES } from "./steps.js";
 
 tts.init();
 const main = $("#main");
@@ -18,6 +19,10 @@ function updateStreak() {
   const n = store.streak(store.get().days);
   el.hidden = n === 0;
   el.textContent = `🔥 ${n} ${n === 1 ? "יום" : "ימים"} ברצף`;
+  const pts = store.get().points;
+  const chip = $("#points");
+  chip.hidden = pts === 0;
+  chip.textContent = `⭐ ${pts}`;
 }
 window.addEventListener("kb:progress", updateStreak);
 
@@ -145,6 +150,80 @@ function course() {
   );
 }
 
+// ---------- ההתקדמות שלי ----------
+function stats() {
+  const s = store.stats();
+  const done = LESSONS.filter((l) => s.completed[l.id]).length;
+  const lv = s.level;
+  const days = store.lastDays(14);
+  const maxPts = Math.max(30, ...days.map((d) => d.points));
+  const weekday = (d) => d.toLocaleDateString("he-IL", { weekday: "narrow" });
+
+  const tile = (emoji, value, label, sub) => h("div", { class: "stat-tile" }, h("span", { class: "emoji" }, emoji), h("b", null, String(value)), h("span", { class: "lbl" }, label), sub && h("span", { class: "sub" }, sub));
+
+  const chart = h(
+    "div",
+    { class: "chart", role: "img", "aria-label": "נקודות בארבעה עשר הימים האחרונים" },
+    days.map((d) => h("div", { class: "bar-col", title: `${d.date.toLocaleDateString("he-IL")}: ${d.points} נקודות, ${d.reps} חזרות` }, h("div", { class: "bar-val" }, d.points ? String(d.points) : ""), h("div", { class: "bar", style: `height:${Math.round((d.points / maxPts) * 100)}%` }), h("div", { class: "bar-lbl" }, weekday(d.date))))
+  );
+
+  const rows = LESSONS.map((l, i) => {
+    const total = l.steps.filter((x) => TASK_TYPES.has(x.t)).length;
+    const got = Math.min(total, store.tasksDoneIn(l.id));
+    const runs = s.runs[l.id] || 0;
+    return h(
+      "a",
+      { class: "lesson-row", href: `#/lesson/${l.id}` },
+      h("span", { class: "icon" }, l.icon),
+      h("div", { class: "grow" }, h("div", { class: "t" }, `${i + 1}. ${l.title}`), h("div", { class: "bar-h" }, h("i", { style: `width:${total ? Math.round((got / total) * 100) : 0}%` })), h("div", { class: "muted small-t" }, `משימות: ${got}/${total}${runs ? ` · הושלם ${runs} ${runs === 1 ? "פעם" : "פעמים"}` : " · עוד לא הושלם"}`)),
+      s.completed[l.id] ? h("span", { class: "badge-done" }, "✓") : h("span", { class: "muted" }, "›")
+    );
+  });
+
+  const resetBtn = h("button", { class: "btn ghost small" }, "איפוס כל הנתונים");
+  resetBtn.addEventListener("click", () => {
+    if (confirm("למחוק את כל ההתקדמות, הנקודות והסטטיסטיקה? אי אפשר לבטל.")) {
+      store.reset();
+      stats();
+    }
+  });
+
+  main.replaceChildren(
+    h(
+      "div",
+      { class: "wrap page" },
+      h("h1", { class: "page-title" }, "ההתקדמות שלי"),
+      h("p", { class: "page-sub" }, "כל משימה שמסיימים בשיעור מזכה ב-10 נקודות, פעם אחת ביום לכל משימה. חזרות נספרות בכל תרגיל."),
+      h(
+        "div",
+        { class: "level-card" },
+        h("div", { class: "level-emoji" }, lv.emoji),
+        h(
+          "div",
+          { class: "grow" },
+          h("div", { class: "level-name" }, lv.name),
+          h("div", { class: "bar-h big" }, h("i", { style: `width:${Math.round(lv.progress * 100)}%` })),
+          h("div", { class: "muted" }, lv.next ? `עוד ${lv.toNext} נקודות לרמה "${lv.next.name}"` : "הגעתם לרמה הגבוהה ביותר!")
+        ),
+        h("div", { class: "level-points" }, h("b", null, String(s.points)), "נקודות")
+      ),
+      h(
+        "div",
+        { class: "stat-grid" },
+        tile("📚", `${done}/${LESSONS.length}`, "שיעורים שהושלמו", s.totalRuns ? `${s.totalRuns} השלמות בסך הכול` : ""),
+        tile("🔁", s.reps, "חזרות על תרגילים"),
+        tile("✅", s.tasks, "משימות שהושלמו", `${s.tasks * 10} נקודות`),
+        tile("🔥", s.streak, "ימים ברצף", s.bestStreak ? `שיא: ${s.bestStreak}` : ""),
+        tile("📅", s.days, "ימי תרגול"),
+        tile("🌬️", s.bestExhale ? s.bestExhale.toFixed(1) : "—", "שיא נשיפה (שניות)")
+      ),
+      h("div", { class: "card", style: "margin-top:18px" }, h("h3", null, "נקודות ב-14 הימים האחרונים"), chart),
+      h("div", { class: "card", style: "margin-top:18px" }, h("h3", null, "השיעורים"), h("div", { class: "lesson-rows" }, rows)),
+      h("div", { class: "controls", style: "margin-top:18px" }, resetBtn)
+    )
+  );
+}
+
 // ---------- כלים ----------
 function tools() {
   const holder = h("div");
@@ -241,6 +320,7 @@ function route() {
 
   if (!page) home();
   else if (page === "course") (course(), (nav = "course"), (titleText = "הקורס | קול בטוח"));
+  else if (page === "stats") (stats(), (nav = "stats"), (titleText = "ההתקדמות שלי | קול בטוח"));
   else if (page === "tools") ((teardown = tools()), (nav = "tools"), (titleText = "כלים | קול בטוח"));
   else if (page === "health") (health(), (nav = "health"), (titleText = "שמירה על הקול | קול בטוח"));
   else if (page === "lesson" && getLesson(arg)) {

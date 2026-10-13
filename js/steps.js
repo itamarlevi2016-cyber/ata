@@ -1,10 +1,13 @@
 // רכיבי התרגילים. כל פונקציה מקבלת (step, host, api) ובונה את התרגיל בתוך host.
-// api: { coach, rootMidi(), onCleanup(fn), complete() }
+// api: { coach, rootMidi(), onCleanup(fn), rep(n), task() }
+// סוגי תרגילים שנחשבים "משימה": השלמה שלהם מזכה ב-10 נקודות
 import { h, fmtTime, richText } from "./ui.js";
 import * as store from "./progress.js";
 import { RANGES, midiToFreq, noteName } from "./pitch.js";
 import { playSequence, playGlide, chime, getCtx } from "./audio.js";
 import { createMeter } from "./meter.js";
+
+export const TASK_TYPES = new Set(["breath", "timer", "stopwatch", "scale", "glide", "repeat", "read", "meter"]);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -68,9 +71,11 @@ function breath(step, host, api) {
           if (my !== token) return;
         }
       }
+      api.rep(1);
     }
     token++;
     reset();
+    api.task();
     status.textContent = "כל הכבוד! סיימתם 🎉";
     btn.textContent = "שוב";
     chime();
@@ -121,6 +126,8 @@ function timer(step, host, api) {
         btn.textContent = "▶ שוב";
         left = step.secs;
         chime();
+        api.rep(1);
+        api.task();
       }
     }, 1000);
   };
@@ -165,6 +172,10 @@ function stopwatch(step, host, api) {
       iv = null;
       const secs = (performance.now() - t0) / 1000;
       time.textContent = secs.toFixed(1);
+      if (secs >= 3) {
+        api.rep(1);
+        api.task();
+      }
       const prev = store.get().bestExhale || 0;
       if (secs > prev) {
         store.save({ bestExhale: secs });
@@ -234,19 +245,26 @@ function scale(step, host, api) {
   host.append(shiftControl(api, state));
 
   let cur = null;
+  let reachedEnd = false;
   const finish = () => {
     dots.forEach((d) => d.classList.remove("active"));
     stopBtn.hidden = true;
     cur = null;
+    if (reachedEnd) {
+      reachedEnd = false;
+      api.rep(1);
+      api.task();
+    }
   };
   const go = (noteDur) => {
     if (cur) cur.stop();
+    reachedEnd = false;
     stopBtn.hidden = false;
     cur = playSequence(step.notes.map((r) => api.rootMidi() + state.shift + r), {
       noteDur,
       onNote: (i) => {
         dots.forEach((d, j) => d.classList.toggle("active", j === i));
-        api.coach.talkFor(noteDur * 900);
+        if (i === n - 1) reachedEnd = true;
       },
       onEnd: finish,
     });
@@ -277,17 +295,31 @@ function glide(step, host, api) {
     dot.setAttribute("cy", pt.y);
   };
   let cur = null;
+  let reachedEnd = false;
   const finish = () => {
     place(0);
     stopBtn.hidden = true;
     cur = null;
+    if (reachedEnd) {
+      reachedEnd = false;
+      api.rep(1);
+      api.task();
+    }
   };
   play.addEventListener("click", () => {
     if (cur) cur.stop();
+    reachedEnd = false;
     stopBtn.hidden = false;
     const base = api.rootMidi() + state.shift;
-    api.coach.talkFor(step.secs * 1000);
-    cur = playGlide(base + step.from, base + step.to, { dur: step.secs, onProgress: place, onEnd: finish });
+    api.coach.act("siren", { dur: step.secs });
+    cur = playGlide(base + step.from, base + step.to, {
+      dur: step.secs,
+      onProgress: (p) => {
+        place(p);
+        if (p >= 0.98) reachedEnd = true;
+      },
+      onEnd: finish,
+    });
   });
   stopBtn.addEventListener("click", () => cur && cur.stop());
   api.onCleanup(() => cur && cur.stop());
@@ -311,6 +343,7 @@ function repeat(step, host, api) {
     [...dots.children].forEach((d, i) => d.classList.toggle("on", i <= pass));
   };
   next.addEventListener("click", () => {
+    api.rep(1);
     if (idx < step.items.length - 1) idx++;
     else if (pass < step.passes.length - 1) {
       pass++;
@@ -321,6 +354,7 @@ function repeat(step, host, api) {
       next.hidden = true;
       again.hidden = false;
       chime();
+      api.task();
       return;
     }
     draw();
@@ -336,7 +370,7 @@ function repeat(step, host, api) {
 }
 
 // ---------- קריאה ----------
-function read(step, host) {
+function read(step, host, api) {
   const frag = document.createDocumentFragment();
   step.text.split(/(\s*\/\/\s*|\s*\/\s*)/).forEach((part) => {
     const p = part.trim();
@@ -344,12 +378,26 @@ function read(step, host) {
     else if (p === "/") frag.append(h("span", { class: "pause-mark" }, "⏸"), " ");
     else if (part) frag.append(richText(part));
   });
-  host.append(h("div", { class: "read" }, frag), h("div", { class: "hint" }, "⏸ = נשימה קצרה · ⏸ הפסקה ארוכה = רגע של שקט · המילים המסומנות מודגשות"));
+  const done = h("button", { class: "btn primary" }, "קראתי בקול ✓");
+  done.addEventListener("click", () => {
+    done.disabled = true;
+    done.textContent = "כל הכבוד!";
+    api.rep(1);
+    api.task();
+  });
+  host.append(h("div", { class: "read" }, frag), h("div", { class: "hint" }, "⏸ = נשימה קצרה · ⏸ הפסקה ארוכה = רגע של שקט · המילים המסומנות מודגשות"), h("div", { class: "controls" }, done));
 }
 
 // ---------- מד קול ----------
 function meterStep(step, host, api) {
-  const m = createMeter(host, { show: step.mode === "volume" ? "volume" : "both", rootMidi: api.rootMidi() });
+  const m = createMeter(host, {
+    show: step.mode === "volume" ? "volume" : "both",
+    rootMidi: api.rootMidi(),
+    onVoiced: () => {
+      api.rep(1);
+      api.task();
+    },
+  });
   api.onCleanup(() => m.destroy());
   if (step.hint) host.append(h("div", { class: "hint" }, step.hint));
 }

@@ -1,7 +1,20 @@
 // שמירת התקדמות בדפדפן (localStorage). שום מידע לא נשלח החוצה.
 
 const KEY = "kol-bothe:v1";
-const defaults = () => ({ completed: {}, days: [], range: "mid", tts: true, bestExhale: 0 });
+const defaults = () => ({
+  completed: {}, // שיעור -> זמן השלמה אחרון
+  runs: {}, // שיעור -> כמה פעמים הושלם
+  days: [],
+  range: "mid",
+  tts: true,
+  speed: 1,
+  bestExhale: 0,
+  points: 0,
+  reps: 0, // חזרות שבוצעו
+  tasks: 0, // משימות שהושלמו (מזכות בנקודות)
+  taskDays: {}, // משימה -> היום האחרון שבו קיבלתם עליה נקודות
+  log: {}, // יום -> {reps, points, tasks}
+});
 
 let storage = null;
 try {
@@ -50,8 +63,113 @@ export function recordPractice(now = new Date()) {
 }
 
 export function markComplete(id, now = new Date()) {
-  save({ completed: { ...load().completed, [id]: now.getTime() } });
+  const s = load();
+  save({ completed: { ...s.completed, [id]: now.getTime() }, runs: { ...s.runs, [id]: (s.runs[id] || 0) + 1 } });
   recordPractice(now);
+}
+
+export const POINTS_PER_TASK = 10;
+
+function bump(now, field, n) {
+  const s = load();
+  const key = dayKey(now);
+  const day = { reps: 0, points: 0, tasks: 0, ...(s.log[key] || {}) };
+  day[field] += n;
+  return { ...s.log, [key]: day };
+}
+
+// חזרה על תרגיל (סבב נשימה, משפט, צליל וכו')
+export function addReps(n = 1, now = new Date()) {
+  save({ reps: load().reps + n, log: bump(now, "reps", n) });
+  recordPractice(now);
+}
+
+// השלמת משימה: 10 נקודות, פעם אחת ביום לכל משימה. מחזיר את מספר הנקודות שנוספו.
+export function awardTask(taskKey, now = new Date()) {
+  const s = load();
+  const today = dayKey(now);
+  if (s.taskDays[taskKey] === today) return 0;
+  save({
+    taskDays: { ...s.taskDays, [taskKey]: today },
+    points: s.points + POINTS_PER_TASK,
+    tasks: s.tasks + 1,
+    log: bump(now, "points", POINTS_PER_TASK),
+  });
+  const log = { ...load().log };
+  log[today] = { ...log[today], tasks: (log[today].tasks || 0) + 1 };
+  save({ log });
+  recordPractice(now);
+  return POINTS_PER_TASK;
+}
+
+export const LEVELS = [
+  { min: 0, name: "מתחיל", emoji: "🌱" },
+  { min: 50, name: "מתחמם", emoji: "🔥" },
+  { min: 150, name: "מתרגל", emoji: "🎯" },
+  { min: 300, name: "דובר בטוח", emoji: "🎤" },
+  { min: 600, name: "דובר מקצועי", emoji: "🌟" },
+  { min: 1000, name: "אמן הקול", emoji: "👑" },
+];
+
+export function levelFor(points) {
+  let i = 0;
+  while (i + 1 < LEVELS.length && points >= LEVELS[i + 1].min) i++;
+  const cur = LEVELS[i], next = LEVELS[i + 1] || null;
+  const progress = next ? (points - cur.min) / (next.min - cur.min) : 1;
+  return { ...cur, next, progress, toNext: next ? next.min - points : 0 };
+}
+
+// נתונים ל-N הימים האחרונים (הישן ראשון)
+export function lastDays(n = 14, now = new Date()) {
+  const log = load().log;
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const key = dayKey(d);
+    out.push({ key, date: d, ...{ reps: 0, points: 0, tasks: 0 }, ...(log[key] || {}) });
+  }
+  return out;
+}
+
+export function bestStreak(days) {
+  const sorted = [...new Set(days)].sort();
+  let best = 0, run = 0, prev = null;
+  for (const k of sorted) {
+    const d = new Date(k + "T12:00:00");
+    run = prev && Math.round((d - prev) / 86400000) === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = d;
+  }
+  return best;
+}
+
+export function stats(now = new Date()) {
+  const s = load();
+  return {
+    points: s.points,
+    reps: s.reps,
+    tasks: s.tasks,
+    days: s.days.length,
+    streak: streak(s.days, now),
+    bestStreak: bestStreak(s.days),
+    bestExhale: s.bestExhale,
+    completed: s.completed,
+    runs: s.runs,
+    totalRuns: Object.values(s.runs).reduce((a, b) => a + b, 0),
+    level: levelFor(s.points),
+  };
+}
+
+export function tasksDoneIn(lessonId) {
+  return Object.keys(load().taskDays).filter((k) => k.startsWith(`${lessonId}:`)).length;
+}
+
+export function reset() {
+  state = defaults();
+  try {
+    storage && storage.setItem(KEY, JSON.stringify(state));
+  } catch (_) {}
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("kb:progress"));
 }
 
 // ימים רצופים של תרגול. נספר גם אם עוד לא תרגלתם היום, כל עוד תרגלתם אתמול.

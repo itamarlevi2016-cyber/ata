@@ -1,6 +1,6 @@
-// ר' דוד, המאמן: דמות מצוירת ב-SVG עם מצמוץ, נשימה, דיבור ומצבי רוח.
+// ר' דוד, המאמן: דמות מצוירת ב-SVG עם מצמוץ, נשימה, דיבור, מצבי רוח ותנועות שמדגימות את התרגילים.
 
-const SVG = `<svg class="coach" viewBox="0 0 300 360" role="img" aria-label="ר' דוד, המאמן שלך" data-mouth="closed" data-mood="happy" data-breath="idle" data-talk="0">
+const SVG = `<svg class="coach" viewBox="0 0 300 470" role="img" aria-label="ר' דוד, המאמן שלך" data-mouth="closed" data-mood="happy" data-breath="idle" data-talk="0">
   <defs>
     <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f3d"/><stop offset="1" stop-color="#15171f"/></linearGradient>
     <linearGradient id="beard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b463e"/><stop offset="1" stop-color="#2f2420"/></linearGradient>
@@ -20,13 +20,12 @@ const SVG = `<svg class="coach" viewBox="0 0 300 360" role="img" aria-label="ר'
 
     <!-- גוף: מעיל שחור וחולצה לבנה -->
     <g class="torso">
-      <path d="M18 360 C18 300 64 272 150 272 C236 272 282 300 282 360Z" fill="url(#jacket)"/>
+      <path d="M18 470 L18 346 C18 302 66 274 150 274 C234 274 282 302 282 346 L282 470Z" fill="url(#jacket)"/>
       <path d="M116 274 L150 340 L184 274 Z" fill="#fbf8f1"/>
       <path d="M116 274 L150 340 L184 274" fill="none" stroke="#e3ddd0" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M104 282 L132 360 M196 282 L168 360" stroke="#0e1016" stroke-width="3" opacity=".5" fill="none"/>
-      <circle cx="150" cy="318" r="2.6" fill="#cfc8ba"/><circle cx="150" cy="336" r="2.6" fill="#cfc8ba"/>
-      <!-- ציציות מבצבצות -->
-      <path d="M60 358 q-3 -14 2 -26 M68 358 q-1 -12 3 -22" stroke="#f4efe4" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".9"/>
+      <path d="M104 284 L126 420 M196 284 L174 420" stroke="#0e1016" stroke-width="3" opacity=".5" fill="none"/>
+      <circle cx="150" cy="318" r="2.6" fill="#cfc8ba"/><circle cx="150" cy="336" r="2.6" fill="#cfc8ba"/><circle cx="150" cy="354" r="2.6" fill="#cfc8ba"/>
+      <path d="M104 440 q-3 12 1 24 M112 440 q-1 10 2 20 M196 440 q3 12 -1 24 M188 440 q1 10 -2 20" stroke="#f4efe4" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".9"/>
     </g>
 
     <g class="head">
@@ -120,8 +119,86 @@ const SVG = `<svg class="coach" viewBox="0 0 300 360" role="img" aria-label="ר'
       <path d="M90 150 C82 164 98 172 90 188 C84 200 98 206 92 222"/>
       <path d="M210 150 C218 164 202 172 210 188 C216 200 202 206 208 222"/>
     </g>
+    <g class="fx fx-straw"><line x1="152" y1="209" x2="204" y2="224" stroke="#ff7a59" stroke-width="7" stroke-linecap="round"/><line x1="152" y1="209" x2="204" y2="224" stroke="#fff" stroke-width="7" stroke-dasharray="5 8" stroke-linecap="butt"/></g>
+    <g class="arm arm-l">
+      <g class="uarm uarm-l" style="transform-origin:62px 304px">
+        <line x1="62" y1="304" x2="62" y2="378" stroke="#0c0e13" stroke-opacity=".5" stroke-width="35" stroke-linecap="round"/>
+        <line x1="62" y1="304" x2="62" y2="378" stroke="#2a2e3c" stroke-width="30" stroke-linecap="round"/>
+        <g class="farm farm-l" style="transform-origin:62px 378px">
+          <line x1="62" y1="378" x2="62" y2="436" stroke="#0c0e13" stroke-opacity=".5" stroke-width="32" stroke-linecap="round"/>
+          <line x1="62" y1="378" x2="62" y2="436" stroke="#2a2e3c" stroke-width="27" stroke-linecap="round"/>
+          <rect x="49" y="428" width="26" height="11" rx="4" fill="#fbf8f1"/>
+          <ellipse cx="73" cy="452" rx="5" ry="9" fill="#eeb48b"/>
+          <circle cx="62" cy="457" r="14" fill="#f4c49c"/>
+          <ellipse class="finger" cx="62" cy="478" rx="4.6" ry="12" fill="#f4c49c"/>
+        </g>
+      </g>
+    </g>
+    <g class="arm arm-r">
+      <g class="uarm uarm-r" style="transform-origin:238px 304px">
+        <line x1="238" y1="304" x2="238" y2="378" stroke="#0c0e13" stroke-opacity=".5" stroke-width="35" stroke-linecap="round"/>
+        <line x1="238" y1="304" x2="238" y2="378" stroke="#2a2e3c" stroke-width="30" stroke-linecap="round"/>
+        <g class="farm farm-r" style="transform-origin:238px 378px">
+          <line x1="238" y1="378" x2="238" y2="436" stroke="#0c0e13" stroke-opacity=".5" stroke-width="32" stroke-linecap="round"/>
+          <line x1="238" y1="378" x2="238" y2="436" stroke="#2a2e3c" stroke-width="27" stroke-linecap="round"/>
+          <rect x="225" y="428" width="26" height="11" rx="4" fill="#fbf8f1"/>
+          <ellipse cx="227" cy="452" rx="5" ry="9" fill="#eeb48b"/>
+          <circle cx="238" cy="457" r="14" fill="#f4c49c"/>
+          <ellipse class="finger" cx="238" cy="478" rx="4.6" ry="12" fill="#f4c49c"/>
+        </g>
+      </g>
+    </g>
   </g>
+  <g class="fx fx-string"><path d="M150 24 L150 -22" stroke="#ffb347" stroke-width="3.5" stroke-dasharray="7 7" stroke-linecap="round"/><path d="M141 -8 L150 -22 L159 -8" fill="none" stroke="#ffb347" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g class="fx fx-belly"><ellipse cx="150" cy="404" rx="46" ry="32" fill="#9be7ee" opacity=".30"/><ellipse cx="150" cy="404" rx="46" ry="32" fill="none" stroke="#9be7ee" stroke-width="3.5" stroke-dasharray="6 6"/></g>
+  <g class="fx fx-notes" fill="#1f7a83" font-size="28" font-family="sans-serif" font-weight="700"><text class="note n1" x="228" y="96">♪</text><text class="note n2" x="58" y="84">♫</text><text class="note n3" x="240" y="150">♪</text></g>
+  <g class="fx fx-waves" fill="none" stroke="#4cc2cc" stroke-width="5" stroke-linecap="round"><path class="w1" d="M236 190 q12 18 0 36"/><path class="w2" d="M250 174 q20 34 0 68"/><path class="w3" d="M264 158 q28 50 0 100"/></g>
+  <g class="fx fx-neck" fill="none" stroke="#ffb347" stroke-width="4" stroke-linecap="round"><path d="M52 92 q-22 34 0 70"/><path d="M248 92 q22 34 0 70"/></g>
+  <g class="fx fx-jaw" fill="none" stroke="#ffb347" stroke-width="4" stroke-linecap="round"><path d="M102 232 q-14 16 -2 34"/><path d="M198 232 q14 16 2 34"/></g>
 </svg>`;
+
+// תנוחות הידיים: [זרוע ימנית, אמה ימנית, זרוע שמאלית, אמה שמאלית] במעלות.
+// (הימנית והשמאלית לפי המסך.) חושב בעזרת חישוב זוויות המפרקים של שתי הזרועות.
+const POSES = {"rest": [-4, 3, 4, -3], "belly": [-6, 77, 6, -77], "present": [-12, -156, 12, 156], "project": [7, -145, -7, 145], "wave": [-40, -138, 4, -3], "point": [-36, -140, 4, -3], "jaw": [-140, -97, 140, 97], "straw": [-158, -105, 158, 105], "throat": [-167, -142, 167, 142], "cheer": [-150, -15, 150, 15], "low": [-86, 124, 86, -124], "mid": [-20, -147, 20, 147], "high": [-123, -80, 123, 80]};
+
+// כל "תנועה" מורכבת מתנוחת ידיים, אפקטים בציור, ומצב פה
+const ACTS = {
+  rest: { pose: "rest" },
+  wave: { pose: "wave", rightOnly: true },
+  present: { pose: "present" },
+  point: { pose: "point", rightOnly: true },
+  palm: { pose: "mid", rightOnly: true },
+  belly: { pose: "belly" },
+  posture: { pose: "rest" },
+  shoulders: { pose: "rest" },
+  neck: { pose: "rest" },
+  jaw: { pose: "jaw", mouth: [["closed", "open2"], 1000] },
+  hum: { pose: "throat" },
+  trill: { pose: "jaw" },
+  straw: { pose: "straw", rightOnly: true },
+  siren: { pose: "low", rightOnly: true },
+  scale: { pose: "low", rightOnly: true },
+  project: { pose: "project" },
+  sigh: { pose: "rest", mouth: [["open1"], 0] },
+  vowels: { pose: "present", mouth: [["open2", "open1", "closed", "open1"], 750] },
+  cheer: { pose: "cheer" },
+};
+
+export const ACT_LABELS = {
+  posture: "עמידה יציבה",
+  shoulders: "גלגול כתפיים",
+  neck: "הטיית צוואר",
+  jaw: "שחרור הלסת",
+  belly: "נשימה אל הבטן",
+  hum: "המהום",
+  trill: "רטט",
+  straw: "צליל דרך קשית",
+  siren: "סירנה",
+  scale: "סולם צלילים",
+  project: "הקרנת הקול",
+  sigh: "אנחת רווחה",
+  vowels: "תנועות בפה פתוח",
+};
 
 const MOUTHS = ["open1", "open2", "open1", "closed", "open2"];
 
@@ -132,24 +209,27 @@ export function createCoach(host) {
   const uid = Math.random().toString(36).slice(2, 7);
   root.innerHTML = root.innerHTML.replace(/id="(jacket|beard|hat)"/g, `id="$1-${uid}"`).replace(/url\(#(jacket|beard|hat)\)/g, `url(#$1-${uid})`);
 
-  let talkTimer = null;
-  let stopTimer = null;
+  let talkTimer = null, stopTimer = null, actTimer = null;
+  let actName = "rest";
 
-  const closedMouth = () => (root.dataset.mood === "cheer" ? "grin" : "closed");
+  const baseMouth = () => {
+    const m = ACTS[actName] && ACTS[actName].mouth;
+    if (m && m[1] === 0) return m[0][0];
+    return root.dataset.mood === "cheer" ? "grin" : "closed";
+  };
 
   function startTalk() {
+    if (actTimer) return; // בתנועה עם פה משלה (למשל פיהוק) לא מתערבים
     clearInterval(talkTimer);
     root.dataset.talk = "1";
     let i = 0;
-    talkTimer = setInterval(() => {
-      root.dataset.mouth = MOUTHS[i++ % MOUTHS.length];
-    }, 150);
+    talkTimer = setInterval(() => (root.dataset.mouth = MOUTHS[i++ % MOUTHS.length]), 150);
   }
   function stopTalk() {
     clearInterval(talkTimer);
     clearTimeout(stopTimer);
     root.dataset.talk = "0";
-    root.dataset.mouth = closedMouth();
+    if (!actTimer) root.dataset.mouth = baseMouth();
   }
   function talkFor(ms) {
     startTalk();
@@ -158,13 +238,38 @@ export function createCoach(host) {
   }
   function mood(m) {
     root.dataset.mood = m;
-    if (root.dataset.talk !== "1") root.dataset.mouth = closedMouth();
+    if (root.dataset.talk !== "1" && !actTimer) root.dataset.mouth = baseMouth();
   }
   // phase: in | hold | out | idle
   function breathe(phase, secs = 1) {
     root.style.setProperty("--breath-dur", `${secs}s`);
     root.dataset.breath = phase;
   }
-  stopTalk();
-  return { root, startTalk, stopTalk, talkFor, mood, breathe };
+  // מדגים תנועה: ידיים, אפקטים ופה
+  function act(name, { dur = 4 } = {}) {
+    if (!ACTS[name]) name = "rest";
+    actName = name;
+    clearInterval(actTimer);
+    actTimer = null;
+    clearInterval(talkTimer);
+    const a = ACTS[name];
+    const p = POSES[a.pose] || POSES.rest;
+    root.style.setProperty("--ur", `${p[0]}deg`);
+    root.style.setProperty("--fr", `${p[1]}deg`);
+    const left = a.rightOnly ? POSES.rest : p; // היד השמאלית נשארת רפויה
+    root.style.setProperty("--ul", `${left[2]}deg`);
+    root.style.setProperty("--fl", `${left[3]}deg`);
+    root.style.setProperty("--act-dur", `${dur}s`);
+    root.dataset.act = name;
+    if (a.mouth && a.mouth[1] > 0) {
+      let i = 0;
+      root.dataset.mouth = a.mouth[0][0];
+      actTimer = setInterval(() => (root.dataset.mouth = a.mouth[0][++i % a.mouth[0].length]), a.mouth[1]);
+    } else {
+      root.dataset.mouth = baseMouth();
+    }
+    root.dataset.talk = "0";
+  }
+  act("rest");
+  return { root, startTalk, stopTalk, talkFor, mood, breathe, act };
 }
