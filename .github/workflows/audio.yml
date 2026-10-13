@@ -19,9 +19,15 @@ on:
 permissions:
   contents: write
 
+# הרצה חדשה מבטלת הרצה ישנה שעדיין פועלת
+concurrency:
+  group: audio-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   audio:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,6 +43,7 @@ jobs:
           AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
         run: python tools/generate_audio.py ${{ inputs.force && '--force' || '' }}
       - name: Commit audio
+        if: always()
         run: |
           git config user.name "voice-bot"
           git config user.email "voice-bot@users.noreply.github.com"

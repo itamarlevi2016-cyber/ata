@@ -53,7 +53,10 @@ def synth_azure(text, path):
 def synth_edge(text, path):
     import edge_tts
 
-    asyncio.run(edge_tts.Communicate(text, VOICE, rate=RATE).save(str(path)))
+    async def run():
+        await asyncio.wait_for(edge_tts.Communicate(text, VOICE, rate=RATE).save(str(path)), timeout=45)
+
+    asyncio.run(run())
 
 
 def main():
@@ -83,6 +86,7 @@ def main():
     synth = synth_azure if os.environ.get("AZURE_SPEECH_KEY") else synth_edge
     print("מנוע:", "Azure Speech" if synth is synth_azure else "edge-tts", "| קול:", VOICE)
     failed = 0
+    streak = 0  # כשלים רצופים: אם השירות לא נגיש, עוצרים מהר במקום להמתין בלי סוף
     for n, it in enumerate(todo, 1):
         f = AUDIO / f"{it['key']}.mp3"
         for attempt in range(1, 4):
@@ -92,13 +96,18 @@ def main():
                     raise RuntimeError("הקובץ ריק")
                 new_items[it["key"]] = {"hash": it["hash"], "voice": VOICE, "bytes": f.stat().st_size}
                 print(f"[{n}/{len(todo)}] {it['key']} ✓")
+                streak = 0
                 break
             except Exception as e:  # noqa: BLE001
                 print(f"[{n}/{len(todo)}] {it['key']} ניסיון {attempt} נכשל: {e}", file=sys.stderr)
                 time.sleep(2 * attempt)
         else:
             failed += 1
+            streak += 1
             f.unlink(missing_ok=True)
+            if streak >= 3:
+                print("שירות ההקראה לא נגיש: 3 כשלים רצופים. עוצרים. אפשר להגדיר AZURE_SPEECH_KEY ו-AZURE_SPEECH_REGION.", file=sys.stderr)
+                break
         time.sleep(0.3)
 
     # מוחקים הקלטות של שלבים שכבר לא קיימים
@@ -108,7 +117,7 @@ def main():
             f.unlink()
     manifest_path.write_text(json.dumps({"voice": VOICE, "items": new_items}, ensure_ascii=False, indent=1), "utf-8")
     print(f"סיום. נכשלו: {failed}")
-    sys.exit(1 if failed and not new_items else 0)
+    sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":
