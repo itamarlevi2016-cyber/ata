@@ -377,6 +377,8 @@ footer.site-footer .wrap { display: flex; flex-direction: column; gap: 6px; }
 .big-emoji { font-size: 3rem; }
 
 .notice { background: var(--accent-soft); border-radius: var(--r-sm); padding: 14px 18px; color: var(--ink); }
+.sources { margin: 10px 0 0; padding-inline-start: 20px; }
+.sources li { margin-bottom: 6px; }
 .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
 .health-grid .card ul { margin: 8px 0 0; padding-inline-start: 20px; color: var(--ink-2); }
 .health-grid .card li { margin-bottom: 4px; }
