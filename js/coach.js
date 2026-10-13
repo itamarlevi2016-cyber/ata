@@ -1,0 +1,170 @@
+// ר' דוד, המאמן: דמות מצוירת ב-SVG עם מצמוץ, נשימה, דיבור ומצבי רוח.
+
+const SVG = `<svg class="coach" viewBox="0 0 300 360" role="img" aria-label="ר' דוד, המאמן שלך" data-mouth="closed" data-mood="happy" data-breath="idle" data-talk="0">
+  <defs>
+    <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f3d"/><stop offset="1" stop-color="#15171f"/></linearGradient>
+    <linearGradient id="beard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b463e"/><stop offset="1" stop-color="#2f2420"/></linearGradient>
+    <linearGradient id="hat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b2d38"/><stop offset="1" stop-color="#101117"/></linearGradient>
+  </defs>
+
+  <g class="sparks" fill="#ffb347">
+    <path class="spark s1" d="M36 120 l5 12 12 5 -12 5 -5 12 -5 -12 -12 -5 12 -5z"/>
+    <path class="spark s2" d="M264 96 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4z"/>
+    <path class="spark s3" d="M256 210 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+  </g>
+
+  <g class="figure">
+    <g class="head-wrap">
+      <path d="M126 226 h48 v60 c0 12 -10 20 -24 20 s-24 -8 -24 -20z" fill="#e6a981"/>
+    </g>
+
+    <!-- גוף: מעיל שחור וחולצה לבנה -->
+    <g class="torso">
+      <path d="M18 360 C18 300 64 272 150 272 C236 272 282 300 282 360Z" fill="url(#jacket)"/>
+      <path d="M116 274 L150 340 L184 274 Z" fill="#fbf8f1"/>
+      <path d="M116 274 L150 340 L184 274" fill="none" stroke="#e3ddd0" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M104 282 L132 360 M196 282 L168 360" stroke="#0e1016" stroke-width="3" opacity=".5" fill="none"/>
+      <circle cx="150" cy="318" r="2.6" fill="#cfc8ba"/><circle cx="150" cy="336" r="2.6" fill="#cfc8ba"/>
+      <!-- ציציות מבצבצות -->
+      <path d="M60 358 q-3 -14 2 -26 M68 358 q-1 -12 3 -22" stroke="#f4efe4" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".9"/>
+    </g>
+
+    <g class="head">
+      <!-- אוזניים -->
+      <ellipse cx="80" cy="160" rx="10" ry="15" fill="#eeb48b"/>
+      <ellipse cx="220" cy="160" rx="10" ry="15" fill="#eeb48b"/>
+      <ellipse cx="81" cy="161" rx="4.5" ry="8" fill="#e09d74"/>
+      <ellipse cx="219" cy="161" rx="4.5" ry="8" fill="#e09d74"/>
+
+      <!-- שיער בצדדים ופאות -->
+      <path d="M86 108 C78 128 80 146 84 160" stroke="#4a3a34" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M214 108 C222 128 220 146 216 160" stroke="#4a3a34" stroke-width="12" fill="none" stroke-linecap="round"/>
+
+      <!-- פנים -->
+      <path d="M82 150 C82 104 112 84 150 84 C188 84 218 104 218 150 C218 196 190 232 150 232 C110 232 82 196 82 150Z" fill="#f4c49c"/>
+      <path d="M96 112 C120 124 180 124 204 112 C200 128 176 138 150 138 C124 138 100 128 96 112Z" fill="#e3a77f" opacity=".55"/>
+
+      <!-- לחיים -->
+      <ellipse cx="103" cy="176" rx="12" ry="7" fill="#ff8f8f" opacity=".32"/>
+      <ellipse cx="197" cy="176" rx="12" ry="7" fill="#ff8f8f" opacity=".32"/>
+
+      <!-- עיניים -->
+      <g class="eyes">
+        <g>
+          <ellipse cx="121" cy="158" rx="9.5" ry="11.5" fill="#2b1c18"/>
+          <circle cx="118" cy="154" r="3.4" fill="#fff"/><circle cx="124.5" cy="162" r="1.7" fill="#fff"/>
+          <ellipse class="lid" cx="121" cy="158" rx="11" ry="12.5" fill="#f4c49c"/>
+        </g>
+        <g>
+          <ellipse cx="179" cy="158" rx="9.5" ry="11.5" fill="#2b1c18"/>
+          <circle cx="176" cy="154" r="3.4" fill="#fff"/><circle cx="182.5" cy="162" r="1.7" fill="#fff"/>
+          <ellipse class="lid" cx="179" cy="158" rx="11" ry="12.5" fill="#f4c49c"/>
+        </g>
+      </g>
+
+      <!-- משקפיים -->
+      <g fill="rgba(255,255,255,.14)" stroke="#34261f" stroke-width="3.6">
+        <circle cx="121" cy="158" r="18"/><circle cx="179" cy="158" r="18"/>
+      </g>
+      <g fill="none" stroke="#34261f" stroke-width="3.6" stroke-linecap="round">
+        <path d="M138 154 Q150 147 162 154"/><path d="M103 154 L88 150"/><path d="M197 154 L212 150"/>
+      </g>
+      <path d="M110 148 q6 -6 14 -5" stroke="#fff" stroke-opacity=".55" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+      <!-- גבות -->
+      <g class="brows" fill="none" stroke="#6a5851" stroke-width="6.5" stroke-linecap="round">
+        <path d="M102 132 Q121 120 140 129"/>
+        <path d="M160 129 Q179 120 198 132"/>
+      </g>
+
+      <!-- אף עגלגל -->
+      <ellipse cx="150" cy="182" rx="15" ry="12" fill="#ebab84"/>
+      <ellipse cx="146" cy="178" rx="5" ry="3.5" fill="#f6cba8" opacity=".8"/>
+
+      <!-- זקן מלא, עם פתח לפה -->
+      <path fill="url(#beard)" fill-rule="evenodd" d="M82 160 C80 206 94 266 150 292 C206 266 220 206 218 160 C214 182 200 196 182 199 L118 199 C100 196 86 182 82 160Z M120 210 a30 18 0 1 0 60 0 a30 18 0 1 0 -60 0Z"/>
+      <path d="M104 238 C112 258 128 272 148 278 M196 238 C188 258 172 272 152 278 M150 262 L150 286 M126 252 C130 264 138 272 146 276" stroke="#aaa39d" stroke-opacity=".5" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+      <!-- שפם -->
+      <path d="M114 199 C116 184 138 180 150 192 C162 180 184 184 186 199 C172 203 160 199 150 195 C140 199 128 203 114 199Z" fill="#4a3832"/>
+
+      <!-- פה -->
+      <g class="mouth">
+        <path class="m m-closed" d="M132 208 Q150 221 168 208" fill="none" stroke="#c0605a" stroke-width="4.5" stroke-linecap="round"/>
+        <g class="m m-grin">
+          <path d="M129 205 Q150 230 171 205 Q150 211 129 205Z" fill="#8f2d3a"/>
+          <path d="M135 206 Q150 212 165 206 L163 211 Q150 215 137 211Z" fill="#fff"/>
+        </g>
+        <g class="m m-open1">
+          <path d="M133 205 Q150 228 167 205 Q150 210 133 205Z" fill="#8f2d3a"/>
+          <ellipse cx="150" cy="218" rx="8" ry="4" fill="#e86a7a"/>
+        </g>
+        <g class="m m-open2">
+          <path d="M130 203 Q150 240 170 203 Q150 212 130 203Z" fill="#8f2d3a"/>
+          <path d="M135 205 Q150 211 165 205 L163 210 Q150 214 137 210Z" fill="#fff"/>
+          <ellipse cx="150" cy="224" rx="10" ry="5" fill="#e86a7a"/>
+        </g>
+      </g>
+
+      <!-- כובע שחור -->
+      <path d="M97 102 C94 58 112 34 150 34 C188 34 206 58 203 102 Z" fill="url(#hat)"/>
+      <path d="M126 36 C140 44 160 44 174 36 C170 50 130 50 126 36Z" fill="#05060a" opacity=".5"/>
+      <path d="M96 94 C120 100 180 100 204 94 L204 104 C180 110 120 110 96 104Z" fill="#3a3d4b"/>
+      <ellipse cx="150" cy="104" rx="86" ry="15" fill="url(#hat)"/>
+      <path d="M92 102 C110 112 190 112 208 102" fill="none" stroke="#4b4e5e" stroke-opacity=".6" stroke-width="2.5"/>
+      <path d="M118 54 C128 44 144 40 158 42" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="5" stroke-linecap="round"/>
+    </g>
+
+    <!-- פאות מתפתלות מעל הצווארון -->
+    <g class="head-sides" fill="none" stroke="#4a3a34" stroke-width="7" stroke-linecap="round">
+      <path d="M90 150 C82 164 98 172 90 188 C84 200 98 206 92 222"/>
+      <path d="M210 150 C218 164 202 172 210 188 C216 200 202 206 208 222"/>
+    </g>
+  </g>
+</svg>`;
+
+const MOUTHS = ["open1", "open2", "open1", "closed", "open2"];
+
+export function createCoach(host) {
+  host.innerHTML = SVG;
+  const root = host.querySelector("svg");
+  // מזהים ייחודיים לשיפועי הצבע, כי יכולות להיות כמה דמויות בעמוד
+  const uid = Math.random().toString(36).slice(2, 7);
+  root.innerHTML = root.innerHTML.replace(/id="(jacket|beard|hat)"/g, `id="$1-${uid}"`).replace(/url\(#(jacket|beard|hat)\)/g, `url(#$1-${uid})`);
+
+  let talkTimer = null;
+  let stopTimer = null;
+
+  const closedMouth = () => (root.dataset.mood === "cheer" ? "grin" : "closed");
+
+  function startTalk() {
+    clearInterval(talkTimer);
+    root.dataset.talk = "1";
+    let i = 0;
+    talkTimer = setInterval(() => {
+      root.dataset.mouth = MOUTHS[i++ % MOUTHS.length];
+    }, 150);
+  }
+  function stopTalk() {
+    clearInterval(talkTimer);
+    clearTimeout(stopTimer);
+    root.dataset.talk = "0";
+    root.dataset.mouth = closedMouth();
+  }
+  function talkFor(ms) {
+    startTalk();
+    clearTimeout(stopTimer);
+    stopTimer = setTimeout(stopTalk, ms);
+  }
+  function mood(m) {
+    root.dataset.mood = m;
+    if (root.dataset.talk !== "1") root.dataset.mouth = closedMouth();
+  }
+  // phase: in | hold | out | idle
+  function breathe(phase, secs = 1) {
+    root.style.setProperty("--breath-dur", `${secs}s`);
+    root.dataset.breath = phase;
+  }
+  stopTalk();
+  return { root, startTalk, stopTalk, talkFor, mood, breathe };
+}
