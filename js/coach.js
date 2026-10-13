@@ -3,7 +3,7 @@
 const SVG = `<svg class="coach" viewBox="0 0 300 470" role="img" aria-label="ר' דוד, המאמן שלך" data-mouth="closed" data-mood="happy" data-breath="idle" data-talk="0">
   <defs>
     <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f3d"/><stop offset="1" stop-color="#15171f"/></linearGradient>
-    <linearGradient id="beard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b463e"/><stop offset="1" stop-color="#2f2420"/></linearGradient>
+    <linearGradient id="beard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c6a44"/><stop offset=".45" stop-color="#8e7a68"/><stop offset="1" stop-color="#c2bcb4"/></linearGradient>
     <linearGradient id="hat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b2d38"/><stop offset="1" stop-color="#101117"/></linearGradient>
   </defs>
 
@@ -36,8 +36,8 @@ const SVG = `<svg class="coach" viewBox="0 0 300 470" role="img" aria-label="ר'
       <ellipse cx="219" cy="161" rx="4.5" ry="8" fill="#e09d74"/>
 
       <!-- שיער בצדדים ופאות -->
-      <path d="M86 108 C78 128 80 146 84 160" stroke="#4a3a34" stroke-width="12" fill="none" stroke-linecap="round"/>
-      <path d="M214 108 C222 128 220 146 216 160" stroke="#4a3a34" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M86 108 C78 128 80 146 84 160" stroke="#8f7050" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M214 108 C222 128 220 146 216 160" stroke="#8f7050" stroke-width="12" fill="none" stroke-linecap="round"/>
 
       <!-- פנים -->
       <path d="M82 150 C82 104 112 84 150 84 C188 84 218 104 218 150 C218 196 190 232 150 232 C110 232 82 196 82 150Z" fill="#f4c49c"/>
@@ -61,17 +61,23 @@ const SVG = `<svg class="coach" viewBox="0 0 300 470" role="img" aria-label="ר'
         </g>
       </g>
 
-      <!-- משקפיים -->
-      <g fill="rgba(255,255,255,.14)" stroke="#34261f" stroke-width="3.6">
-        <circle cx="121" cy="158" r="18"/><circle cx="179" cy="158" r="18"/>
+      <!-- משקפיים דקים -->
+      <g fill="rgba(255,255,255,.12)" stroke="#a3acb6" stroke-width="2.4">
+        <ellipse cx="121" cy="158" rx="19" ry="15.5"/><ellipse cx="179" cy="158" rx="19" ry="15.5"/>
       </g>
-      <g fill="none" stroke="#34261f" stroke-width="3.6" stroke-linecap="round">
-        <path d="M138 154 Q150 147 162 154"/><path d="M103 154 L88 150"/><path d="M197 154 L212 150"/>
+      <g fill="none" stroke="#a3acb6" stroke-width="2.4" stroke-linecap="round">
+        <path d="M140 155 Q150 150 160 155"/><path d="M102 153 L89 150"/><path d="M198 153 L211 150"/>
       </g>
-      <path d="M110 148 q6 -6 14 -5" stroke="#fff" stroke-opacity=".55" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M108 150 q7 -5 15 -4" stroke="#fff" stroke-opacity=".6" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+      <!-- שקיות עיניים וקמטים עדינים -->
+      <g fill="none" stroke="#d6987a" stroke-width="2" stroke-linecap="round" opacity=".75">
+        <path d="M107 177 q14 7 28 0"/><path d="M165 177 q14 7 28 0"/>
+        <path d="M112 121 q38 -7 76 0"/>
+      </g>
 
       <!-- גבות -->
-      <g class="brows" fill="none" stroke="#6a5851" stroke-width="6.5" stroke-linecap="round">
+      <g class="brows" fill="none" stroke="#8a5d3b" stroke-width="7.5" stroke-linecap="round">
         <path d="M102 132 Q121 120 140 129"/>
         <path d="M160 129 Q179 120 198 132"/>
       </g>
@@ -81,11 +87,11 @@ const SVG = `<svg class="coach" viewBox="0 0 300 470" role="img" aria-label="ר'
       <ellipse cx="146" cy="178" rx="5" ry="3.5" fill="#f6cba8" opacity=".8"/>
 
       <!-- זקן מלא, עם פתח לפה -->
-      <path fill="url(#beard)" fill-rule="evenodd" d="M82 160 C80 206 94 266 150 292 C206 266 220 206 218 160 C214 182 200 196 182 199 L118 199 C100 196 86 182 82 160Z M120 210 a30 18 0 1 0 60 0 a30 18 0 1 0 -60 0Z"/>
-      <path d="M104 238 C112 258 128 272 148 278 M196 238 C188 258 172 272 152 278 M150 262 L150 286 M126 252 C130 264 138 272 146 276" stroke="#aaa39d" stroke-opacity=".5" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path fill="url(#beard)" fill-rule="evenodd" d="M80 160 C76 214 92 278 150 308 C208 278 224 214 220 160 C214 182 200 196 182 199 L118 199 C100 196 86 182 80 160Z M120 210 a30 18 0 1 0 60 0 a30 18 0 1 0 -60 0Z"/>
+      <path d="M100 236 C108 262 128 284 148 292 M200 236 C192 262 172 284 152 292 M150 266 L150 298 M124 254 C128 270 138 284 146 290 M176 254 C172 270 162 284 154 290" stroke="#e4ded6" stroke-opacity=".6" stroke-width="3" fill="none" stroke-linecap="round"/>
 
       <!-- שפם -->
-      <path d="M114 199 C116 184 138 180 150 192 C162 180 184 184 186 199 C172 203 160 199 150 195 C140 199 128 203 114 199Z" fill="#4a3832"/>
+      <path d="M114 199 C116 184 138 180 150 192 C162 180 184 184 186 199 C172 203 160 199 150 195 C140 199 128 203 114 199Z" fill="#a07048"/>
 
       <!-- פה -->
       <g class="mouth">
@@ -105,19 +111,22 @@ const SVG = `<svg class="coach" viewBox="0 0 300 470" role="img" aria-label="ר'
         </g>
       </g>
 
-      <!-- כובע שחור -->
-      <path d="M97 102 C94 58 112 34 150 34 C188 34 206 58 203 102 Z" fill="url(#hat)"/>
-      <path d="M126 36 C140 44 160 44 174 36 C170 50 130 50 126 36Z" fill="#05060a" opacity=".5"/>
-      <path d="M96 94 C120 100 180 100 204 94 L204 104 C180 110 120 110 96 104Z" fill="#3a3d4b"/>
-      <ellipse cx="150" cy="104" rx="86" ry="15" fill="url(#hat)"/>
-      <path d="M92 102 C110 112 190 112 208 102" fill="none" stroke="#4b4e5e" stroke-opacity=".6" stroke-width="2.5"/>
-      <path d="M118 54 C128 44 144 40 158 42" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="5" stroke-linecap="round"/>
+      <!-- כובע שחור רחב שוליים עם סרט -->
+      <path d="M100 102 C95 62 106 28 150 28 C194 28 205 62 200 102 Z" fill="url(#hat)"/>
+      <path d="M121 32 C138 46 162 46 179 32 C173 54 127 54 121 32Z" fill="#05060a" opacity=".5"/>
+      <path d="M99 86 C125 95 175 95 201 86 L201 101 C175 110 125 110 99 101Z" fill="#15161d"/>
+      <path d="M99 87 C125 96 175 96 201 87" fill="none" stroke="#3d4050" stroke-width="2"/>
+      <g transform="rotate(-2.5 150 104)">
+        <ellipse cx="150" cy="105" rx="104" ry="17" fill="url(#hat)"/>
+        <path d="M48 104 C70 120 230 120 252 104" fill="none" stroke="#4b4e5e" stroke-opacity=".6" stroke-width="2.5"/>
+      </g>
+      <path d="M116 50 C128 40 146 36 160 38" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="5" stroke-linecap="round"/>
     </g>
 
     <!-- פאות מתפתלות מעל הצווארון -->
-    <g class="head-sides" fill="none" stroke="#4a3a34" stroke-width="7" stroke-linecap="round">
-      <path d="M90 150 C82 164 98 172 90 188 C84 200 98 206 92 222"/>
-      <path d="M210 150 C218 164 202 172 210 188 C216 200 202 206 208 222"/>
+    <g class="head-sides" fill="none" stroke="#a98563" stroke-width="7" stroke-linecap="round">
+      <path d="M90 150 C80 168 99 180 90 200 C83 216 99 226 92 246 C89 258 96 264 93 274"/>
+      <path d="M210 150 C220 168 201 180 210 200 C217 216 201 226 208 246 C211 258 204 264 207 274"/>
     </g>
     <g class="fx fx-straw"><line x1="152" y1="209" x2="204" y2="224" stroke="#ff7a59" stroke-width="7" stroke-linecap="round"/><line x1="152" y1="209" x2="204" y2="224" stroke="#fff" stroke-width="7" stroke-dasharray="5 8" stroke-linecap="butt"/></g>
     <g class="arm arm-l">
