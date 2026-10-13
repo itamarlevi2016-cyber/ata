@@ -26,6 +26,14 @@ const SVG = `<svg class="coach puppet" viewBox="0 0 540 880" role="img" aria-lab
       </g>
     </g>
   </g>
+  <g class="pose-face">
+    <g class="mouth">
+        <g class="m m-open1"><path d="M236 335 Q268 346 302 335 Q292 362 268 364 Q244 362 236 335Z" fill="#5a1a1d"/><ellipse cx="268" cy="355" rx="11" ry="5" fill="#d9606a"/></g>
+        <g class="m m-open2"><path d="M233 334 Q268 347 305 334 Q296 378 268 382 Q242 378 233 334Z" fill="#5a1a1d"/><path d="M240 337 Q268 346 298 337 L296 346 Q268 353 242 346Z" fill="#fbf1de"/><ellipse cx="268" cy="368" rx="14" ry="6.5" fill="#d9606a"/></g>
+        <g class="m m-grin"><path d="M233 334 Q268 354 305 334 Q268 342 233 334Z" fill="#5a1a1d"/><path d="M241 337 Q268 349 297 337 L294 342 Q268 351 244 342Z" fill="#fbf1de"/></g>
+        <g class="m m-round"><ellipse cx="268" cy="346" rx="12" ry="14" fill="#5a1a1d"/><ellipse cx="268" cy="346" rx="12" ry="14" fill="none" stroke="#b9694f" stroke-width="3.5"/></g>
+      </g>
+  </g>
   <g class="fx fx-belly"><ellipse cx="268" cy="738" rx="82" ry="54" fill="#ffe2a8" opacity=".30"/><ellipse cx="268" cy="738" rx="82" ry="54" fill="none" stroke="#ffd27a" stroke-width="6" stroke-dasharray="10 10"/></g>
   <g class="fx fx-string" fill="none" stroke="#ff9d4d" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
     <path d="M62 190 L62 70 M40 96 L62 66 L84 96" stroke-dasharray="14 14"/><path d="M478 190 L478 70 M456 96 L478 66 L500 96" stroke-dasharray="14 14"/>
@@ -95,6 +103,8 @@ const MOUTHS = ["open1", "open2", "open1", "closed", "open2"];
 
 // תמונות תנוחה אופציונליות: אם קיימת התמונה assets/poses/<שם-התנועה>.webp (או png/jpg) והיא רשומה
 // ב-assets/poses/manifest.json, היא מוצגת במקום הדמות המונפשת. ראו assets/poses/README.md
+// בתנוחות עם הבעה רגועה אפשר להוסיף פה מדבר; בשאר (פה פתוח, קשית, עיניים עצומות) התמונה נשארת כמו שהיא
+const POSE_TALK = new Set(["wave", "point", "present", "palm", "project", "siren"]);
 let poseManifest = null;
 const poseReady = fetch("assets/poses/manifest.json")
   .then((r) => (r.ok ? r.json() : {}))
@@ -152,6 +162,7 @@ export function createCoach(host) {
     if (file) {
       img.setAttribute("href", `assets/poses/${file}`);
       root.dataset.pose = "1";
+      root.dataset.poseTalk = POSE_TALK.has(actName) ? "1" : "0";
     } else {
       root.dataset.pose = "0";
     }

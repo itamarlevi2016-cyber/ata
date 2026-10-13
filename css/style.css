@@ -134,8 +134,12 @@ button { font: inherit; color: inherit; }
 .coach .spark, .coach .note { opacity: 0; transform-box: fill-box; transform-origin: center; }
 .coach .pose-img { transition: opacity .3s; }
 .coach[data-pose="1"] .pose-img { opacity: 1; }
+.coach .pose-face { display: none; }
+.coach[data-pose="1"][data-pose-talk="1"] .pose-face { display: inline; }
+.coach[data-pose="1"][data-talk="1"] .pose-img { animation: posebob .7s ease-in-out infinite; }
+@keyframes posebob { 50% { transform: translateY(-3px); } }
 .coach[data-pose="1"] .figure { opacity: 0; }
-.coach[data-pose="1"] .fx-wave, .coach[data-pose="1"] .fx-point { opacity: 0 !important; }
+.coach[data-pose="1"] .fx-wave, .coach[data-pose="1"] .fx-point, .coach[data-pose="1"] .fx-straw { opacity: 0 !important; }
 .coach .figure { transition: opacity .3s; }
 .coach .emoji-fx { font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
 
