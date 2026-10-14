@@ -34,7 +34,8 @@ const sources={
  './voice.js':'export const {loadManifest,available,transcriptFor,speak,stop,pause,resume,setVolume}=globals.voice;',
  './recorded-lines.js':'export const playLine=async()=>true;export function stopLine(){};export const pauseLine=()=>true;export const resumeLine=async()=>true;export function setLineVolume(){};',
  './progress.js':'export const {get,save,savePosition,clearPosition,awardTask,streak,markComplete,stats,addReps}=globals.store;',
- './data.js':'export const LESSONS=[globals.lesson];'
+ './data.js':'export const LESSONS=[globals.lesson];',
+ './guides.js':'export const guideFor=()=>null;export const renderGuide=()=>null;'
 };
 const module=new vm.SourceTextModule(await fs.readFile(new URL('../js/player.js',import.meta.url),'utf8'),{context});
 await module.link(async id=>new vm.SourceTextModule(sources[id],{context}));await module.evaluate();

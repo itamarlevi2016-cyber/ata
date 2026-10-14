@@ -57,11 +57,11 @@ const SVG = `<svg class="coach puppet" viewBox="0 0 540 880" role="img" aria-lab
     <circle class="ring r2" cx="268" cy="320" r="44"/>
     <circle class="ring r3" cx="268" cy="320" r="62"/>
   </g>
-  <g class="fx fx-trill-lines" fill="none" stroke="#ff9d4d" stroke-width="6" stroke-linecap="round" aria-hidden="true">
-    <path class="tl l1" d="M210 342 q-18 6 -24 22"/>
-    <path class="tl l2" d="M218 360 q-20 8 -26 26"/>
-    <path class="tl r1" d="M326 342 q18 6 24 22"/>
-    <path class="tl r2" d="M318 360 q20 8 26 26"/>
+  <g class="fx fx-trill-lines" fill="none" stroke="#ff8a3d" stroke-width="3.5" stroke-linecap="round" aria-hidden="true">
+    <path class="tl l1" d="M233 337 q-6 9 0 18"/>
+    <path class="tl l2" d="M225 333 q-8 13 0 26"/>
+    <path class="tl r1" d="M308 337 q6 9 0 18"/>
+    <path class="tl r2" d="M316 333 q8 13 0 26"/>
   </g>
   <g class="fx fx-straw"><line x1="272" y1="342" x2="372" y2="388" stroke="#ff5a4d" stroke-width="13" stroke-linecap="round"/><line x1="272" y1="342" x2="372" y2="388" stroke="#fff" stroke-width="13" stroke-dasharray="9 15"/></g>
   <g class="fx fx-straw-cup" aria-hidden="true">

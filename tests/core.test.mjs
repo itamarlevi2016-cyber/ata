@@ -141,3 +141,19 @@ test("כל שלב בקורס מקבל תנועה ויש טקסט להקראה", 
     assert.ok(l.steps.some((s) => TASK_TYPES.has(s.t)), `${l.id} בלי משימות`);
   }
 });
+
+test("לכל הוראה בשיעור יש הסבר מפורט", async () => {
+  const { GUIDES } = await import("../js/guides.js");
+  const { ALL } = await import("../js/data.js");
+  const keys = new Set();
+  for (const l of ALL) l.steps.forEach((s, i) => {
+    const key = `${l.id}:${i}`;
+    keys.add(key);
+    const isGreeting = i === 0 && s.act === "wave";
+    if (s.mood === "cheer" || isGreeting) return;
+    const g = GUIDES[key];
+    assert.ok(g, `${key} חסר הסבר מפורט`);
+    assert.ok(g.goal && g.how?.length >= 1, `${key} חסרים מטרה או צעדים`);
+  });
+  for (const key of Object.keys(GUIDES)) assert.ok(keys.has(key), `${key} לא מתאים לשום שלב`);
+});

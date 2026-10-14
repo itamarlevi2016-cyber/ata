@@ -342,7 +342,7 @@ function route() {
   } else notFound();
 
   document.body.dataset.view = page === "lesson" && getLesson(arg) ? "lesson" : page || "home";
-  if (document.body.dataset.view !== "lesson") main.prepend(pageKnowledge());
+  if (document.body.dataset.view !== "lesson") main.append(pageKnowledge());
   document.title = titleText;
   document.querySelectorAll("#nav a").forEach((a) => (a.dataset.route === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   if (page !== "lesson") window.scrollTo(0, 0);

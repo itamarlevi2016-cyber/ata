@@ -10,6 +10,7 @@ import * as voice from "./voice.js";
 import { playLine, stopLine, pauseLine, resumeLine, setLineVolume } from "./recorded-lines.js";
 import * as store from "./progress.js";
 import { LESSONS } from "./data.js";
+import { guideFor, renderGuide } from "./guides.js";
 
 export function mountPlayer(lesson, main, { onExit }) {
   const saved = store.get().positions?.[lesson.id];
@@ -30,8 +31,9 @@ export function mountPlayer(lesson, main, { onExit }) {
   const pauseSpeech = h("button", { class: "btn ghost small", type: "button", disabled: true }, "⏸ השהיה");
   const speechStatus = h("span", { class: "speech-status", role: "status" }, "מוכנים להקשיב");
   let paused = false, speechMode = null;
-  const speechTools = h("div", { class: "speech-tools" }, pauseSpeech, stopSpeech, listenAgain, speechStatus);
-  const bubble = h("div", { class: "bubble" }, bubbleText, replay);
+  const speechTools = h("div", { class: "speech-tools" }, pauseSpeech, listenAgain, speechStatus);
+  const guideHost = h("div", { class: "guide-host" });
+  const bubble = h("div", { class: "bubble" }, bubbleText);
   const exercise = h("div", { class: "exercise" });
   const demo = h("div", { class: "coach-demo", hidden: true });
   const guideTab = h("button", {class:"screen-tab",type:"button",role:"tab",id:"guide-tab","aria-controls":"guide-panel","aria-selected":"true"}, "הדרכה ותרגול");
@@ -57,19 +59,21 @@ export function mountPlayer(lesson, main, { onExit }) {
   const caption = h("div", { class: "coach-caption" });
   const mission = h("span", { class: "mission", title: "כל משימה שמסיימים מזכה ב-10 נקודות" }, `⭐ 0/${totalTasks} משימות`);
 
-  const voiceBox = h("div", { class: "voice-box", hidden: true });
+  const voiceBox = h("details", { class: "voice-box", hidden: true });
+  const voiceRow = h("div", { class: "voice-row" });
+  voiceBox.append(h("summary", null, "🔊 הגדרות שמע"), voiceRow);
   const voiceToggle = h("input", { type: "checkbox" });
   voiceToggle.checked = store.get().tts;
   const speedSel = h("select", { "aria-label": "מהירות הקראה" }, [["0.9", "איטי"], ["0.97", "רגוע"], ["1", "טבעי (מומלץ)"], ["1.08", "מהיר" ]].map(([v, t]) => h("option", { value: v }, t)));
   speedSel.value = [...speedSel.options].some(x => x.value === String(store.get().speed)) ? String(store.get().speed) : "1";
-  voiceBox.append(h("label", { class: "toggle" }, voiceToggle, "קריינות"), speedSel);
-  const volumeBox = h("details", { class: "volume-settings" }, h("summary", null, "עוצמת השמע"));
+  voiceRow.append(h("label", { class: "toggle" }, voiceToggle, "קריינות"), h("label", null, "מהירות", speedSel));
+  const volumeBox = h("div", { class: "volume-settings" });
   for (const [key, label] of [["speechVolume", "קריינות"], ["demoVolume", "צלילי הדגמה"]]) {
     const input = h("input", { type: "range", min: "0", max: "1", step: ".05", value: String(store.get()[key] ?? 1), "aria-label": `עוצמת ${label}` });
     input.addEventListener("input", () => { const value = Number(input.value); store.save({ [key]: value }); if (key === "demoVolume") setDemoVolume(value); else { voice.setVolume(value); setLineVolume(value); } });
     volumeBox.append(h("label", null, label, input));
   }
-  voiceBox.append(volumeBox);
+  voiceRow.append(volumeBox);
   voiceToggle.addEventListener("change", () => {
     store.save({ tts: voiceToggle.checked });
     if (!voiceToggle.checked) { stopNarration(); speechStatus.textContent = "הקריינות כבויה"; }
@@ -78,7 +82,7 @@ export function mountPlayer(lesson, main, { onExit }) {
   speedSel.addEventListener("change", () => { store.save({ speed: Number(speedSel.value) }); setPhase("explain"); speak(); });
   voice.loadManifest().then(() => { if (alive) voiceBox.hidden = false; });
 
-  const guidePanel = h("section", {id:"guide-panel",role:"tabpanel","aria-labelledby":"guide-tab"},flow,bubble,speechTools,enableAudio,demo,beginPractice,exercise);
+  const guidePanel = h("section", {id:"guide-panel",role:"tabpanel","aria-labelledby":"guide-tab"},flow,bubble,speechTools,enableAudio,guideHost,demo,beginPractice,exercise);
   const root = h(
     "div",
     { class: "wrap player" },
@@ -124,7 +128,9 @@ export function mountPlayer(lesson, main, { onExit }) {
     demo.hidden = !(phase === "demo" && hasDemo);
     exercise.hidden = TASK_TYPES.has(step.t) && phase !== "practice";
     beginPractice.hidden = !TASK_TYPES.has(step.t) || phase === "practice";
-    beginPractice.textContent = phase === "explain" && hasDemo ? "צפו בהדגמה" : "הבנתי, לתרגול";
+    beginPractice.textContent = phase === "explain" && hasDemo ? "צפו בהדגמה ◀" : "הבנתי, לתרגול ◀";
+    next.className = beginPractice.hidden ? "btn primary big" : "btn ghost big";
+    root.setAttribute("data-phase", phase);
     if (phase === "demo" || phase === "practice") coach.act(currentAct, { dur: currentDur });
     else coach.act("rest");
     caption.textContent = phase === "explain" ? "ר׳ דוד מסביר" : ACT_LABELS[currentAct] ? `מדגים: ${ACT_LABELS[currentAct]}` : "";
@@ -274,6 +280,7 @@ export function mountPlayer(lesson, main, { onExit }) {
     step = lesson.steps[i];
     lessonPhase = null; practiceStopped = false;
     knowledgePanel.replaceChildren(renderKnowledge(lesson,step));
+    guideHost.replaceChildren(...[renderGuide(guideFor(lesson.id, i))].filter(Boolean));
     selectTab(false);
     store.savePosition(lesson.id, idx, [...doneTasks]);
     mission.textContent = `⭐ ${doneTasks.size}/${totalTasks} משימות`;
@@ -327,7 +334,7 @@ export function mountPlayer(lesson, main, { onExit }) {
       const pose = ({flow:"palm",softvoice:"hum",transfer:"hum",speech:"present",scale:"siren"})[act] || act;
       const poseFile = ["wave","point","present","palm","jaw","straw","hum","siren","project","cheer"].includes(pose) ? `assets/poses/${pose}.webp` : null;
       const poseImage = poseFile && h("img",{class:"demo-illustration",src:poseFile,alt:`המחשה: ${d.title || ACT_LABELS[act] || lesson.title}`,loading:"lazy"});
-      demo.replaceChildren(h("span", { class: "demo-label" }, "🎬 המחשה לתרגיל"), poseImage, copy, btn);
+      demo.replaceChildren(...[h("span", { class: "demo-label" }, "🎬 המחשה לתרגיל"), poseImage, copy, btn].filter(Boolean));
       hasDemo = true; demo.hidden = false;
     } else { hasDemo = false; demo.hidden = true; demo.replaceChildren(); }
     // Display exactly what the Cedar recording says, including heading and key points.
@@ -358,6 +365,7 @@ export function mountPlayer(lesson, main, { onExit }) {
     store.markComplete(lesson.id);
     store.clearPosition(lesson.id);
     flow.hidden = beginPractice.hidden = demo.hidden = resumeBanner.hidden = true;
+    guideHost.replaceChildren();
     exercise.hidden = false;
     selectTab(false);
     const streak = store.streak(store.get().days);
