@@ -7,34 +7,36 @@ const SVG = `<svg class="coach puppet" viewBox="0 0 540 880" role="img" aria-lab
     <mask id="fademask" maskUnits="userSpaceOnUse" x="0" y="0" width="540" height="880"><rect width="540" height="880" fill="url(#fadeg)"/></mask>
   </defs>
   <image class="bgimg" href="assets/char/bg.webp" width="540" height="880" preserveAspectRatio="none"/>
-  <image class="pose-img" x="-150" y="-30" width="832" height="1248" preserveAspectRatio="none" opacity="0" mask="url(#fademask)"/>
+  <image class="pose-img" x="0" y="0" width="540" height="880" preserveAspectRatio="xMidYMid slice" opacity="0" mask="url(#fademask)"/>
   <g class="figure" mask="url(#fademask)">
     <g class="torso"><image href="assets/char/body.webp" width="540" height="880"/></g>
     <g class="head">
       <image href="assets/char/head.webp" width="540" height="880"/>
-      <!-- עפעפיים למצמוץ -->
-      <g class="lids" fill="#e8996a">
-        <ellipse class="lid" cx="242" cy="262" rx="19" ry="17"/>
-        <ellipse class="lid" cx="320" cy="268" rx="20" ry="18"/>
-      </g>
       <!-- פה (הצורה הסגורה היא האיור המקורי) -->
-      <g class="mouth">
-        <g class="m m-open1"><path d="M236 335 Q268 346 302 335 Q292 362 268 364 Q244 362 236 335Z" fill="#5a1a1d"/><ellipse cx="268" cy="355" rx="11" ry="5" fill="#d9606a"/></g>
-        <g class="m m-open2"><path d="M233 334 Q268 347 305 334 Q296 378 268 382 Q242 378 233 334Z" fill="#5a1a1d"/><path d="M240 337 Q268 346 298 337 L296 346 Q268 353 242 346Z" fill="#fbf1de"/><ellipse cx="268" cy="368" rx="14" ry="6.5" fill="#d9606a"/></g>
-        <g class="m m-grin"><path d="M233 334 Q268 354 305 334 Q268 342 233 334Z" fill="#5a1a1d"/><path d="M241 337 Q268 349 297 337 L294 342 Q268 351 244 342Z" fill="#fbf1de"/></g>
-        <g class="m m-round"><ellipse cx="268" cy="346" rx="12" ry="14" fill="#5a1a1d"/><ellipse cx="268" cy="346" rx="12" ry="14" fill="none" stroke="#b9694f" stroke-width="3.5"/></g>
+      <g class="mouth" aria-hidden="true">
+        <path class="m m-open1" d="M239 335 Q270 347 302 335 Q289 351 271 352 Q252 349 239 335Z" fill="#592d24"/>
+        <g class="m m-open2"><path d="M239 335 Q270 347 302 335 Q289 356 271 357 Q251 351 239 335Z" fill="#4b2520"/><path d="M254 349 Q270 355 285 350 Q272 351 254 349Z" fill="#b56d61"/></g>
+        <ellipse class="m m-round" cx="271" cy="345" rx="8" ry="7" fill="#592d24"/>
       </g>
     </g>
   </g>
-  <g class="pose-face">
-    <g class="mouth">
-        <g class="m m-open1"><path d="M236 335 Q268 346 302 335 Q292 362 268 364 Q244 362 236 335Z" fill="#5a1a1d"/><ellipse cx="268" cy="355" rx="11" ry="5" fill="#d9606a"/></g>
-        <g class="m m-open2"><path d="M233 334 Q268 347 305 334 Q296 378 268 382 Q242 378 233 334Z" fill="#5a1a1d"/><path d="M240 337 Q268 346 298 337 L296 346 Q268 353 242 346Z" fill="#fbf1de"/><ellipse cx="268" cy="368" rx="14" ry="6.5" fill="#d9606a"/></g>
-        <g class="m m-grin"><path d="M233 334 Q268 354 305 334 Q268 342 233 334Z" fill="#5a1a1d"/><path d="M241 337 Q268 349 297 337 L294 342 Q268 351 244 342Z" fill="#fbf1de"/></g>
-        <g class="m m-round"><ellipse cx="268" cy="346" rx="12" ry="14" fill="#5a1a1d"/><ellipse cx="268" cy="346" rx="12" ry="14" fill="none" stroke="#b9694f" stroke-width="3.5"/></g>
-      </g>
+  <g class="fx fx-pitch-guide" aria-hidden="true" fill="none" stroke="#287f89" stroke-width="5" stroke-linecap="round">
+    <path d="M62 426 V290 M52 305 L62 290 L72 305"/>
+    <circle class="pitch-guide-dot" cx="62" cy="426" r="9" fill="#287f89" stroke="white" stroke-width="3"/>
+  </g>
+  <g class="fx fx-shoulder-guide" aria-hidden="true" fill="none" stroke="#287f89" stroke-width="5" stroke-linecap="round">
+    <path d="M64 456 Q40 430 64 404 M52 405 L64 404 L63 418"/>
+    <path d="M476 456 Q500 430 476 404 M488 405 L476 404 L477 418"/>
   </g>
   <g class="fx fx-belly"><ellipse cx="268" cy="738" rx="82" ry="54" fill="#ffe2a8" opacity=".30"/><ellipse cx="268" cy="738" rx="82" ry="54" fill="none" stroke="#ffd27a" stroke-width="6" stroke-dasharray="10 10"/></g>
+  <g class="fx fx-breath-guides" fill="none" stroke="#77c8d4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path class="breath-in left" d="M170 758 q-58 -18 -66 -78"/>
+    <path class="breath-in right" d="M366 758 q58 -18 66 -78"/>
+    <path class="breath-out" d="M268 696 q0 -58 0 -118"/>
+    <path class="breath-arrow left-a" d="M88 694 l18 -16 6 25"/>
+    <path class="breath-arrow right-a" d="M448 694 l-18 -16 -6 25"/>
+    <path class="breath-arrow out-a" d="M268 560 l-18 20 36 0z"/>
+  </g>
   <g class="fx fx-string" fill="none" stroke="#ff9d4d" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
     <path d="M62 190 L62 70 M40 96 L62 66 L84 96" stroke-dasharray="14 14"/><path d="M478 190 L478 70 M456 96 L478 66 L500 96" stroke-dasharray="14 14"/>
   </g>
@@ -50,7 +52,36 @@ const SVG = `<svg class="coach puppet" viewBox="0 0 540 880" role="img" aria-lab
   <g class="fx fx-jaw" fill="none" stroke="#ff9d4d" stroke-width="8" stroke-linecap="round">
     <path d="M196 300 q-22 30 -4 58"/><path d="M342 300 q22 30 4 58"/>
   </g>
+  <g class="fx fx-hum-resonance" aria-hidden="true">
+    <circle class="ring r1" cx="268" cy="320" r="26"/>
+    <circle class="ring r2" cx="268" cy="320" r="44"/>
+    <circle class="ring r3" cx="268" cy="320" r="62"/>
+  </g>
+  <g class="fx fx-trill-lines" fill="none" stroke="#ff9d4d" stroke-width="6" stroke-linecap="round" aria-hidden="true">
+    <path class="tl l1" d="M210 342 q-18 6 -24 22"/>
+    <path class="tl l2" d="M218 360 q-20 8 -26 26"/>
+    <path class="tl r1" d="M326 342 q18 6 24 22"/>
+    <path class="tl r2" d="M318 360 q20 8 26 26"/>
+  </g>
   <g class="fx fx-straw"><line x1="272" y1="342" x2="372" y2="388" stroke="#ff5a4d" stroke-width="13" stroke-linecap="round"/><line x1="272" y1="342" x2="372" y2="388" stroke="#fff" stroke-width="13" stroke-dasharray="9 15"/></g>
+  <g class="fx fx-straw-cup" aria-hidden="true">
+    <path class="cup" d="M364 390 h78 l-10 90 h-58 z"/>
+    <path class="water" d="M372 426 q14 -8 28 0 t28 0 t28 0 v38 h-84z"/>
+  </g>
+  <g class="fx fx-straw-bubbles" aria-hidden="true">
+    <circle class="bubble b1" cx="390" cy="438" r="9"/><circle class="bubble b2" cx="408" cy="452" r="6"/>
+    <circle class="bubble b3" cx="426" cy="432" r="5"/><path class="air-flow" d="M374 390 Q399 385 424 373"/>
+  </g>
+  <g class="fx fx-airflow" fill="none" stroke="#75bfd1" stroke-width="6" stroke-linecap="round" aria-hidden="true">
+    <path class="af a1" d="M306 340 q26 -8 52 6 q26 14 48 8"/>
+    <path class="af a2" d="M306 352 q28 4 54 18 q22 12 44 8"/>
+    <path class="af a3" d="M302 364 q30 12 54 28 q18 12 38 12"/>
+  </g>
+  <g class="fx fx-speech-bits" aria-hidden="true">
+    <g class="sb b1"><rect x="364" y="292" rx="14" ry="14" width="66" height="30"/><text x="397" y="313">ממ</text></g>
+    <g class="sb b2"><rect x="388" y="336" rx="14" ry="14" width="72" height="30"/><text x="424" y="357">מה</text></g>
+    <g class="sb b3"><rect x="408" y="382" rx="14" ry="14" width="92" height="30"/><text x="454" y="403">שלום</text></g>
+  </g>
   <g class="fx fx-wave"><text x="452" y="470" font-size="84" class="emoji-fx">👋</text></g>
   <g class="fx fx-point"><text x="452" y="470" font-size="84" class="emoji-fx">☝️</text></g>
   <g class="sparks" fill="#ffb347">
@@ -75,6 +106,10 @@ const ACTS = {
   hum: {},
   trill: { mouth: [["round"], 0] },
   straw: { mouth: [["round"], 0] },
+  flow: { mouth: [["closed", "round", "closed"], 900] },
+  softvoice: { mouth: [["closed", "open1", "closed", "open1"], 820] },
+  transfer: { mouth: [["round", "open1", "open2", "closed"], 720] },
+  speech: { mouth: [["open1", "open2", "closed", "round"], 620] },
   siren: {},
   scale: {},
   project: {},
@@ -92,6 +127,10 @@ export const ACT_LABELS = {
   hum: "המהום",
   trill: "רטט",
   straw: "צליל דרך קשית",
+  flow: "זרימת אוויר רגועה",
+  softvoice: "קול רך ועדין",
+  transfer: "מעבר מצליל למילה",
+  speech: "דיבור טבעי ונינוח",
   siren: "סירנה",
   scale: "סולם צלילים",
   project: "הקרנת הקול",
@@ -99,12 +138,11 @@ export const ACT_LABELS = {
   vowels: "תנועות בפה פתוח",
 };
 
-const MOUTHS = ["open1", "open2", "open1", "closed", "open2"];
+const MOUTHS = ["open1", "closed", "open1", "open2", "open1", "closed"];
 
 // תמונות תנוחה אופציונליות: אם קיימת התמונה assets/poses/<שם-התנועה>.webp (או png/jpg) והיא רשומה
 // ב-assets/poses/manifest.json, היא מוצגת במקום הדמות המונפשת. ראו assets/poses/README.md
 // בתנוחות עם הבעה רגועה אפשר להוסיף פה מדבר; בשאר (פה פתוח, קשית, עיניים עצומות) התמונה נשארת כמו שהיא
-const POSE_TALK = new Set(["wave", "point", "present", "palm", "project", "siren"]);
 let poseManifest = null;
 const poseReady = fetch("assets/poses/manifest.json")
   .then((r) => (r.ok ? r.json() : {}))
@@ -119,27 +157,38 @@ export function createCoach(host) {
   root.innerHTML = root.innerHTML.replace(/id="(fadeg|fademask)"/g, `id="$1-${uid}"`).replace(/url\(#(fadeg|fademask)\)/g, `url(#$1-${uid})`);
   root.querySelector(".figure").setAttribute("mask", `url(#fademask-${uid})`);
 
-  let talkTimer = null, stopTimer = null, actTimer = null;
-  let actName = "rest";
-
-  const baseMouth = () => {
-    const m = ACTS[actName] && ACTS[actName].mouth;
-    if (m && m[1] === 0) return m[0][0];
-    return root.dataset.mood === "cheer" ? "grin" : "closed";
-  };
+  let talkTimer = null, stopTimer = null;
+  let actName = "rest", poseName = "rest";
 
   function startTalk() {
-    if (actTimer) return; // בתנועה עם פה משלה (למשל פיהוק) לא מתערבים
+    act("rest");
     clearInterval(talkTimer);
     root.dataset.talk = "1";
     let i = 0;
     talkTimer = setInterval(() => (root.dataset.mouth = MOUTHS[i++ % MOUTHS.length]), 150);
   }
+  // פה מסונכרן לעוצמת ההקלטה (לא זיהוי פונמות מדויק).
+  let lastShape = "closed", speechLevel = 0;
+  function setSpeechLevel(level) {
+    if (root.dataset.talk !== "1") return;
+    speechLevel = speechLevel * .65 + Math.max(0, Math.min(1, level)) * .35;
+    const shape = speechLevel < 0.07 ? "closed" : speechLevel < 0.42 ? "open1" : "open2";
+    if (shape !== lastShape) root.dataset.mouth = lastShape = shape;
+  }
+  function startAudioTalk() {
+    act("rest");
+    clearInterval(talkTimer);
+    talkTimer = null;
+    root.dataset.talk = "1";
+    root.dataset.mouth = "closed";
+    lastShape = "closed";
+    speechLevel = 0;
+  }
   function stopTalk() {
     clearInterval(talkTimer);
     clearTimeout(stopTimer);
     root.dataset.talk = "0";
-    if (!actTimer) root.dataset.mouth = baseMouth();
+    root.dataset.mouth = "closed";
   }
   function talkFor(ms) {
     startTalk();
@@ -148,7 +197,7 @@ export function createCoach(host) {
   }
   function mood(m) {
     root.dataset.mood = m;
-    if (root.dataset.talk !== "1" && !actTimer) root.dataset.mouth = baseMouth();
+    if (root.dataset.talk !== "1") root.dataset.mouth = "closed";
   }
   // phase: in | hold | out | idle
   function breathe(phase, secs = 1) {
@@ -157,12 +206,12 @@ export function createCoach(host) {
   }
   // מדגים תנועה: אפקטים, פה וגוף
   function applyPose() {
-    const file = poseManifest && poseManifest[actName];
+    const file = poseManifest && poseManifest[poseName];
     const img = root.querySelector(".pose-img");
     if (file) {
       img.setAttribute("href", `assets/poses/${file}`);
-      root.dataset.pose = "1";
-      root.dataset.poseTalk = POSE_TALK.has(actName) ? "1" : "0";
+      root.dataset.pose = "0";
+      root.dataset.poseTalk = "0";
     } else {
       root.dataset.pose = "0";
     }
@@ -171,23 +220,23 @@ export function createCoach(host) {
 
   function act(name, { dur = 4 } = {}) {
     if (!ACTS[name]) name = "rest";
-    actName = name;
-    if (poseManifest) applyPose();
-    clearInterval(actTimer);
-    actTimer = null;
     clearInterval(talkTimer);
-    const a = ACTS[name];
-    root.style.setProperty("--act-dur", `${dur}s`);
+    clearTimeout(stopTimer);
+    actName = name;
+    poseName = ({ flow: "palm", softvoice: "hum", transfer: "hum", speech: "present", scale: "siren" })[name] || name;
+    if (poseManifest) applyPose();
+    root.style.setProperty("--act-dur", `${Math.max(1, dur)}s`);
     root.dataset.act = name;
-    if (a.mouth && a.mouth[1] > 0) {
-      let i = 0;
-      root.dataset.mouth = a.mouth[0][0];
-      actTimer = setInterval(() => (root.dataset.mouth = a.mouth[0][++i % a.mouth[0].length]), a.mouth[1]);
-    } else {
-      root.dataset.mouth = baseMouth();
-    }
     root.dataset.talk = "0";
+    root.dataset.mouth = ["trill", "straw"].includes(name) ? "round" : "closed";
   }
   act("rest");
-  return { root, startTalk, stopTalk, talkFor, mood, breathe, act };
+  const observer = new MutationObserver(() => {
+    if (root.isConnected) return;
+    clearInterval(talkTimer);
+    clearTimeout(stopTimer);
+    observer.disconnect();
+  });
+  observer.observe(document.body, {childList: true, subtree: true});
+  return { root, startTalk, startAudioTalk, setSpeechLevel, stopTalk, talkFor, mood, breathe, act };
 }

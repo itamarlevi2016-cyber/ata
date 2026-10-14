@@ -101,7 +101,7 @@ test("רמות ונקודות", () => {
   assert.equal(store.levelFor(0).name, "מתחיל");
   assert.equal(store.levelFor(50).name, "מתחמם");
   assert.equal(store.levelFor(299).name, "מתרגל");
-  assert.equal(store.levelFor(5000).name, "אמן הקול");
+  assert.equal(store.levelFor(5000).name, "התמדה מצוינת");
   assert.equal(store.levelFor(5000).next, null);
   const l = store.levelFor(100);
   assert.ok(l.progress > 0.49 && l.progress < 0.51 && l.toNext === 50);
@@ -132,7 +132,7 @@ test("ההקראה כוללת כותרת, הסבר וכל הנקודות, בלי
 });
 
 test("כל שלב בקורס מקבל תנועה ויש טקסט להקראה", () => {
-  const acts = new Set(["rest","wave","present","point","palm","belly","posture","shoulders","neck","jaw","hum","trill","straw","siren","scale","project","sigh","vowels","cheer"]);
+  const acts = new Set(["rest","wave","present","point","palm","belly","posture","shoulders","neck","jaw","hum","trill","straw","siren","scale","project","sigh","vowels","cheer","flow","softvoice","transfer","speech"]);
   for (const l of ALL) {
     l.steps.forEach((s, i) => {
       assert.ok(acts.has(s.act), `${l.id}:${i} תנועה לא מוכרת: ${s.act}`);

@@ -1,14 +1,8 @@
 name: יצירת הקלטות קול אנושיות
 
-# רץ אוטומטית כשמשתנה תוכן השיעורים, מילון ההגייה או כלי ההקלטה,
-# ומוסיף לענף את קבצי ה-mp3 החדשים. אפשר גם להריץ ידנית מלשונית Actions.
+# הפעלה ידנית בלבד מלשונית Actions. באתר יש הקלטות Cedar (audio/cedar-map.json),
+# והרצה אוטומטית הייתה עלולה להחליף אותן בקבצים בשמות זהים.
 on:
-  push:
-    paths:
-      - "js/data.js"
-      - "js/narration.js"
-      - "js/pronounce.js"
-      - "tools/**"
   workflow_dispatch:
     inputs:
       force:

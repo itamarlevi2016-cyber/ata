@@ -9,7 +9,11 @@ import { createMeter } from "./meter.js";
 import { midiToFreq, noteName } from "./pitch.js";
 import { TASK_TYPES } from "./steps.js";
 
+import {pageKnowledge} from "./knowledge.js";
+import {mountMusic} from "./music.js";
+
 tts.init();
+const backgroundMusic = mountMusic(document.body);
 const main = $("#main");
 let teardown = null;
 
@@ -29,8 +33,11 @@ window.addEventListener("kb:progress", updateStreak);
 // ---------- בית ----------
 function home() {
   const done = store.get().completed;
+  const nextLesson = LESSONS.find((l) => !done[l.id]) || LESSONS[LESSONS.length - 1];
+  const resume = store.get().positions?.[store.get().lastLesson] ? getLesson(store.get().lastLesson) : null;
+  const started = Object.keys(done).length > 0;
   const hello = h("div", { class: "bubble hello-bubble" }, "שלום וברכה! אני ר' דוד. בואו נחמם את הקול יחד 🎵");
-  const heroBtn = h("a", { class: "btn primary big", href: "#/lesson/intro" }, Object.keys(done).length ? "המשיכו ללמוד" : "מתחילים את השיעור הראשון");
+  const heroBtn = h("a", { class: "btn primary big", href: `#/lesson/${resume ? resume.id : started ? nextLesson.id : "intro"}` }, resume ? `המשיכו מהמקום שעצרתם: ${resume.title}` : started ? `המשיכו לשיעור הבא: ${nextLesson.title}` : "מתחילים את השיעור הראשון");
   const hero = h(
     "section",
     { class: "hero" },
@@ -53,8 +60,8 @@ function home() {
   hostNode.append(coachHost);
   const coach = createCoach(coachHost);
   coach.mood("cheer");
-  setTimeout(() => coach.talkFor(2200), 600);
-  coachHost.addEventListener("click", () => coach.talkFor(1600));
+  coach.act("rest");
+  
 
   const how = h(
     "section",
@@ -62,7 +69,7 @@ function home() {
     h(
       "div",
       { class: "wrap" },
-      h("div", { class: "section-head" }, h("h2", null, "איך זה עובד?"), h("p", null, "שלוש דקות ביום מספיקות כדי להרגיש הבדל.")),
+      h("div", { class: "section-head" }, h("h2", null, "איך זה עובד?"), h("p", null, "מתרגלים כמה דקות בקצב אישי, ללא לחץ.")),
       h(
         "div",
         { class: "steps3" },
@@ -92,7 +99,7 @@ function home() {
   const course = h(
     "section",
     { class: "block alt" },
-    h("div", { class: "wrap" }, h("div", { class: "section-head" }, h("h2", null, "המסלול המלא"), h("p", null, "תשעה שיעורים קצרים, מהיסודות ועד הבמה. מומלץ ללכת לפי הסדר.")), lessonGrid())
+    h("div", { class: "wrap" }, h("div", { class: "section-head" }, h("h2", null, "המסלול המלא"), h("p", null, `${LESSONS.length} שיעורים קצרים, מהיסודות ועד הבמה. מומלץ ללכת לפי הסדר.`)), lessonGrid())
   );
 
   const faq = h(
@@ -106,7 +113,8 @@ function home() {
       qa("האם ההקלטה שלי נשמרת או נשלחת?", "לא. המיקרופון משמש רק להצגת הצליל על המסך, והכול קורה בדפדפן שלכם. שום דבר לא נשמר ולא נשלח."),
       qa("כמה זמן צריך להקדיש?", "חמש עד עשר דקות ביום מספיקות. עקביות חשובה יותר מכמות."),
       qa("אפשר מהטלפון?", "כן, האתר מותאם גם לטלפון ולטאבלט."),
-      qa("מה עושים אם כואב בגרון?", "עוצרים ונחים. אם צרידות נמשכת יותר משבועיים, כדאי לפנות לרופא אף אוזן גרון.")
+      qa("מה עושים אם כואב בגרון?", "עוצרים ונחים. אם צרידות נמשכת יותר משבועיים, כדאי לפנות לרופא אף אוזן גרון."),
+      qa("האם האתר מחליף טיפול מקצועי?", "לא. האתר מיועד לתרגול והדרכה כלליים. אם יש כאב, צרידות ממושכת או קושי מיוחד, כדאי לפנות לאיש מקצוע.")
     )
   );
   main.replaceChildren(hero, how, daily, course, faq);
@@ -143,7 +151,7 @@ function course() {
       "div",
       { class: "wrap page" },
       h("h1", { class: "page-title" }, "הקורס"),
-      h("p", { class: "page-sub" }, "תשעה שיעורים קצרים. כל אחד לוקח כמה דקות."),
+      h("p", { class: "page-sub" }, `${LESSONS.length} שיעורים קצרים. כל אחד לוקח כמה דקות.`),
       h("div", { class: "progress-summary" }, h("span", { class: "pill" }, `✓ ${count} מתוך ${LESSONS.length} שיעורים`), h("a", { class: "btn small", href: "#/lesson/daily" }, "☀️ תרגול יומי")),
       lessonGrid()
     )
@@ -193,7 +201,7 @@ function stats() {
       "div",
       { class: "wrap page" },
       h("h1", { class: "page-title" }, "ההתקדמות שלי"),
-      h("p", { class: "page-sub" }, "כל משימה שמסיימים בשיעור מזכה ב-10 נקודות, פעם אחת ביום לכל משימה. חזרות נספרות בכל תרגיל."),
+      h("p", { class: "page-sub" }, "הנקודות משקפות השתתפות והתמדה, ולא מדידה של איכות הקול. אישור תרגול מזכה ב-10 נקודות, פעם אחת ביום לכל משימה."),
       h(
         "div",
         { class: "level-card" },
@@ -210,12 +218,12 @@ function stats() {
       h(
         "div",
         { class: "stat-grid" },
-        tile("📚", `${done}/${LESSONS.length}`, "שיעורים שהושלמו", s.totalRuns ? `${s.totalRuns} השלמות בסך הכול` : ""),
+        tile("📚", `${done}/${LESSONS.length}`, "שיעורים שהגעתם לסופם", s.totalRuns ? `${s.totalRuns} השלמות בסך הכול` : ""),
         tile("🔁", s.reps, "חזרות על תרגילים"),
         tile("✅", s.tasks, "משימות שהושלמו", `${s.tasks * 10} נקודות`),
         tile("🔥", s.streak, "ימים ברצף", s.bestStreak ? `שיא: ${s.bestStreak}` : ""),
         tile("📅", s.days, "ימי תרגול"),
-        tile("🌬️", s.bestExhale ? s.bestExhale.toFixed(1) : "—", "שיא נשיפה (שניות)")
+        tile("🌬️", s.bestExhale ? s.bestExhale.toFixed(1) : "—", "משך נשיפה מרבי שתועד")
       ),
       h("div", { class: "card", style: "margin-top:18px" }, h("h3", null, "נקודות ב-14 הימים האחרונים"), chart),
       h("div", { class: "card", style: "margin-top:18px" }, h("h3", null, "השיעורים"), h("div", { class: "lesson-rows" }, rows)),
@@ -275,7 +283,7 @@ function health() {
       "div",
       { class: "wrap page" },
       h("h1", { class: "page-title" }, "שמירה על הקול"),
-      h("p", { class: "page-sub" }, "הקול הוא שריר רגיש. מעט הרגלים טובים עושים הבדל גדול."),
+      h("p", { class: "page-sub" }, "הקול נוצר מרטט של מיתרי הקול, ונשען גם על נשימה, תהודה והרגלי שימוש בריאים."),
       h(
         "div",
         { class: "health-grid" },
@@ -288,16 +296,18 @@ function health() {
         { class: "card", style: "margin-top:20px" },
         h("h3", null, "📚 על מה התרגילים מבוססים"),
         h("p", { class: "muted" }, "התרגילים באתר הם שיטות מקובלות שמופיעות שוב ושוב אצל מאמני קול וקלינאי תקשורת: נשימה בטנית, רטט שפתיים וגלגול לשון, המהום, סירנות, צליל דרך קשית, הגזמה בהגייה ותרגול עוצמה בטווחים שונים. את הניסוחים כתבנו בעצמנו."),
-        h("p", { class: "muted" }, "חשוב לדעת: רוב ההמלצות לדוברים מבוססות על ניסיון של מאמנים. המחקר הקליני על חימומי קול מצומצם, והתמיכה בתרגילי צליל דרך קשית היא בעיקר תיאורטית ופיזיולוגית. לכן התרגילים כאן עדינים ובטוחים, ואינם טיפול."),
+        h("p", { class: "muted" }, "חשוב לדעת: גישות כגון תרגילי קול עם מעבר אוויר מצומצם, זרימת אוויר ותהודה מתוארות בספרות המקצועית. אין פירוש הדבר שכל תרגיל מתאים לכל אדם; התרגול כאן חינוכי בלבד ואינו טיפול אישי."),
         h(
           "ul",
           { class: "sources" },
+          src("https://www.asha.org/practice-portal/clinical-topics/voice-disorders/", "ASHA — סקירה מקצועית של תרגילי קול, קשית, זרימת אוויר ותהודה"),
+          src("https://www.nidcd.nih.gov/health/taking-care-your-voice", "NIDCD — כללי שמירה על הקול ומתי לפנות לייעוץ רפואי"),
           src("https://www.torontospeechtherapy.com/blog/2024/the-power-of-straw-phonation-exploring-sovt-exercises/", "פונציה דרך קשית כחימום וכקירור לדוברים (מרפאת קלינאות תקשורת)"),
           src("https://royalberkshire.nhs.uk/media/5ehceiw2/voice-warm-up-and-warm-down_apr24.pdf", "חוברת חימום וקירור קול (שירות הבריאות הבריטי, בית חולים Royal Berkshire)"),
           src("https://in.bgu.ac.il/academicdev/Documents/סדנת%20קול-%20הצעה%20לתרגול%20עצמי.pdf", "סדנת קול, הצעה לתרגול עצמי (אוניברסיטת בן-גוריון)")
         )
       ),
-      h("div", { class: "notice", style: "margin-top:20px" }, "אם צרידות נמשכת יותר משבועיים, או אם יש כאבים חוזרים, כדאי לפנות לרופא אף אוזן גרון. האתר מיועד לתרגול כללי ואינו מחליף ייעוץ רפואי או הדרכה אישית של מורה לקול.")
+      h("div", { class: "notice", style: "margin-top:20px" }, "אם יש כאב, שינוי קול שנמשך או קושי בדיבור, מומלץ לפנות לרופא אף אוזן גרון או לקלינאי תקשורת. האתר מיועד לתרגול כללי ולא לאבחון או לטיפול רפואי.")
     )
   );
 }
@@ -317,6 +327,7 @@ function route() {
   const [page, arg] = hash.split("/");
   let titleText = "קול בטוח | פיתוח קול לדוברים, שלב אחרי שלב";
   let nav = "";
+  backgroundMusic.setPage(page || "home");
 
   if (!page) home();
   else if (page === "course") (course(), (nav = "course"), (titleText = "הקורס | קול בטוח"));
@@ -331,11 +342,13 @@ function route() {
   } else notFound();
 
   document.body.dataset.view = page === "lesson" && getLesson(arg) ? "lesson" : page || "home";
+  if (document.body.dataset.view !== "lesson") main.prepend(pageKnowledge());
   document.title = titleText;
   document.querySelectorAll("#nav a").forEach((a) => (a.dataset.route === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   if (page !== "lesson") window.scrollTo(0, 0);
 }
 
+document.querySelector(".skip").addEventListener("click", e => { e.preventDefault(); main.focus(); main.scrollIntoView({block:"start"}); });
 window.addEventListener("hashchange", route);
 updateStreak();
 route();

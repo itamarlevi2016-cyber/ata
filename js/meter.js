@@ -36,6 +36,7 @@ export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {
   host.append(box);
 
   let mic = null;
+  let destroyed = false, generation = 0;
   let raf = 0;
   let frame = 0;
   let history = []; // {t, midi|null}
@@ -44,7 +45,7 @@ export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {
   let lastSeen = 0;
   const buf = new Float32Array(4096);
   const recent = [];
-  let voicedMs = 0;
+  let voicedMs = 0, lastFrameAt = 0;
   let voicedDone = false;
 
   const ctx2d = canvas.getContext && canvas.getContext("2d");
@@ -117,7 +118,9 @@ export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {
     mic.analyser.getFloatTimeDomainData(buf);
     const r = rms(buf);
     if (onVoiced && !voicedDone) {
-      if (r > 0.02) voicedMs += 33;
+      const elapsed = lastFrameAt ? Math.min(100, now-lastFrameAt) : 0;
+      lastFrameAt = now;
+      if (r > 0.02 && detectPitch(buf, mic.sampleRate)) voicedMs += elapsed;
       if (voicedMs >= 3000) {
         voicedDone = true;
         onVoiced();
@@ -154,11 +157,16 @@ export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {
   }
 
   async function start() {
+    if (destroyed) return;
+    const ticket = ++generation;
     msg.hidden = true;
     startBtn.disabled = true;
     try {
-      mic = await startMic();
+      const stream = await startMic();
+      if (destroyed || ticket !== generation) { stream.stop(); return; }
+      mic = stream;
     } catch (err) {
+      if (destroyed || ticket !== generation) return;
       msg.textContent = micErrorText(err);
       msg.hidden = false;
       startBtn.disabled = false;
@@ -169,11 +177,13 @@ export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {
     stopBtn.hidden = false;
     subEl.textContent = "מקשיבים… התחילו להמהם או לדבר";
     history = [];
+    lastFrameAt = 0;
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(onFrame);
   }
 
   function stop() {
+    generation++;
     if (mic) mic.stop();
     mic = null;
     cancelAnimationFrame(raf);
@@ -188,7 +198,9 @@ export function createMeter(host, { show = "both", rootMidi = 52, onVoiced } = {
   setTimeout(resizeCanvas, 0);
 
   return {
+    stop,
     destroy() {
+      destroyed = true;
       stop();
       window.removeEventListener("resize", resizeCanvas);
       box.remove();

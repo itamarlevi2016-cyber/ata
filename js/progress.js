@@ -2,12 +2,19 @@
 
 const KEY = "kol-bothe:v1";
 const defaults = () => ({
+  positions: {},
+  reflections: {},
+  lastLesson: null,
   completed: {}, // שיעור -> זמן השלמה אחרון
   runs: {}, // שיעור -> כמה פעמים הושלם
   days: [],
   range: "mid",
   tts: true,
   speed: 1,
+  speechVolume: 1,
+  demoVolume: .8,
+  musicEnabled: true,
+  musicVolume: .12,
   bestExhale: 0,
   points: 0,
   reps: 0, // חזרות שבוצעו
@@ -106,9 +113,9 @@ export const LEVELS = [
   { min: 0, name: "מתחיל", emoji: "🌱" },
   { min: 50, name: "מתחמם", emoji: "🔥" },
   { min: 150, name: "מתרגל", emoji: "🎯" },
-  { min: 300, name: "דובר בטוח", emoji: "🎤" },
-  { min: 600, name: "דובר מקצועי", emoji: "🌟" },
-  { min: 1000, name: "אמן הקול", emoji: "👑" },
+  { min: 300, name: "מתמיד", emoji: "🎤" },
+  { min: 600, name: "מתרגל מסור", emoji: "🌟" },
+  { min: 1000, name: "התמדה מצוינת", emoji: "👑" },
 ];
 
 export function levelFor(points) {
@@ -183,4 +190,12 @@ export function streak(days, now = new Date()) {
     d = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
   }
   return n;
+}
+
+export function savePosition(lessonId, index, tasks = []) {
+  save({ lastLesson: lessonId, positions: { ...load().positions, [lessonId]: { index, tasks } } });
+}
+export function clearPosition(lessonId) {
+  const positions = { ...load().positions }; delete positions[lessonId];
+  save({ positions, lastLesson: load().lastLesson === lessonId ? null : load().lastLesson });
 }

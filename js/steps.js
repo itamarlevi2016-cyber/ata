@@ -66,8 +66,11 @@ function breath(step, host, api) {
         ring.dataset.phase = phase;
         api.coach.breathe(phase, secs);
         for (let s = secs; s > 0; s--) {
+          while (api.isPaused?.() && my === token) await sleep(100);
+          if (my !== token) return;
           count.textContent = s;
           await sleep(1000);
+          while (api.isPaused?.() && my === token) await sleep(100);
           if (my !== token) return;
         }
       }
@@ -150,6 +153,7 @@ function timer(step, host, api) {
     btn.textContent = "▶ התחילו";
     rst.hidden = true;
   });
+  api.onPause?.(() => { if (iv) { stop(); btn.textContent = "▶ המשיכו"; } });
   api.onCleanup(stop);
   draw();
 }
@@ -158,13 +162,13 @@ function timer(step, host, api) {
 function stopwatch(step, host, api) {
   const best = store.get().bestExhale || 0;
   const time = h("div", { class: "ring-time", style: "position:static;font-size:3.4rem;text-align:center" }, "0.0");
-  const info = h("div", { class: "hint" }, best ? `השיא שלכם: ${best.toFixed(1)} שניות · יעד: ${step.goal}` : `יעד ראשון: ${step.goal} שניות`);
+  const info = h("div", { class: "hint" }, best ? `משך קודם שנרשם: ${best.toFixed(1)} שניות. הנוחות חשובה מהזמן.` : "נושפים בנוחות ועוצרים לפני מאמץ. אין צורך להגיע לשיא.");
   const btn = h("button", { class: "btn primary" }, "▶ התחילו");
-  host.append(h("div", { class: "exercise-title" }, "כמה זמן אפשר לנשוף על ״ססס״?"), time, info, h("div", { class: "controls" }, btn));
-  let t0 = 0, iv = null;
+  host.append(h("div", { class: "exercise-title" }, "נשיפה נינוחה על ״ססס״"), time, info, h("div", { class: "controls" }, btn));
+  let t0 = 0, iv = null, elapsed = 0;
   btn.addEventListener("click", () => {
     if (!iv) {
-      t0 = performance.now();
+      t0 = performance.now() - elapsed;
       btn.textContent = "⏹ סיימתי";
       iv = setInterval(() => (time.textContent = ((performance.now() - t0) / 1000).toFixed(1)), 100);
     } else {
@@ -179,11 +183,13 @@ function stopwatch(step, host, api) {
       const prev = store.get().bestExhale || 0;
       if (secs > prev) {
         store.save({ bestExhale: secs });
-        info.textContent = prev ? `🎉 שיא חדש! ${secs.toFixed(1)} שניות` : `יפה! ${secs.toFixed(1)} שניות. זה השיא הראשון שלכם`;
-      } else info.textContent = `${secs.toFixed(1)} שניות. השיא שלכם: ${prev.toFixed(1)}`;
+        info.textContent = `נרשמו ${secs.toFixed(1)} שניות. חשוב שהנשיפה תישאר נוחה.`;
+      } else info.textContent = `${secs.toFixed(1)} שניות. זה רישום של התרגול, לא ציון לאיכות הקול.`;
+      elapsed = 0;
       btn.textContent = "▶ שוב";
     }
   });
+  api.onPause?.(() => { if (iv) { elapsed = performance.now() - t0; clearInterval(iv); iv = null; btn.textContent = "▶ המשיכו"; } });
   api.onCleanup(() => clearInterval(iv));
 }
 
@@ -217,6 +223,7 @@ function micToggle(host, api, state) {
       btn.textContent = "הסתירו את המיקרופון";
     }
   });
+  api.onPause?.(() => meter?.stop());
   api.onCleanup(() => meter && meter.destroy());
   host.append(h("div", { class: "controls" }, btn), holder, h("div", { class: "hint" }, "עדיף להשתמש באוזניות כשמפעילים גם צליל וגם מיקרופון"));
 }
@@ -252,10 +259,12 @@ function scale(step, host, api) {
     cur = null;
     if (reachedEnd) {
       reachedEnd = false;
-      api.rep(1);
-      api.task();
+      confirmPractice.hidden = false;
     }
   };
+  const confirmPractice = h("button",{class:"btn primary",type:"button",hidden:true},"תרגלתי בקול בנוחות ✓");
+  confirmPractice.addEventListener("click",()=>{confirmPractice.hidden=true;api.rep(1);api.task();});
+  host.append(h("div",{class:"controls"},confirmPractice));
   const go = (noteDur) => {
     if (cur) cur.stop();
     reachedEnd = false;
@@ -272,6 +281,7 @@ function scale(step, host, api) {
   play.addEventListener("click", () => go(0.65));
   slow.addEventListener("click", () => go(1.0));
   stopBtn.addEventListener("click", () => cur && cur.stop());
+  api.onPause?.(() => cur && cur.stop());
   api.onCleanup(() => cur && cur.stop());
   if (step.mic) micToggle(host, api, state);
 }
@@ -296,14 +306,16 @@ function glide(step, host, api) {
   };
   let cur = null;
   let reachedEnd = false;
+  const confirmPractice = h("button",{class:"btn primary",type:"button",hidden:true},"תרגלתי בקול בנוחות ✓");
+  confirmPractice.addEventListener("click",()=>{confirmPractice.hidden=true;api.rep(1);api.task();});
+  host.append(h("div",{class:"controls"},confirmPractice));
   const finish = () => {
     place(0);
     stopBtn.hidden = true;
     cur = null;
     if (reachedEnd) {
       reachedEnd = false;
-      api.rep(1);
-      api.task();
+      confirmPractice.hidden = false;
     }
   };
   play.addEventListener("click", () => {
@@ -322,6 +334,7 @@ function glide(step, host, api) {
     });
   });
   stopBtn.addEventListener("click", () => cur && cur.stop());
+  api.onPause?.(() => cur && cur.stop());
   api.onCleanup(() => cur && cur.stop());
   if (step.mic) micToggle(host, api, state);
 }
@@ -398,6 +411,7 @@ function meterStep(step, host, api) {
       api.task();
     },
   });
+  api.onPause?.(() => m.stop());
   api.onCleanup(() => m.destroy());
   if (step.hint) host.append(h("div", { class: "hint" }, step.hint));
 }

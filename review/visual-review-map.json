@@ -1,0 +1,704 @@
+[
+  {
+    "lesson": "intro",
+    "step": 1,
+    "type": "say",
+    "act": "wave",
+    "speech": "original-neutral-local-mouth",
+    "demo": "wave",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "intro",
+    "step": 2,
+    "type": "say",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "intro",
+    "step": 3,
+    "type": "range",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "intro",
+    "step": 4,
+    "type": "meter",
+    "act": "hum",
+    "speech": "original-neutral-local-mouth",
+    "demo": "hum",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "intro",
+    "step": 5,
+    "type": "say",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "intro",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "posture",
+    "step": 1,
+    "type": "say",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "posture",
+    "step": 2,
+    "type": "say",
+    "act": "posture",
+    "speech": "original-neutral-local-mouth",
+    "demo": "posture",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "posture",
+    "step": 3,
+    "type": "timer",
+    "act": "shoulders",
+    "speech": "original-neutral-local-mouth",
+    "demo": "shoulders",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "posture",
+    "step": 4,
+    "type": "timer",
+    "act": "neck",
+    "speech": "original-neutral-local-mouth",
+    "demo": "neck",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "posture",
+    "step": 5,
+    "type": "timer",
+    "act": "jaw",
+    "speech": "original-neutral-local-mouth",
+    "demo": "jaw",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "posture",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "breath",
+    "step": 1,
+    "type": "say",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "breath",
+    "step": 2,
+    "type": "say",
+    "act": "belly",
+    "speech": "original-neutral-local-mouth",
+    "demo": "belly",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "breath",
+    "step": 3,
+    "type": "breath",
+    "act": "belly",
+    "speech": "original-neutral-local-mouth",
+    "demo": "belly",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "breath",
+    "step": 4,
+    "type": "stopwatch",
+    "act": "belly",
+    "speech": "original-neutral-local-mouth",
+    "demo": "belly",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "breath",
+    "step": 5,
+    "type": "breath",
+    "act": "belly",
+    "speech": "original-neutral-local-mouth",
+    "demo": "belly",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "breath",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 1,
+    "type": "say",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 2,
+    "type": "timer",
+    "act": "hum",
+    "speech": "original-neutral-local-mouth",
+    "demo": "hum",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 3,
+    "type": "timer",
+    "act": "trill",
+    "speech": "original-neutral-local-mouth",
+    "demo": "trill",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 4,
+    "type": "glide",
+    "act": "siren",
+    "speech": "original-neutral-local-mouth",
+    "demo": "siren",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 5,
+    "type": "say",
+    "act": "straw",
+    "speech": "original-neutral-local-mouth",
+    "demo": "straw",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 6,
+    "type": "timer",
+    "act": "straw",
+    "speech": "original-neutral-local-mouth",
+    "demo": "straw",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 7,
+    "type": "scale",
+    "act": "scale",
+    "speech": "original-neutral-local-mouth",
+    "demo": "scale",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "warmup",
+    "step": 8,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 1,
+    "type": "say",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 2,
+    "type": "repeat",
+    "act": "vowels",
+    "speech": "original-neutral-local-mouth",
+    "demo": "vowels",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 3,
+    "type": "repeat",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 4,
+    "type": "repeat",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 5,
+    "type": "timer",
+    "act": "trill",
+    "speech": "original-neutral-local-mouth",
+    "demo": "trill",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 6,
+    "type": "say",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 7,
+    "type": "read",
+    "act": "palm",
+    "speech": "original-neutral-local-mouth",
+    "demo": "palm",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "diction",
+    "step": 8,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "projection",
+    "step": 1,
+    "type": "say",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "projection",
+    "step": 2,
+    "type": "say",
+    "act": "project",
+    "speech": "original-neutral-local-mouth",
+    "demo": "project",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "projection",
+    "step": 3,
+    "type": "meter",
+    "act": "project",
+    "speech": "original-neutral-local-mouth",
+    "demo": "project",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "projection",
+    "step": 4,
+    "type": "repeat",
+    "act": "project",
+    "speech": "original-neutral-local-mouth",
+    "demo": "project",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "projection",
+    "step": 5,
+    "type": "repeat",
+    "act": "project",
+    "speech": "original-neutral-local-mouth",
+    "demo": "project",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "projection",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "resonance",
+    "step": 1,
+    "type": "say",
+    "act": "hum",
+    "speech": "original-neutral-local-mouth",
+    "demo": "hum",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "resonance",
+    "step": 2,
+    "type": "scale",
+    "act": "hum",
+    "speech": "original-neutral-local-mouth",
+    "demo": "hum",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "resonance",
+    "step": 3,
+    "type": "timer",
+    "act": "sigh",
+    "speech": "original-neutral-local-mouth",
+    "demo": "sigh",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "resonance",
+    "step": 4,
+    "type": "repeat",
+    "act": "hum",
+    "speech": "original-neutral-local-mouth",
+    "demo": "hum",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "resonance",
+    "step": 5,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "pace",
+    "step": 1,
+    "type": "say",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "pace",
+    "step": 2,
+    "type": "say",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "pace",
+    "step": 3,
+    "type": "read",
+    "act": "palm",
+    "speech": "original-neutral-local-mouth",
+    "demo": "palm",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "pace",
+    "step": 4,
+    "type": "repeat",
+    "act": "point",
+    "speech": "original-neutral-local-mouth",
+    "demo": "point",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "pace",
+    "step": 5,
+    "type": "say",
+    "act": "wave",
+    "speech": "original-neutral-local-mouth",
+    "demo": "wave",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "pace",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "flow",
+    "step": 1,
+    "type": "say",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "flow",
+    "step": 2,
+    "type": "breath",
+    "act": "flow",
+    "speech": "original-neutral-local-mouth",
+    "demo": "flow",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "flow",
+    "step": 3,
+    "type": "timer",
+    "act": "softvoice",
+    "speech": "original-neutral-local-mouth",
+    "demo": "softvoice",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "flow",
+    "step": 4,
+    "type": "repeat",
+    "act": "transfer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "transfer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "flow",
+    "step": 5,
+    "type": "read",
+    "act": "speech",
+    "speech": "original-neutral-local-mouth",
+    "demo": "speech",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "flow",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "transfer",
+    "step": 1,
+    "type": "say",
+    "act": "transfer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "transfer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "transfer",
+    "step": 2,
+    "type": "timer",
+    "act": "hum",
+    "speech": "original-neutral-local-mouth",
+    "demo": "hum",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "transfer",
+    "step": 3,
+    "type": "repeat",
+    "act": "transfer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "transfer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "transfer",
+    "step": 4,
+    "type": "repeat",
+    "act": "speech",
+    "speech": "original-neutral-local-mouth",
+    "demo": "speech",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "transfer",
+    "step": 5,
+    "type": "read",
+    "act": "speech",
+    "speech": "original-neutral-local-mouth",
+    "demo": "speech",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "transfer",
+    "step": 6,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 1,
+    "type": "say",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 2,
+    "type": "say",
+    "act": "posture",
+    "speech": "original-neutral-local-mouth",
+    "demo": "posture",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 3,
+    "type": "breath",
+    "act": "belly",
+    "speech": "original-neutral-local-mouth",
+    "demo": "belly",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 4,
+    "type": "repeat",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 5,
+    "type": "timer",
+    "act": "sigh",
+    "speech": "original-neutral-local-mouth",
+    "demo": "sigh",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 6,
+    "type": "say",
+    "act": "rest",
+    "speech": "original-neutral-local-mouth",
+    "demo": "rest",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "stage",
+    "step": 7,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 1,
+    "type": "say",
+    "act": "wave",
+    "speech": "original-neutral-local-mouth",
+    "demo": "wave",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 2,
+    "type": "breath",
+    "act": "belly",
+    "speech": "original-neutral-local-mouth",
+    "demo": "belly",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 3,
+    "type": "timer",
+    "act": "trill",
+    "speech": "original-neutral-local-mouth",
+    "demo": "trill",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 4,
+    "type": "timer",
+    "act": "straw",
+    "speech": "original-neutral-local-mouth",
+    "demo": "straw",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 5,
+    "type": "glide",
+    "act": "siren",
+    "speech": "original-neutral-local-mouth",
+    "demo": "siren",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 6,
+    "type": "scale",
+    "act": "scale",
+    "speech": "original-neutral-local-mouth",
+    "demo": "scale",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 7,
+    "type": "repeat",
+    "act": "present",
+    "speech": "original-neutral-local-mouth",
+    "demo": "present",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  },
+  {
+    "lesson": "daily",
+    "step": 8,
+    "type": "say",
+    "act": "cheer",
+    "speech": "original-neutral-local-mouth",
+    "demo": "cheer",
+    "visualVerification": "native SVG stills reviewed; browser layout pending"
+  }
+]

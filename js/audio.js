@@ -1,4 +1,5 @@
 // צלילי הדגמה, מיקרופון והקראה (קריינות של המכשיר).
+import * as store from "./progress.js";
 import { midiToFreq } from "./pitch.js";
 
 let ctx = null;
@@ -9,7 +10,7 @@ export function getCtx() {
     const AC = window.AudioContext || window.webkitAudioContext;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = 0.9;
+    master.gain.value = store.get().demoVolume ?? .8;
     master.connect(ctx.destination);
   }
   if (ctx.state === "suspended") ctx.resume();
@@ -179,6 +180,7 @@ export const tts = {
       u.lang = this.voice.lang || "he-IL";
       u.rate = rate;
       u.pitch = 1.0;
+      u.volume = store.get().speechVolume ?? 1;
       if (i === 0) u.onstart = () => onstart && onstart();
       if (i === chunks.length - 1) u.onend = u.onerror = () => onend && onend();
       speechSynthesis.speak(u);
@@ -189,3 +191,5 @@ export const tts = {
     if (this.supported) speechSynthesis.cancel();
   },
 };
+
+export function setDemoVolume(value) { if (master) master.gain.value = Math.max(0, Math.min(1, value)); }
