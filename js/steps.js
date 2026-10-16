@@ -6,8 +6,11 @@ import * as store from "./progress.js";
 import { RANGES, midiToFreq, noteName } from "./pitch.js";
 import { playSequence, playGlide, chime, getCtx } from "./audio.js";
 import { createMeter } from "./meter.js";
+import { startMic, micErrorText } from "./audio.js";
+import { rms } from "./pitch.js";
+import { tokenize, wpmFor, paceZone, PACE_ZONES, itemMs, analyzeSpeech } from "./pace.js";
 
-export const TASK_TYPES = new Set(["breath", "timer", "stopwatch", "scale", "glide", "repeat", "read", "meter"]);
+export const TASK_TYPES = new Set(["breath", "timer", "stopwatch", "scale", "glide", "repeat", "read", "meter", "paced", "record"]);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -416,4 +419,162 @@ function meterStep(step, host, api) {
   if (step.hint) host.append(h("div", { class: "hint" }, step.hint));
 }
 
-export const RENDERERS = { say, range, breath, timer, stopwatch, scale, glide, repeat, read, meter: meterStep };
+// ---------- קצב קריאה: מדידה או קריאה עם סמן ----------
+// mode "measure": קוראים בקצב שלכם ומודדים מילים לדקה.
+// mode "follow": סמן עובר על המילים בקצב היעד (step.wpm), וקוראים יחד איתו.
+function paceGauge(wpm) {
+  const zone = paceZone(wpm);
+  const pos = Math.max(0, Math.min(100, (wpm / 200) * 100));
+  return h(
+    "div",
+    { class: "pace-gauge" },
+    h("div", { class: "pace-bar" }, PACE_ZONES.map((z, i) => h("span", { class: `pace-zone z-${z.key}` }, z.label)), h("i", { class: "pace-mark", style: `inset-inline-start:${pos}%` })),
+    h("div", { class: "pace-result" }, h("b", null, `${wpm} מילים לדקה`), ` · ${zone.label}. ${zone.note}`)
+  );
+}
+
+function paced(step, host, api) {
+  const items = tokenize(step.text);
+  const words = items.filter((t) => t.w).length;
+  const mode = step.mode || "follow";
+  const spans = items.map((t) => (t.pause ? h("span", { class: `pace-pause${t.pause === 2 ? " long" : ""}` }, "⏸") : h("span", { class: "pace-word" }, t.w)));
+  const text = h("div", { class: "read paced" }, spans.flatMap((s) => [s, " "]));
+  const result = h("div", { class: "pace-out" });
+  host.append(h("div", { class: "exercise-title" }, step.label || (mode === "measure" ? "מדדו את הקצב שלכם" : `קראו יחד עם הסמן · ${step.wpm} מילים לדקה`)), text, result);
+
+  if (mode === "measure") {
+    const btn = h("button", { class: "btn primary" }, "▶ התחלתי לקרוא");
+    const clock = h("span", { class: "pace-clock" }, "0");
+    host.append(h("div", { class: "hint" }, `${words} מילים. קראו בקול בקצב שבו הייתם מסבירים לתלמידים, ולחצו "סיימתי" בסוף.`), h("div", { class: "controls" }, btn, clock));
+    let t0 = 0, iv = null;
+    btn.addEventListener("click", () => {
+      if (!iv) {
+        t0 = performance.now();
+        btn.textContent = "⏹ סיימתי";
+        iv = setInterval(() => (clock.textContent = String(Math.round((performance.now() - t0) / 1000))), 250);
+        return;
+      }
+      clearInterval(iv); iv = null;
+      const secs = (performance.now() - t0) / 1000;
+      const wpm = wpmFor(words, secs);
+      btn.textContent = "▶ שוב";
+      clock.textContent = "";
+      result.replaceChildren(paceGauge(wpm));
+      if (secs >= 3 && wpm > 0) {
+        const log = [...(store.get().paceLog || []), { d: new Date().toISOString().slice(0, 10), wpm }].slice(-30);
+        store.save({ paceLog: log });
+        api.rep(1);
+        api.task();
+      }
+    });
+    api.onPause?.(() => { if (iv) { clearInterval(iv); iv = null; btn.textContent = "▶ התחלתי לקרוא"; clock.textContent = ""; } });
+    api.onCleanup(() => clearInterval(iv));
+    return;
+  }
+
+  let wpm = step.wpm || 110, i = 0, token = 0, running = false, finished = false;
+  const wpmLabel = h("span", { class: "pace-wpm" }, `${wpm} מילים לדקה`);
+  const slower = h("button", { class: "btn ghost small", type: "button", "aria-label": "לאט יותר" }, "− לאט יותר");
+  const faster = h("button", { class: "btn ghost small", type: "button", "aria-label": "מהר יותר" }, "מהר יותר +");
+  const btn = h("button", { class: "btn primary" }, "▶ התחילו");
+  const confirm = h("button", { class: "btn primary", type: "button", hidden: true }, "קראתי יחד עם הסמן ✓");
+  host.append(h("div", { class: "controls pace-controls" }, slower, wpmLabel, faster), h("div", { class: "controls" }, btn, confirm), h("div", { class: "hint" }, "קראו בקול את המילה שמודגשת. בסימן ⏸ עוצרים ושותקים עד שהסמן ממשיך."));
+  const base = items.map((t) => (t.pause ? `pace-pause${t.pause === 2 ? " long" : ""}` : "pace-word"));
+  const mark = (idx) => spans.forEach((s, k) => s.setAttribute("class", `${base[k]}${k === idx ? " on" : k < idx ? " done" : ""}`));
+  const setWpm = (v) => { wpm = Math.max(60, Math.min(200, v)); wpmLabel.textContent = `${wpm} מילים לדקה`; };
+  slower.addEventListener("click", () => setWpm(wpm - 10));
+  faster.addEventListener("click", () => setWpm(wpm + 10));
+  async function run() {
+    const my = ++token;
+    running = true;
+    btn.textContent = "⏸ עצרו";
+    while (i < items.length) {
+      if (my !== token) return;
+      mark(i);
+      spans[i].scrollIntoView?.({ block: "nearest" });
+      await sleep(itemMs(items[i], wpm));
+      if (my !== token) return;
+      i++;
+    }
+    running = false;
+    finished = true;
+    mark(-1);
+    btn.textContent = "▶ מההתחלה";
+    i = 0;
+    confirm.hidden = false;
+    chime();
+  }
+  btn.addEventListener("click", () => {
+    if (running) { token++; running = false; btn.textContent = "▶ המשיכו"; return; }
+    if (finished) finished = false;
+    run();
+  });
+  confirm.addEventListener("click", () => { confirm.hidden = true; api.rep(1); api.task(); });
+  api.onPause?.(() => { if (running) { token++; running = false; btn.textContent = "▶ המשיכו"; } });
+  api.onCleanup(() => token++);
+}
+
+// ---------- הקלטה עצמית: דיבור, שקט והפסקות ----------
+// ההקלטה נשארת בזיכרון של הדף בלבד ונמחקת במעבר שלב.
+function record(step, host, api) {
+  const max = step.secs || 30;
+  const btn = h("button", { class: "btn primary" }, "🎙️ הקליטו");
+  const clock = h("span", { class: "pace-clock" }, "");
+  const msg = h("div", { class: "mic-msg", hidden: true });
+  const out = h("div", { class: "pace-out" });
+  host.append(h("div", { class: "exercise-title" }, step.label || "הקליטו את עצמכם"), h("div", { class: "hint" }, step.prompt || `דברו עד ${max} שניות. בסוף נראה איפה היו הפסקות ואיפה המילים רדפו זו את זו.`), msg, h("div", { class: "controls" }, btn, clock), out);
+  let mic = null, rec = null, iv = null, frames = [], chunks = [], t0 = 0, url = null;
+  const buf = new Float32Array(2048);
+  function show(blob) {
+    const a = analyzeSpeech(frames);
+    const timeline = h("div", { class: "pace-timeline", "aria-label": "דיבור ושקט לאורך ההקלטה" }, a.segments.map((s) => h("i", { class: s.on ? "on" : "off", style: `width:${Math.max(0.5, ((s.end - s.start) / a.total) * 100)}%` })));
+    const per10 = a.total ? (a.pauses / a.total) * 10 : 0;
+    const verdict = a.total < 5 ? "הקלטה קצרה מדי כדי להסיק משהו. נסו שוב עם כמה משפטים." : a.pauses === 0 ? "לא הייתה אף הפסקה של יותר מחצי שנייה. המאזינים לא קיבלו רגע לעכל." : per10 < 1 ? "יש הפסקות, אבל מעטות. נסו לעצור בסוף כל משפט." : a.longestPause < 1 ? "יש הפסקות קצרות. אחרי רעיון חשוב כדאי הפסקה של שנייה ויותר." : "קצב טוב: יש הפסקות, וחלקן ארוכות מספיק כדי שהתלמידים יספיקו לחשוב.";
+    out.replaceChildren(
+      timeline,
+      h("div", { class: "pace-legend" }, h("span", { class: "on" }, "דיבור"), h("span", { class: "off" }, "שקט")),
+      h("div", { class: "summary" },
+        h("div", { class: "sum-tile" }, h("b", null, String(a.pauses)), "הפסקות"),
+        h("div", { class: "sum-tile" }, h("b", null, `${a.longestPause.toFixed(1)}״`), "ההפסקה הארוכה"),
+        h("div", { class: "sum-tile" }, h("b", null, `${Math.round(a.ratio * 100)}%`), "מהזמן דיברתם")),
+      h("p", { class: "pace-result" }, verdict),
+      blob && h("audio", { controls: true, src: (url = URL.createObjectURL(blob)) }),
+      blob && h("div", { class: "hint" }, "הקשיבו פעם אחת רק להפסקות. ההקלטה לא נשמרת ונמחקת במעבר לשלב הבא.")
+    );
+    if (a.total >= 5) { api.rep(1); api.task(); }
+  }
+  function stop() {
+    clearInterval(iv); iv = null;
+    const recorder = rec; rec = null;
+    btn.textContent = "🎙️ הקליטו שוב";
+    clock.textContent = "";
+    if (recorder && recorder.state !== "inactive") {
+      recorder.onstop = () => { show(chunks.length ? new Blob(chunks, { type: recorder.mimeType }) : null); mic?.stop(); mic = null; };
+      recorder.stop();
+    } else { show(null); mic?.stop(); mic = null; }
+  }
+  btn.addEventListener("click", async () => {
+    if (iv) { stop(); return; }
+    msg.hidden = true; btn.disabled = true;
+    if (url) { URL.revokeObjectURL(url); url = null; }
+    try { mic = await startMic(); } catch (err) { msg.textContent = micErrorText(err); msg.hidden = false; btn.disabled = false; return; }
+    btn.disabled = false;
+    frames = []; chunks = []; out.replaceChildren();
+    if (typeof MediaRecorder !== "undefined" && mic.stream) {
+      try { rec = new MediaRecorder(mic.stream); rec.ondataavailable = (e) => e.data.size && chunks.push(e.data); rec.start(250); } catch (_) { rec = null; }
+    }
+    t0 = performance.now();
+    btn.textContent = "⏹ סיימתי";
+    iv = setInterval(() => {
+      mic.analyser.getFloatTimeDomainData(buf);
+      frames.push(rms(buf));
+      const secs = (performance.now() - t0) / 1000;
+      clock.textContent = `${Math.round(secs)} / ${max}`;
+      if (secs >= max) stop();
+    }, 50);
+  });
+  api.onPause?.(() => { if (iv) stop(); });
+  api.onCleanup(() => { if (iv) { clearInterval(iv); iv = null; } rec?.state !== "inactive" && rec?.stop(); mic?.stop(); if (url) URL.revokeObjectURL(url); });
+}
+
+export const RENDERERS = { say, range, breath, timer, stopwatch, scale, glide, repeat, read, meter: meterStep, paced, record };

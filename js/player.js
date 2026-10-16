@@ -33,6 +33,8 @@ export function mountPlayer(lesson, main, { onExit }) {
   let paused = false, speechMode = null;
   const speechTools = h("div", { class: "speech-tools" }, pauseSpeech, listenAgain, speechStatus);
   const guideHost = h("div", { class: "guide-host" });
+  const reminder = h("div", { class: "guide-reminder", hidden: true });
+  let hasReminder = false;
   const bubble = h("div", { class: "bubble" }, bubbleText);
   const exercise = h("div", { class: "exercise" });
   const demo = h("div", { class: "coach-demo", hidden: true });
@@ -82,7 +84,7 @@ export function mountPlayer(lesson, main, { onExit }) {
   speedSel.addEventListener("change", () => { store.save({ speed: Number(speedSel.value) }); setPhase("explain"); speak(); });
   voice.loadManifest().then(() => { if (alive) voiceBox.hidden = false; });
 
-  const guidePanel = h("section", {id:"guide-panel",role:"tabpanel","aria-labelledby":"guide-tab"},flow,bubble,speechTools,enableAudio,guideHost,demo,beginPractice,exercise);
+  const guidePanel = h("section", {id:"guide-panel",role:"tabpanel","aria-labelledby":"guide-tab"},flow,bubble,speechTools,enableAudio,guideHost,demo,beginPractice,reminder,exercise);
   const root = h(
     "div",
     { class: "wrap player" },
@@ -127,6 +129,7 @@ export function mountPlayer(lesson, main, { onExit }) {
     });
     demo.hidden = !(phase === "demo" && hasDemo);
     exercise.hidden = TASK_TYPES.has(step.t) && phase !== "practice";
+    reminder.hidden = !(phase === "practice" && hasReminder);
     beginPractice.hidden = !TASK_TYPES.has(step.t) || phase === "practice";
     beginPractice.textContent = phase === "explain" && hasDemo ? "צפו בהדגמה ◀" : "הבנתי, לתרגול ◀";
     next.className = beginPractice.hidden ? "btn primary big" : "btn ghost big";
@@ -280,7 +283,10 @@ export function mountPlayer(lesson, main, { onExit }) {
     step = lesson.steps[i];
     lessonPhase = null; practiceStopped = false;
     knowledgePanel.replaceChildren(renderKnowledge(lesson,step));
-    guideHost.replaceChildren(...[renderGuide(guideFor(lesson.id, i))].filter(Boolean));
+    const guide = guideFor(lesson.id, i);
+    guideHost.replaceChildren(...[renderGuide(guide)].filter(Boolean));
+    hasReminder = !!(guide?.how?.length && TASK_TYPES.has(step.t));
+    reminder.replaceChildren(...(hasReminder ? [h("b", null, "תזכורת מהירה"), h("ol", null, guide.how.slice(0, 4).map((t) => h("li", null, t)))] : []));
     selectTab(false);
     store.savePosition(lesson.id, idx, [...doneTasks]);
     mission.textContent = `⭐ ${doneTasks.size}/${totalTasks} משימות`;
@@ -365,11 +371,12 @@ export function mountPlayer(lesson, main, { onExit }) {
     store.markComplete(lesson.id);
     store.clearPosition(lesson.id);
     flow.hidden = beginPractice.hidden = demo.hidden = resumeBanner.hidden = true;
-    guideHost.replaceChildren();
+    guideHost.replaceChildren(); reminder.replaceChildren(); reminder.hidden = true; hasReminder = false;
     exercise.hidden = false;
     selectTab(false);
     const streak = store.streak(store.get().days);
-    const nextLesson = LESSONS[LESSONS.findIndex((l) => l.id === lesson.id) + 1];
+    const sameTrack = LESSONS.filter((l) => l.track === lesson.track);
+    const nextLesson = sameTrack[sameTrack.findIndex((l) => l.id === lesson.id) + 1];
     [...dots.children].forEach((d) => (d.className = "on"));
     coach.mood("cheer");
     coach.act("cheer");

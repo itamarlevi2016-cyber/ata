@@ -824,3 +824,49 @@ body[data-view="lesson"] .background-music, body[data-view="tools"] .background-
 .coach-demo:not(:has(.demo-illustration)) { grid-template-columns:1fr; }
 .coach-demo:not(:has(.demo-illustration)) .demo-copy { grid-column:1; }
 .voice-box input[type="range"] { accent-color:var(--brand); }
+
+/* ---- מסלולים ---- */
+.tracks { display:grid; gap:36px; }
+.track-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.track-head .track-icon { font-size:2rem; width:56px; height:56px; display:grid; place-items:center; border-radius:16px; background:var(--brand-soft); flex:none; }
+.track-head h3 { margin:0; font-size:1.25rem; }
+.track-head p { margin:2px 0 0; color:var(--ink-2); font-size:.95rem; }
+.track-head .pill { margin-inline-start:auto; flex:none; }
+@media (max-width:600px) { .track-head { flex-wrap:wrap; } .track-head .pill { margin-inline-start:70px; } }
+
+/* ---- תזכורת מהירה בזמן תרגול ---- */
+.guide-reminder { background:var(--bg-2); border:1px solid var(--line); border-radius:var(--r-sm); padding:12px 16px; font-size:.95rem; line-height:1.6; }
+.guide-reminder b { display:block; margin-bottom:4px; color:var(--brand); }
+.guide-reminder ol { margin:0; padding-inline-start:20px; }
+.guide-reminder[hidden] { display:none; }
+
+/* ---- קצב קריאה ---- */
+.read.paced { font-size:1.3rem; line-height:2.1; }
+.pace-word { padding:2px 4px; border-radius:6px; transition:background .15s, color .15s; }
+.pace-word.on { background:var(--accent); color:#fff; }
+.pace-word.done { color:var(--muted); }
+.pace-pause { color:var(--brand); font-size:.85em; opacity:.6; padding:0 2px; }
+.pace-pause.long { opacity:1; font-weight:700; }
+.pace-pause.on { background:var(--brand-soft); border-radius:6px; opacity:1; }
+.pace-controls { gap:12px; }
+.pace-wpm { font-weight:800; min-width:9ch; text-align:center; font-variant-numeric:tabular-nums; }
+.pace-clock { font-weight:800; font-variant-numeric:tabular-nums; color:var(--muted); min-width:3ch; }
+.pace-out:empty { display:none; }
+.pace-gauge { margin-top:16px; }
+.pace-bar { position:relative; display:flex; height:34px; border-radius:999px; overflow:hidden; border:1px solid var(--line); font-size:.78rem; font-weight:700; }
+.pace-zone { display:grid; place-items:center; color:#1f3a3d; }
+.pace-zone.z-slow { flex:90; background:#dbe9ee; }
+.pace-zone.z-teach { flex:40; background:#bfe6cf; }
+.pace-zone.z-talk { flex:30; background:#ffe3a8; }
+.pace-zone.z-fast { flex:40; background:#ffc9b8; }
+.pace-mark { position:absolute; top:-4px; bottom:-4px; width:4px; margin-inline-start:-2px; background:var(--ink); border-radius:2px; }
+.pace-result { margin-top:10px; line-height:1.6; }
+.pace-timeline { display:flex; height:28px; border-radius:8px; overflow:hidden; border:1px solid var(--line); margin-top:4px; }
+.pace-timeline i { display:block; height:100%; }
+.pace-timeline i.on { background:var(--brand); }
+.pace-timeline i.off { background:var(--bg-2); }
+.pace-legend { display:flex; gap:16px; font-size:.85rem; color:var(--muted); margin:6px 0 10px; }
+.pace-legend span::before { content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-inline-end:6px; vertical-align:-1px; background:var(--bg-2); border:1px solid var(--line); }
+.pace-legend .on::before { background:var(--brand); border-color:var(--brand); }
+.pace-out audio { width:100%; margin-top:14px; }
+@media (max-width:600px) { .pace-zone { font-size:.68rem; } .read.paced { font-size:1.15rem; } }

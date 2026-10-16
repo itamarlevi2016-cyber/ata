@@ -157,3 +157,33 @@ test("לכל הוראה בשיעור יש הסבר מפורט", async () => {
   });
   for (const key of Object.keys(GUIDES)) assert.ok(keys.has(key), `${key} לא מתאים לשום שלב`);
 });
+
+test("חישובי קצב: מילים לדקה, אזורים וניתוח הפסקות", async () => {
+  const { tokenize, wordCount, wpmFor, paceZone, itemMs, analyzeSpeech } = await import("../js/pace.js");
+  assert.deepEqual(tokenize("שלום / לכולם // *טוב*"), [{ w: "שלום" }, { pause: 1 }, { w: "לכולם" }, { pause: 2 }, { w: "טוב" }]);
+  assert.equal(wordCount("אחת שתיים / שלוש"), 3);
+  assert.equal(wpmFor(55, 30), 110);
+  assert.equal(wpmFor(10, 0), 0);
+  assert.equal(paceZone(80).key, "slow");
+  assert.equal(paceZone(115).key, "teach");
+  assert.equal(paceZone(145).key, "talk");
+  assert.equal(paceZone(190).key, "fast");
+  assert.ok(itemMs({ pause: 2 }, 120) > itemMs({ pause: 1 }, 120) && itemMs({ pause: 1 }, 120) > itemMs({ w: "מילה" }, 120));
+  // 2 שניות דיבור, שנייה שקט, 2 שניות דיבור, בדגימה כל 50 מ"ש
+  const frames = [...Array(40).fill(0.1), ...Array(20).fill(0), ...Array(40).fill(0.1)];
+  const a = analyzeSpeech(frames);
+  assert.equal(a.pauses, 1);
+  assert.ok(Math.abs(a.longestPause - 1) < 0.11);
+  assert.ok(a.ratio > 0.75 && a.ratio < 0.85);
+  // שקט קצרצר באמצע מילה אינו הפסקה, ושקט בסוף ההקלטה לא נספר
+  const b = analyzeSpeech([...Array(40).fill(0.1), 0, 0, ...Array(40).fill(0.1), ...Array(30).fill(0)]);
+  assert.equal(b.pauses, 0);
+});
+
+test("לכל שיעור יש מסלול, ולמסלול ההוראה יש חמישה שיעורים", async () => {
+  const { LESSONS, TRACKS, trackLessons } = await import("../js/data.js");
+  const ids = new Set(TRACKS.map((t) => t.id));
+  for (const l of LESSONS) assert.ok(ids.has(l.track), `${l.id} בלי מסלול`);
+  assert.equal(trackLessons("teach").length, 5);
+  assert.equal(trackLessons("voice").length, 11);
+});

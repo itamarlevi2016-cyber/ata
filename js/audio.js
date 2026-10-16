@@ -124,6 +124,7 @@ export async function startMic() {
   source.connect(analyser);
   return {
     analyser,
+    stream,
     sampleRate: c.sampleRate,
     stop() {
       stream.getTracks().forEach((t) => t.stop());

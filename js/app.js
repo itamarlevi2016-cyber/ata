@@ -1,7 +1,7 @@
 // ניווט ועמודי האתר.
 import { h, $ } from "./ui.js";
 import * as store from "./progress.js";
-import { LESSONS, getLesson } from "./data.js";
+import { LESSONS, TRACKS, trackLessons, getLesson } from "./data.js";
 import { createCoach } from "./coach.js";
 import { tts, playSequence } from "./audio.js";
 import { mountPlayer } from "./player.js";
@@ -99,7 +99,7 @@ function home() {
   const course = h(
     "section",
     { class: "block alt" },
-    h("div", { class: "wrap" }, h("div", { class: "section-head" }, h("h2", null, "המסלול המלא"), h("p", null, `${LESSONS.length} שיעורים קצרים, מהיסודות ועד הבמה. מומלץ ללכת לפי הסדר.`)), lessonGrid())
+    h("div", { class: "wrap" }, h("div", { class: "section-head" }, h("h2", null, "שני מסלולים"), h("p", null, `${LESSONS.length} שיעורים קצרים בשני מסלולים: פיתוח קול, ודיבור איטי וברור למי שמוסר שיעור. אפשר להתחיל מכל מסלול.`)), lessonGrid())
   );
 
   const faq = h(
@@ -125,10 +125,20 @@ const qa = (q, a) => h("details", null, h("summary", null, q), h("p", null, a));
 
 function lessonGrid() {
   const done = store.get().completed;
+  return h("div", { class: "tracks" }, TRACKS.map((t) => {
+    const list = trackLessons(t.id);
+    const count = list.filter((l) => done[l.id]).length;
+    return h("section", { class: "track", id: `track-${t.id}` },
+      h("div", { class: "track-head" }, h("span", { class: "track-icon" }, t.icon), h("div", null, h("h3", null, t.title), h("p", null, t.subtitle)), h("span", { class: "pill" }, `✓ ${count}/${list.length}`)),
+      trackGrid(list, done));
+  }));
+}
+
+function trackGrid(list, done) {
   return h(
     "div",
     { class: "lessons" },
-    LESSONS.map((l, i) =>
+    list.map((l, i) =>
       h(
         "a",
         { class: `lesson-card${done[l.id] ? " done" : ""}`, href: `#/lesson/${l.id}` },
@@ -151,7 +161,7 @@ function course() {
       "div",
       { class: "wrap page" },
       h("h1", { class: "page-title" }, "הקורס"),
-      h("p", { class: "page-sub" }, `${LESSONS.length} שיעורים קצרים. כל אחד לוקח כמה דקות.`),
+      h("p", { class: "page-sub" }, `${LESSONS.length} שיעורים קצרים בשני מסלולים. כל שיעור לוקח כמה דקות, ואפשר להתחיל מכל מסלול.`),
       h("div", { class: "progress-summary" }, h("span", { class: "pill" }, `✓ ${count} מתוך ${LESSONS.length} שיעורים`), h("a", { class: "btn small", href: "#/lesson/daily" }, "☀️ תרגול יומי")),
       lessonGrid()
     )
@@ -162,6 +172,7 @@ function course() {
 function stats() {
   const s = store.stats();
   const done = LESSONS.filter((l) => s.completed[l.id]).length;
+  const lastPace = (store.get().paceLog || []).at(-1);
   const lv = s.level;
   const days = store.lastDays(14);
   const maxPts = Math.max(30, ...days.map((d) => d.points));
@@ -223,7 +234,8 @@ function stats() {
         tile("✅", s.tasks, "משימות שהושלמו", `${s.tasks * 10} נקודות`),
         tile("🔥", s.streak, "ימים ברצף", s.bestStreak ? `שיא: ${s.bestStreak}` : ""),
         tile("📅", s.days, "ימי תרגול"),
-        tile("🌬️", s.bestExhale ? s.bestExhale.toFixed(1) : "—", "משך נשיפה מרבי שתועד")
+        tile("🌬️", s.bestExhale ? s.bestExhale.toFixed(1) : "—", "משך נשיפה מרבי שתועד"),
+        tile("🐢", lastPace ? String(lastPace.wpm) : "—", "מילים לדקה במדידה האחרונה", lastPace ? `יעד לשיעור: 100 עד 130` : "נמדד במסלול \"מוסרים שיעור\"")
       ),
       h("div", { class: "card", style: "margin-top:18px" }, h("h3", null, "נקודות ב-14 הימים האחרונים"), chart),
       h("div", { class: "card", style: "margin-top:18px" }, h("h3", null, "השיעורים"), h("div", { class: "lesson-rows" }, rows)),

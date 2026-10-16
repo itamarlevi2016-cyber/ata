@@ -17,11 +17,12 @@ const TOPICS={
  projection:['הקרנת קול','דיבור מעל רעש עלול להעמיס על הקול. מיקרופון יכול להפחית צורך להתחרות ברעש.','להיות מובן לקהל באמצעות קצב, היגוי והגברה מתאימה.'],
  pacing:['קצב והפסקות','הפסקות מחלקות רעיון למשפטים ומשאירות מקום לנשימה.','לתכנן את המשפט במקום לסיים אותו על שארית האוויר.'],
  transfer:['מהצליל אל הדיבור','תרגול תהודה מתקדם מצלילים קלים לדיבור בשיחה.','להעביר תחושת נוחות להברות, למילים ולמשפטים.'],
+ teaching:['קצב דיבור בשיעור','המאזין מעבד מילים לאט יותר מהקצב שבו דובר שמכיר את החומר מפיק אותן. הפסקות נותנות זמן לעיבוד, לרישום ולשאלה.','לדבר בקצב שמאפשר לתלמידים להבין ולרשום: משפטים קצרים, הפסקה אחרי כל רעיון, ובדיקת הבנה.'],
  daily:['תרגול יומי','מנוחה ושימוש מתון בקול חשובים לצד התרגול.','לבנות הרגל קצר ועקבי ולהתאים אותו לתחושה היום.']
 };
 const ACT_TOPIC={posture:'posture',shoulders:'posture',neck:'posture',jaw:'posture',belly:'breath',straw:'straw',hum:'hum',trill:'trill',flow:'flow',softvoice:'flow',siren:'pitch',scale:'pitch',vowels:'diction',project:'projection',speech:'transfer',transfer:'transfer'};
-const LESSON_TOPIC={intro:'basics',posture:'posture',breath:'breath',warmup:'hum',diction:'diction',projection:'projection',resonance:'hum',pace:'pacing',flow:'flow',transfer:'transfer',stage:'projection',daily:'daily'};
-export function knowledgeFor(lesson={},step={}) {const key=ACT_TOPIC[step.act]||LESSON_TOPIC[lesson.id]||'basics';return {key,title:TOPICS[key][0],mechanism:TOPICS[key][1],goal:TOPICS[key][2]};}
+const LESSON_TOPIC={intro:'basics',posture:'posture',breath:'breath',warmup:'hum',diction:'diction',projection:'projection',resonance:'hum',pace:'pacing',flow:'flow',transfer:'transfer',stage:'projection',daily:'daily',tempo:'teaching',pauses:'teaching',chunks:'teaching',shiur:'teaching',pacedaily:'teaching'};
+export function knowledgeFor(lesson={},step={}) {const key=(LESSON_TOPIC[lesson.id]==='teaching'&&!['belly'].includes(step.act))?'teaching':(ACT_TOPIC[step.act]||LESSON_TOPIC[lesson.id]||'basics');return {key,title:TOPICS[key][0],mechanism:TOPICS[key][1],goal:TOPICS[key][2]};}
 function section(title,...kids){return h('section',{class:'knowledge-section'},h('h3',null,title),...kids);}
 export function renderKnowledge(lesson={},step={}){
  const topic=knowledgeFor(lesson,step);
