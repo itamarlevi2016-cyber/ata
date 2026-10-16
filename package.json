@@ -1,0 +1,6 @@
+{
+  "name": "kol-bothe",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test tests/core.test.mjs && node --experimental-vm-modules tests/update.test.mjs" }
+}

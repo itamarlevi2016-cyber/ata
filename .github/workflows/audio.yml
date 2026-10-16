@@ -1,0 +1,46 @@
+name: יצירת הקלטות קול אנושיות
+
+# הפעלה ידנית בלבד מלשונית Actions. באתר יש הקלטות Cedar (audio/cedar-map.json),
+# והרצה אוטומטית הייתה עלולה להחליף אותן בקבצים בשמות זהים.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "ליצור את כל ההקלטות מחדש"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# הרצה חדשה מבטלת הרצה ישנה שעדיין פועלת
+concurrency:
+  group: audio-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install edge-tts
+      - name: Generate audio
+        env:
+          AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
+          AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python tools/generate_audio.py ${{ inputs.force && '--force' || '' }}
+      - name: Commit audio
+        if: always()
+        run: |
+          git config user.name "voice-bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add audio
+          if git diff --cached --quiet; then echo "אין שינויים"; else git commit -m "Update narration audio" && git push; fi
