@@ -4,30 +4,30 @@ function syncStatus(text,kind='ready') {const el=$('syncStatus');el.textContent=
 function acceptShared(data) {
   if(data.etag)sharedEtag=data.etag;else sharedEtag=null;records=data.records;deletedRecords=data.deleted||[];sharedRevision=data.revision;sharedReady=true;render();
   if($('detailDialog').open){const id=$('detailContent').dataset.recordId;const record=records.find(r=>r.id===id);if(!record)close('detailDialog');else if(String(record._version)!==$('detailContent').dataset.version){close('detailDialog');detail(id);}}
-  syncStatus('● מאגר משותף · מעודכן לכולן');renderCelebrations(data.celebrations||[]);
+  syncStatus('מאגר משותף · מעודכן לכולן');renderCelebrations(data.celebrations||[]);if(data.user)showUser(data.user);
 }
 async function refreshShared(force=false) {
   if(sharedSaving||(!force&&document.hidden))return;
-  try {const response=await fetch('/api/records',{cache:'no-store',headers:sharedEtag?{'If-None-Match':sharedEtag}:{}});if(response.status===304){syncStatus('● מאגר משותף · מעודכן לכולן');return}const data=await response.json();if(!response.ok)throw Error(data.error);acceptShared(data);}
-  catch{syncStatus('● אין חיבור · לא ניתן לשמור כרגע','offline');}
+  try {const response=await fetch('/api/records',{cache:'no-store',headers:sharedEtag?{'If-None-Match':sharedEtag}:{}});if(response.status===304){syncStatus('מאגר משותף · מעודכן לכולן');return}const data=await response.json();if(!response.ok)throw Error(data.error);acceptShared(data);}
+  catch{syncStatus('אין חיבור · לא ניתן לשמור כרגע','offline');}
 }
 async function commitOperations(operations) {
   if(!operations.length)return true;
   if(sharedSaving){toast('שמירה קודמת עדיין מתבצעת. המתיני רגע.');return false}
-  sharedSaving=true;syncStatus('● שומרת במאגר המשותף…','saving');$('editForm').querySelector('[type=submit]').disabled=true;$('confirmImport').disabled=true;
+  sharedSaving=true;syncStatus('שומרת במאגר המשותף…','saving');$('editForm').querySelector('[type=submit]').disabled=true;$('confirmImport').disabled=true;
   let completed=0;
   try {
     for(let i=0;i<operations.length;i+=50) {
       const response=await fetch('/api/records',{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify({requestId:uid(),operations:operations.slice(i,i+50)})});
       const data=await response.json();if(!response.ok){if(data.current)acceptShared(data.current);if(response.status===409&&$('editDialog').open){$('editConflict').hidden=false;$('editConflictText').textContent=data.error;}const error=Error((completed?completed+' רשומות כבר נשמרו. ':'')+(data.error||'השמירה נכשלה'));error.conflict=response.status===409;throw error;}
-      acceptShared(data);completed+=Math.min(50,operations.length-i);syncStatus('● שומרת במאגר המשותף…','saving');
+      acceptShared(data);completed+=Math.min(50,operations.length-i);syncStatus('שומרת במאגר המשותף…','saving');
     }
-    syncStatus('● נשמר במאגר · זמין לכולן');return true;
-  } catch(error){toast(error.message||'לא ניתן לשמור ללא חיבור. הפרטים נשארו בטופס.');syncStatus(error.conflict?'● הכרטיס השתנה · בדקי את הגרסה החדשה':'● השמירה לא הושלמה · נסי שוב',error.conflict?'conflict':'offline');return false;}
+    syncStatus('נשמר במאגר · זמין לכולן');return true;
+  } catch(error){toast(error.message||'לא ניתן לשמור ללא חיבור. הפרטים נשארו בטופס.');syncStatus(error.conflict?'הכרטיס השתנה · בדקי את הגרסה החדשה':'השמירה לא הושלמה · נסי שוב',error.conflict?'conflict':'offline');return false;}
   finally{sharedSaving=false;$('editForm').querySelector('[type=submit]').disabled=false;$('confirmImport').disabled=false;}
 }
 async function initializeShared() {
-  syncStatus('● מתחברת למאגר המשותף…','loading');await refreshShared(true);prepareLocalMigration();
+  syncStatus('מתחברת למאגר המשותף…','loading');await refreshShared(true);prepareLocalMigration();
   syncTimer=setInterval(()=>refreshShared(),5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshShared(true)});window.addEventListener('online',()=>refreshShared(true));
 }
 function prepareLocalMigration() {

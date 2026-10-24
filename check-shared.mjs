@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { handleRecords, nextIsraelMidnight } from './server/records.mjs';
 const sql=new DatabaseSync(':memory:');
-for(const name of ['0000_sad_maddog.sql','0001_quiet_santa_claus.sql'])sql.exec(readFileSync('drizzle/'+name,'utf8'));
+for(const name of ['0000_sad_maddog.sql','0001_quiet_santa_claus.sql','0002_mysterious_whistler.sql'])sql.exec(readFileSync('drizzle/'+name,'utf8'));
 class Statement {constructor(query,values=[]){this.query=query;this.values=values}bind(...values){return new Statement(this.query,values)}async first(){return sql.prepare(this.query).get(...this.values)||null}async run(){return this.execute()}execute(){const stmt=sql.prepare(this.query);let results=[];if(stmt.columns().length)results=stmt.all(...this.values);else stmt.run(...this.values);return{results,meta:{changes:Number(sql.prepare('SELECT changes() AS n').get().n)}}}}
 const db={prepare:query=>new Statement(query),batch:async statements=>{sql.exec('BEGIN');try{const results=statements.map(s=>s.execute());sql.exec('COMMIT');return results}catch(e){sql.exec('ROLLBACK');throw e}}};
 const seed=[{id:'seed-1',name:'בדיקה בלבד',age:'24',city:'ירושלים',status:'לא נבדק',custom:{}}];

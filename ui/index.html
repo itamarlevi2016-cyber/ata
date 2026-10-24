@@ -1,10 +1,300 @@
-<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#308e80"><title>קשר טוב — מרחב השידוכים שלך</title><meta name="description" content="קשר טוב — מאגר שידוכים משותף, כרטיסים ורזומות במקום אחד"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/brand-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css?v=vivid6"><script defer src="xlsx.min.js"></script><script defer src="mammoth.min.js"></script><script defer src="profile-export.js"></script><script defer src="/celebration.js"></script><script defer src="/shared.js"></script><script defer src="/app.js?v=vivid6"></script></head><body><a class="skip-link" href="#mainContent">דילוג לתוכן הראשי</a>
-<aside class="sidebar"><a class="brand" href="#" aria-label="קשר טוב, ראשי"><img class="brand-mark" src="/brand-mark.svg" width="60" height="60" alt=""><span>קשר <b>טוב</b><small>מחברות אנשים. פותחות לבבות.</small></span></a><div class="space-label">המרחב שלך</div><nav><button class="nav active" data-nav="home"><span>⌂</span> הבית שלנו</button><button class="nav" data-nav="all"><span>▦</span> מאגר השמות <b id="navCount">0</b></button><button class="nav" data-nav="fav"><span>♡</span> שמות שסימנתי</button><button class="nav" data-nav="progress"><span>↗</span> בתהליך היכרות</button><button class="nav" data-nav="pending"><span>◌</span> זהות לבירור <b id="pendingCount">0</b></button><button class="nav" data-nav="archive"><span>♡</span> ארכיון אירוסין <b id="archiveCount">0</b></button><button class="nav" id="importNav"><span>⇧</span> ייבוא מקובץ</button></nav><div class="sidebar-bottom"><div class="aside-note"><span>✧</span><h3>מקום לכל פרט קטן.</h3><p>לפעמים דווקא הוא<br>מה שמוביל לחיבור גדול.</p></div><button class="nav" id="helpBtn">ⓘ &nbsp; עזרה וגיבוי</button><div class="private">♧ &nbsp; מרחב משותף · יחד מחברות</div></div></aside>
-<div class="workspace"><header class="topbar"><span>בס״ד &nbsp; <i></i> מרחב לניהול שידוכים</span><div class="top-actions"><button class="celebrate-trigger" id="reportCelebrationBtn" aria-label="דיווח על אירוסין">♡ <span>דיווח משמח</span></button><span class="local-chip" id="syncStatus" role="status">● מתחברת למאגר המשותף…</span><button class="avatar" id="helpTop" aria-label="מידע על המרחב">ק</button></div></header><main id="mainContent" tabindex="-1"><section id="celebrationBanner" class="celebration-banner" aria-label="מזל טוב לחתן ולכלה" hidden></section><div id="connectionBanner" class="connection-banner" hidden><span>אין כרגע חיבור למאגר המשותף. אפשר לעיין בפרטים שכבר נטענו; יש להתחבר כדי לשמור שינויים.</span><button id="syncRetry" class="outline">ניסיון חיבור נוסף</button></div><div id="legacyBanner" class="legacy-banner" hidden><span>נמצאו במכשיר <b id="legacyCount"></b> כרטיסים עם שינויים מהגרסה הקודמת.</span><button id="legacyReview" class="outline">בדיקה והעברה למאגר המשותף</button></div><section class="hero"><div class="hero-copy"><div class="hero-kicker"><span>✦</span> מקום קטן לחיבורים גדולים</div><h1>קשר <em>טוב</em><span class="heading-dot">.</span></h1><h2>כל שם הוא עולם. <br>כל חיבור הוא התחלה.</h2><p>מאגר משותף, פרטים מסודרים ולב פתוח.<br>יחד מפנות מקום לחיבור הנכון.</p><button class="primary" id="browseNames">למאגר השמות ←</button><button class="text-button" id="heroAdd">＋ הוספת שם</button><button class="text-button" id="heroImport">ייבוא מקובץ <span>←</span></button></div><div class="hero-art" aria-hidden="true"><div class="art-halo"></div><div class="orbit o1"></div><div class="orbit o2"></div><img class="hero-mark" src="/brand-mark.svg" alt=""><span class="floating-leaf leaf-one"></span><span class="floating-leaf leaf-two"></span><span class="spark s1">✦</span><span class="spark s2">✧</span><span class="art-caption">חיבורים עם לב</span><div class="tiny-card">♡ &nbsp; משהו טוב מתחיל כאן</div></div></section>
-<section class="stats" aria-label="סיכום המאגר"><button data-stat="all"><span class="stat-icon rose">▦</span><div><strong id="countAll">0</strong><span>שמות במאגר</span></div><small>כל האפשרויות במקום אחד</small></button><button data-stat="male"><span class="stat-icon sage">♧</span><div><strong id="countMale">0</strong><span>מועמדים</span></div><small>כל אחד והסיפור שלו</small></button><button data-stat="female"><span class="stat-icon peach">❀</span><div><strong id="countFemale">0</strong><span>מועמדות</span></div><small>כל אחת והדרך שלה</small></button><button data-stat="progress"><span class="stat-icon lilac">↗</span><div><strong id="countProgress">0</strong><span>בתהליך היכרות</span></div><small>התחלות של משהו טוב</small></button></section>
-<section class="home-shortcuts" id="homeShortcuts"><div><span class="eyebrow">מה תרצי לעשות היום?</span><h2>כל מה שצריך, במקום הנכון.</h2></div><button data-go="all"><span>▦</span><strong>למצוא את החיבור הבא</strong><small>חיפוש וסינון במאגר השמות ←</small></button><button data-go="pending"><span>✎</span><strong>להשלים את התמונה</strong><small>כרטיסים שמחכים לפרטים נוספים ←</small></button><button id="homeCelebrate"><span>♡</span><strong>לשתף בשמחה</strong><small>דיווח על אירוסין ומזל טוב לכולם ←</small></button></section><section class="database" hidden><div class="section-head"><div><h2 id="sectionTitle">מאגר השמות <span id="resultCount"></span></h2><p id="sectionHint">היכרות טובה מתחילה בפרטים הקטנים</p></div><div class="section-actions"><button class="outline" id="importBtn">⇧ ייבוא מקובץ</button><button class="primary small" id="addBtn">＋ הוספת שם</button></div></div><div class="directory-guide"><strong>החיבור הבא מתחיל כאן</strong><span>חפשי שם, צמצמי לפי הפרטים שחשובים לך ובחרי את סדר התצוגה.</span></div><div class="sort-shortcuts" role="group" aria-label="סדר הצגת השמות"><span>סדר הצגה</span><button data-sort="name">א–ת · לפי שם</button><button data-sort="age">לפי גיל ↑</button><button data-sort="ageDesc">לפי גיל ↓</button><button data-sort="community">לפי עדה</button><button data-sort="city">לפי עיר</button><button data-sort="recent">נוספו לאחרונה</button></div><div class="toolbar"><label class="search"><span>⌕</span><input id="search" placeholder="חיפוש לפי שם, מקום לימודים, מקצוע..." aria-label="חיפוש במאגר"></label><select id="genderFilter" aria-label="סינון מועמדים"><option value="">כולם וכולן</option><option value="מועמד">מועמד</option><option value="מועמדת">מועמדת</option></select><select id="communityFilter" aria-label="סינון לפי עדה"><option value="">כל העדות</option></select><select id="statusFilter" aria-label="סינון לפי מצב"><option value="">כל המצבים</option><option>לא נבדק</option><option>פנוי/ה</option><option>בבירור</option><option>בהיכרות</option><option>מאורס/ת</option><option>לא פעיל/ה</option></select><button class="filter-toggle" id="moreFilters" aria-controls="extraFilters" aria-expanded="true">☷ גיל ועיר</button></div><div class="extra-filters" id="extraFilters"><label>מגיל <input id="minAge" type="number" min="18" max="120"></label><label>עד גיל <input id="maxAge" type="number" min="18" max="120"></label><label>עיר <input id="cityFilter" placeholder="כל הערים"></label><label>כרטיסים שחסר בהם<select id="missingFilter" aria-label="סינון לפי פרט חסר"><option value="">הצגת כל הכרטיסים</option><option value="birthDate">תאריך לידה</option><option value="city">עיר מגורים</option><option value="looking">מה מחפש/ת</option><option value="verifiedAt">תאריך בדיקת פרטים</option></select></label><button class="text-button" id="clearFilters">איפוס סינון</button></div><div id="filterSummary" class="filter-summary" role="status" aria-live="polite"></div><div class="results-bar"><div class="tabs"><button class="selected" data-tab="">כל השמות</button><button data-tab="מועמד">מועמדים</button><button data-tab="מועמדת">מועמדות</button></div><div class="sort"><label for="sort">מיון לפי</label><select id="sort"><option value="recent">נוספו לאחרונה</option><option value="name">שם א–ת</option><option value="age">גיל — מהצעיר</option><option value="ageDesc">גיל — מהמבוגר</option><option value="community">עדה</option><option value="city">עיר מגורים</option></select><button id="gridBtn" class="view active" aria-label="תצוגת כרטיסים">▦</button><button id="listBtn" class="view" aria-label="תצוגת טבלה">☰</button></div></div><div id="cards" class="cards"></div><div class="empty" id="empty" hidden><span>♡</span><h3>כאן מתחילים חיבורים חדשים</h3><p>הוסיפי שם ראשון או ייבאי רשימה קיימת מקובץ.</p><button class="primary" id="emptyAdd">＋ הוספת שם ראשון</button><button class="text-button" id="demoBtn">להתרשמות עם נתוני דוגמה</button></div><div class="table-wrap" id="tableWrap" hidden><table><thead><tr><th>שם</th><th>גיל</th><th>עדה</th><th>מגורים</th><th>מקצוע / לימודים</th><th>מצב</th><th></th></tr></thead><tbody id="tableBody"></tbody></table></div><div id="pagination" class="pagination" hidden><button id="prevPage" class="outline">→ הקודם</button><span id="pageLabel"></span><button id="nextPage" class="outline">הבא ←</button></div><div class="demo-banner" id="demoBanner" hidden>אלו נתוני הדגמה בדויים בלבד <button id="clearDemo">הסרת נתוני הדוגמה</button></div></section><footer><span class="footer-logo">♡ קשר טוב</span><span>מקום מסודר. מחשבה פנויה. חיבורים טובים.</span><button id="backupBtn">↓ גיבוי המאגר</button></footer></main></div>
-<dialog id="editDialog"><form id="editForm"><div class="modal-head"><div><span class="eyebrow">עוד התחלה טובה</span><h2 id="editTitle">הוספת שם חדש</h2></div><button type="button" class="close" data-close="editDialog" aria-label="סגירה">×</button></div><div class="form-body"><p class="muted">כל שינוי נשמר במאגר המשותף ומופיע אצל כולן. כדאי להשלים תאריך לידה, עיר ומה מחפש/ת. יש להזין רק מידע שנמסר; תאריך לידה חלקי נשמר כפי שהוא, והגיל הוא הגיל שדווח. * שדה חובה</p><div id="editConflict" class="edit-conflict" hidden><p id="editConflictText"></p><button type="button" class="outline" id="reloadConflict">טעינת הכרטיס המעודכן לטופס</button></div><div class="form-grid" id="formFields"></div><h3>פרטים נוספים</h3><p class="muted">כל מידע נוסף שחשוב לך לשמור בכרטיס</p><label id="completionLabel" class="completion-check" hidden><input id="completeIdentity" type="checkbox"> אימתתי והשלמתי את שם המועמד/ת — העברה למאגר השמות</label><div id="customFields"></div><button type="button" class="outline" id="addCustom">＋ שדה מותאם אישית</button><label class="wide notes-label">הערות ומידע נוסף<textarea name="notes" rows="4" placeholder="אופי, משפחה, פרטים לבירורים, העדפות וכל פרט חשוב..."></textarea></label></div><div class="modal-footer"><button class="primary" type="submit">שמירת הכרטיס</button><button type="button" class="outline" data-close="editDialog">ביטול</button></div></form></dialog>
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#8f1a57">
+<title>קשר טוב — מרחב השידוכים שלך</title>
+<meta name="description" content="קשר טוב — מאגר שידוכים משותף, כרטיסים ורזומות במקום אחד">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/brand-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css?v=calm1">
+<script defer src="/profile-export.js"></script>
+<script defer src="/celebration.js"></script>
+<script defer src="/shared.js"></script>
+<script defer src="/app.js?v=calm1"></script>
+</head>
+<body>
+<svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.13a.5.5 0 0 1 .96 0L14.06 8.5a2 2 0 0 0 1.44 1.44l6.13 1.58a.5.5 0 0 1 0 .96l-6.13 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+</svg>
+
+<a class="skip-link" href="#mainContent">דילוג לתוכן הראשי</a>
+
+<aside class="sidebar">
+  <a class="brand" href="#home" aria-label="קשר טוב, ראשי">
+    <img class="brand-mark" src="/brand-mark.svg" width="44" height="44" alt="">
+    <span>קשר <b>טוב</b><small>מרחב השידוכים המשותף</small></span>
+  </a>
+  <nav aria-label="ניווט ראשי">
+    <button class="nav active" data-nav="home"><svg class="i"><use href="#i-home"/></svg><span>הבית</span></button>
+    <button class="nav" data-nav="all"><svg class="i"><use href="#i-users"/></svg><span>מאגר השמות</span><b id="navCount">0</b></button>
+    <button class="nav" data-nav="fav"><svg class="i"><use href="#i-heart"/></svg><span>מסומנים</span></button>
+    <button class="nav" data-nav="progress"><svg class="i"><use href="#i-trend"/></svg><span>בתהליך היכרות</span></button>
+    <button class="nav" data-nav="pending"><svg class="i"><use href="#i-pencil"/></svg><span>להשלמה</span><b id="pendingCount">0</b></button>
+    <button class="nav" data-nav="archive"><svg class="i"><use href="#i-archive"/></svg><span>ארכיון אירוסין</span><b id="archiveCount">0</b></button>
+    <button class="nav" id="importNav"><svg class="i"><use href="#i-upload"/></svg><span>ייבוא מקובץ</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="nav" id="helpBtn"><svg class="i"><use href="#i-help"/></svg><span>עזרה וגיבוי</span></button>
+    <div class="user-chip" id="userChip" hidden>
+      <svg class="i"><use href="#i-user"/></svg>
+      <span><b id="userName"></b><small id="userEmail"></small></span>
+      <a href="/signout-with-chatgpt?return_to=%2F" class="icon-button" title="התנתקות" aria-label="התנתקות"><svg class="i"><use href="#i-logout"/></svg></a>
+    </div>
+  </div>
+</aside>
+
+<div class="workspace">
+  <header class="topbar">
+    <span class="topbar-title">בס״ד <i></i> מרחב לניהול שידוכים</span>
+    <div class="top-actions">
+      <span class="local-chip" id="syncStatus" role="status">מתחברת למאגר המשותף…</span>
+      <button class="celebrate-trigger" id="reportCelebrationBtn" aria-label="דיווח על אירוסין"><svg class="i"><use href="#i-sparkles"/></svg><span>דיווח משמח</span></button>
+      <button class="icon-button" id="helpTop" aria-label="מידע על המרחב"><svg class="i"><use href="#i-help"/></svg></button>
+    </div>
+  </header>
+
+  <main id="mainContent" tabindex="-1">
+    <section id="celebrationBanner" class="celebration-banner" aria-label="מזל טוב לחתן ולכלה" hidden></section>
+    <div id="connectionBanner" class="banner banner-warn" hidden>
+      <span>אין כרגע חיבור למאגר המשותף. אפשר לעיין בפרטים שכבר נטענו; יש להתחבר כדי לשמור שינויים.</span>
+      <button id="syncRetry" class="outline small">ניסיון חיבור נוסף</button>
+    </div>
+    <div id="legacyBanner" class="banner banner-info" hidden>
+      <span>נמצאו במכשיר <b id="legacyCount"></b> כרטיסים עם שינויים מהגרסה הקודמת.</span>
+      <button id="legacyReview" class="outline small">בדיקה והעברה למאגר המשותף</button>
+    </div>
+
+    <!-- Home -->
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow" id="heroGreeting">ברוכה הבאה</span>
+        <h1>כל שם הוא עולם. כל חיבור הוא התחלה.</h1>
+        <p>מאגר משותף לכל הצוות: כל שינוי נשמר ומופיע אצל כולן בתוך שניות.</p>
+        <div class="hero-actions">
+          <button class="primary" id="browseNames"><svg class="i"><use href="#i-users"/></svg> למאגר השמות</button>
+          <button class="outline" id="heroAdd"><svg class="i"><use href="#i-plus"/></svg> הוספת שם</button>
+          <button class="text-button" id="heroImport">ייבוא מקובץ</button>
+        </div>
+      </div>
+      <img class="hero-mark" src="/brand-mark.svg" alt="" aria-hidden="true">
+    </section>
+
+    <section class="stats" aria-label="סיכום המאגר">
+      <button data-stat="all"><strong id="countAll">0</strong><span>שמות במאגר</span></button>
+      <button data-stat="male"><strong id="countMale">0</strong><span>מועמדים</span></button>
+      <button data-stat="female"><strong id="countFemale">0</strong><span>מועמדות</span></button>
+      <button data-stat="progress"><strong id="countProgress">0</strong><span>בתהליך היכרות</span></button>
+    </section>
+
+    <section class="home-shortcuts" id="homeShortcuts">
+      <h2>מה תרצי לעשות היום?</h2>
+      <button data-go="all"><svg class="i"><use href="#i-search"/></svg><span><strong>למצוא את החיבור הבא</strong><small>חיפוש וסינון במאגר השמות</small></span></button>
+      <button data-go="pending"><svg class="i"><use href="#i-pencil"/></svg><span><strong>להשלים את התמונה</strong><small>כרטיסים שמחכים לפרטים נוספים (<span id="pendingHome">0</span>)</small></span></button>
+      <button data-go="progress"><svg class="i"><use href="#i-trend"/></svg><span><strong>לעקוב אחרי ההיכרויות</strong><small>מי בבירור ומי כבר בהיכרות</small></span></button>
+      <button id="homeCelebrate"><svg class="i"><use href="#i-sparkles"/></svg><span><strong>לשתף בשמחה</strong><small>דיווח על אירוסין ומזל טוב לכולן</small></span></button>
+    </section>
+
+    <!-- Directory -->
+    <section class="database" hidden>
+      <div class="section-head">
+        <div>
+          <h2 id="sectionTitle">מאגר השמות <span id="resultCount"></span></h2>
+          <p id="sectionHint">הגילים לפי הדיווח המקורי · יש לבדוק זמינות ופרטים עדכניים</p>
+        </div>
+        <div class="section-actions">
+          <button class="outline" id="importBtn"><svg class="i"><use href="#i-upload"/></svg> ייבוא</button>
+          <button class="primary" id="addBtn"><svg class="i"><use href="#i-plus"/></svg> הוספת שם</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="search" type="search" placeholder="חיפוש לפי שם, עיר, מקום לימודים, מקצוע…" aria-label="חיפוש במאגר"></label>
+        <select id="genderFilter" aria-label="סינון מועמדים"><option value="">מועמדים ומועמדות</option><option value="מועמד">מועמדים</option><option value="מועמדת">מועמדות</option></select>
+        <select id="communityFilter" aria-label="סינון לפי עדה"><option value="">כל העדות</option></select>
+        <select id="statusFilter" aria-label="סינון לפי מצב"><option value="">כל המצבים</option><option>לא נבדק</option><option>פנוי/ה</option><option>בבירור</option><option>בהיכרות</option><option>מאורס/ת</option><option>לא פעיל/ה</option></select>
+        <button class="outline filter-toggle" id="moreFilters" aria-controls="extraFilters" aria-expanded="false"><svg class="i"><use href="#i-filter"/></svg> סינון נוסף <b id="filterCount" hidden></b></button>
+        <label class="sort"><span>מיון</span><select id="sort"><option value="name">שם א–ת</option><option value="recent">נוספו לאחרונה</option><option value="age">גיל — מהצעיר</option><option value="ageDesc">גיל — מהמבוגר</option><option value="community">עדה</option><option value="city">עיר מגורים</option></select></label>
+        <div class="view-toggle" role="group" aria-label="תצוגה">
+          <button id="gridBtn" class="view active" aria-label="תצוגת כרטיסים" aria-pressed="true"><svg class="i"><use href="#i-grid"/></svg></button>
+          <button id="listBtn" class="view" aria-label="תצוגת טבלה" aria-pressed="false"><svg class="i"><use href="#i-list"/></svg></button>
+        </div>
+      </div>
+
+      <div class="extra-filters" id="extraFilters" hidden>
+        <label>מגיל <input id="minAge" type="number" min="18" max="120" inputmode="numeric"></label>
+        <label>עד גיל <input id="maxAge" type="number" min="18" max="120" inputmode="numeric"></label>
+        <label>עיר <input id="cityFilter" placeholder="כל הערים"></label>
+        <label>חסר בכרטיס <select id="missingFilter" aria-label="סינון לפי פרט חסר"><option value="">לא משנה</option><option value="birthDate">תאריך לידה</option><option value="city">עיר מגורים</option><option value="looking">מה מחפש/ת</option><option value="verifiedAt">תאריך בדיקת פרטים</option></select></label>
+        <button class="text-button" id="clearFilters">איפוס כל הסינון</button>
+      </div>
+
+      <div id="filterSummary" class="filter-summary" role="status" aria-live="polite"></div>
+
+      <div id="cards" class="cards"></div>
+
+      <div class="empty" id="empty" hidden>
+        <svg class="i big"><use href="#i-heart"/></svg>
+        <h3>כאן מתחילים חיבורים חדשים</h3>
+        <p>הוסיפי שם ראשון או ייבאי רשימה קיימת מקובץ.</p>
+        <button class="primary" id="emptyAdd"><svg class="i"><use href="#i-plus"/></svg> הוספת שם ראשון</button>
+      </div>
+
+      <div class="table-wrap" id="tableWrap" hidden>
+        <table>
+          <thead><tr><th>שם</th><th>גיל</th><th>עדה</th><th>מגורים</th><th>מקצוע / לימודים</th><th>מצב</th><th>איש קשר</th><th><span class="sr-only">פעולות</span></th></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div id="pagination" class="pagination" hidden>
+        <button id="prevPage" class="outline small"><svg class="i"><use href="#i-chev-right"/></svg> הקודם</button>
+        <span id="pageLabel"></span>
+        <button id="nextPage" class="outline small">הבא <svg class="i"><use href="#i-chev-left"/></svg></button>
+      </div>
+      <div class="demo-banner" id="demoBanner" hidden>אלו נתוני הדגמה בדויים בלבד <button id="clearDemo">הסרת נתוני הדוגמה</button></div>
+    </section>
+
+    <footer>
+      <span>קשר טוב · מרחב משותף</span>
+      <button id="backupBtn" class="text-button"><svg class="i"><use href="#i-download"/></svg> גיבוי המאגר</button>
+    </footer>
+  </main>
+</div>
+
+<dialog id="editDialog">
+  <form id="editForm">
+    <div class="modal-head">
+      <h2 id="editTitle">הוספת שם חדש</h2>
+      <button type="button" class="icon-button close" data-close="editDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="form-body">
+      <p class="muted">כל שינוי נשמר במאגר המשותף ומופיע אצל כולן. יש להזין רק מידע שנמסר; תאריך לידה חלקי נשמר כפי שהוא. * שדה חובה</p>
+      <div id="editConflict" class="banner banner-warn" hidden><p id="editConflictText"></p><button type="button" class="outline small" id="reloadConflict">טעינת הכרטיס המעודכן לטופס</button></div>
+      <p id="duplicateHint" class="banner banner-info" hidden></p>
+      <div class="form-grid" id="formFields"></div>
+      <h3>פרטים נוספים</h3>
+      <label id="completionLabel" class="completion-check" hidden><input id="completeIdentity" type="checkbox"> אימתתי והשלמתי את שם המועמד/ת — העברה למאגר השמות</label>
+      <div id="customFields"></div>
+      <button type="button" class="text-button" id="addCustom"><svg class="i"><use href="#i-plus"/></svg> שדה מותאם אישית</button>
+      <label class="wide notes-label">הערות ומידע נוסף<textarea name="notes" rows="4" placeholder="אופי, משפחה, פרטים לבירורים, העדפות וכל פרט חשוב…"></textarea></label>
+    </div>
+    <div class="modal-footer">
+      <button class="primary" type="submit">שמירת הכרטיס</button>
+      <button type="button" class="outline" data-close="editDialog">ביטול</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="detailDialog"><div id="detailContent"></div></dialog>
-<dialog id="importDialog"><div class="modal-head"><div><span class="eyebrow">מרשימה להיכרות</span><h2>ייבוא שמות מקובץ</h2></div><button class="close" data-close="importDialog" aria-label="סגירה">×</button></div><div class="form-body"><p>העלי קובץ Excel, CSV, Word (DOCX), JSON או טקסט מסומן. בטבלאות נזהה כותרות כמו שם, גיל, עדה, מקצוע ומקום לימודים — ותוכלי לבדוק ולתקן לפני השמירה.</p><label class="drop-zone" id="dropZone"><span>⇧</span><strong>בחרי קובץ או גררי אותו לכאן</strong><small>Excel (.xlsx / .xls), Word (.docx), CSV, JSON, TXT · עד 10MB</small><input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.json,.txt,.docx"></label><button class="text-button" id="templateBtn">↓ הורדת תבנית Excel למילוי</button><details><summary>איך להכין קובץ לייבוא?</summary><p>בטבלה: שורת כותרות ולאחריה שורה לכל שם. עמודות לא מוכרות יישמרו כשדות נוספים. בטקסט: כל פרט בשורה, למשל „שם: רחל ישראלי”, „גיל: 23”, „עדה: ספרדי”; שורה ריקה מפרידה בין אנשים. בקובץ Word מזוהים פרטים בסיסיים מתבניות מוכרות, והטקסט המלא נשמר בהערות. חובה לבדוק את התוצאה: טקסט חופשי עשוי לדרוש השלמה ידנית. סריקות ו־PDF אינם נתמכים בגרסה זו.</p></details><div id="importMessage" role="status"></div><div id="importPreview" hidden><h3>בדיקה לפני הייבוא</h3><p class="muted">בחרי לאילו שדות לשייך את העמודות. רשומות ללא שם או גיל תקין יוצגו כהערה ולא יתווספו.</p><div id="mapping"></div><div class="table-wrap"><table><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table></div><p id="importSummary"></p><button class="primary" id="confirmImport">ייבוא הרשומות</button></div></div></dialog>
-<dialog id="helpDialog"><div class="modal-head"><h2>המרחב המשותף שלנו</h2><button class="close" data-close="helpDialog" aria-label="סגירה">×</button></div><div class="form-body help"><h3>כל הפרטים, בקצב שלך</h3><p>הוסיפי כרטיס, מלאי פרטים ידועים והוסיפי שדות משלך. לחיצה על כרטיס פותחת את כל המידע ומאפשרת עריכה. הלב שומר שמות ברשימת המועדפים.</p><h3>היכן הפרטים נשמרים?</h3><p>הכרטיסים נשמרים במאגר משותף. כל מי שמחזיקה בקישור יכולה לצפות, להוסיף ולעדכן; השינויים מופיעים אוטומטית אצל כולן בתוך כמה שניות. בזמן שאין חיבור אין אפשרות לשמור. אם אותו פרט נערך במקביל, תופיע הודעה כדי למנוע דריסה של מידע.</p><h3>פרטים שלא נמסרו במקור</h3><p>חסר בשדה אינו אומר שהקובץ לא נקרא. בחלק מהמקורות לא נמסרו תאריך לידה, עיר או העדפות, ובחלקם חסר שם מזוהה. אפשר להוריד רשימה עם פרטי הקשר לבירור.</p><button class="outline" id="missingReport">↓ רשימת חוסרים ואנשי קשר</button><h3>גיבוי והעברה</h3><p>אפשר להוריד עותק JSON של המאגר המשותף בכל עת. הייבוא מוסיף רשומות ומדלג על כפילויות זהות בשם ובטלפון; הוא אינו מעדכן כרטיסים קיימים.</p><button class="primary" id="helpBackup">↓ הורדת גיבוי מלא</button><h3>כרטיסים שנמחקו</h3><p>כרטיס שנמחק מוסר אצל כולן, ואפשר לשחזר אותו מכאן.</p><button class="outline" id="deletedBtn">פתיחת נמחקו לאחרונה</button><h3>נתונים מהגרסה הקודמת</h3><p>אם היו במכשיר הזה שינויים לפני המעבר למאגר המשותף, אפשר לשמור עותק של הנתונים המקומיים הקודמים.</p><button class="outline" id="legacyBackup">↓ גיבוי מקומי קודם</button><h3>ייצוא לטבלה</h3><p>אפשר גם להוריד את כל הרשומות לקובץ Excel מסודר.</p><button class="outline" id="exportExcel">↓ ייצוא Excel</button></div></dialog><div id="toast" role="status"></div>
-<dialog id="deletedDialog"><div class="modal-head"><h2>נמחקו לאחרונה</h2><button class="close" data-close="deletedDialog" aria-label="סגירה">×</button></div><div class="form-body" id="deletedList"></div></dialog><dialog id="legacyDialog"><div class="modal-head"><h2>שינויים מהגרסה הקודמת</h2><button class="close" data-close="legacyDialog" aria-label="סגירה">×</button></div><div class="form-body"><p>הכרטיסים הבאים נשמרו בעבר רק במכשיר הזה. ההעברה תעדכן את הפרטים המפורטים כאן במאגר של כולן. יתר הפרטים במאגר יישארו כפי שהם.</p><ul class="legacy-list" id="legacyList"></ul></div><div class="modal-footer"><button class="primary" id="legacyConfirm">העברת השינויים למאגר של כולן</button><button class="outline" data-close="legacyDialog">ביטול</button></div></dialog><dialog id="celebrationDialog"><form id="celebrationForm"><div class="modal-head"><div><span class="eyebrow">עוד בית נאמן בישראל</span><h2>יש לנו בשורה משמחת!</h2></div><button type="button" class="close" data-close="celebrationDialog" aria-label="סגירה">×</button></div><div class="form-body"><div class="celebration-form-mark">♡</div><p>דיווח על אירוסין יאיר את האתר בזיקוקים, ושלט מזל טוב יישאר בראש האתר עד חצות לפי שעון ישראל.</p><div class="form-grid"><label>שם החתן<input id="groomName" list="groomOptions" required maxlength="120" placeholder="שם החתן המלא"><datalist id="groomOptions"></datalist></label><label>שם הכלה<input id="brideName" list="brideOptions" required maxlength="120" placeholder="שם הכלה המלא"><datalist id="brideOptions"></datalist></label></div><p class="muted">אפשר לבחור שם מהמאגר או להקליד שם חדש. כרטיסים תואמים מהמאגר יעברו לארכיון האירוסין.</p></div><div class="modal-footer"><button type="submit" class="primary">✦ פרסום הבשורה — מזל טוב!</button><button type="button" class="outline" data-close="celebrationDialog">ביטול</button></div></form></dialog><canvas id="fireworksCanvas" aria-hidden="true"></canvas></body></html>
+
+<dialog id="importDialog">
+  <div class="modal-head">
+    <h2>ייבוא שמות מקובץ</h2>
+    <button class="icon-button close" data-close="importDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="form-body">
+    <p>העלי קובץ Excel, CSV, Word (DOCX), JSON או טקסט מסומן. בטבלאות נזהה כותרות כמו שם, גיל, עדה, מקצוע ומקום לימודים — ותוכלי לבדוק ולתקן לפני השמירה.</p>
+    <label class="drop-zone" id="dropZone">
+      <svg class="i big"><use href="#i-upload"/></svg>
+      <strong>בחרי קובץ או גררי אותו לכאן</strong>
+      <small>Excel (.xlsx / .xls), Word (.docx), CSV, JSON, TXT · עד 10MB</small>
+      <input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.json,.txt,.docx">
+    </label>
+    <button class="text-button" id="templateBtn"><svg class="i"><use href="#i-download"/></svg> הורדת תבנית Excel למילוי</button>
+    <details><summary>איך להכין קובץ לייבוא?</summary><p>בטבלה: שורת כותרות ולאחריה שורה לכל שם. עמודות לא מוכרות יישמרו כשדות נוספים. בטקסט: כל פרט בשורה, למשל „שם: רחל ישראלי”, „גיל: 23”, „עדה: ספרדי”; שורה ריקה מפרידה בין אנשים. בקובץ Word מזוהים פרטים בסיסיים מתבניות מוכרות, והטקסט המלא נשמר בהערות. חובה לבדוק את התוצאה: טקסט חופשי עשוי לדרוש השלמה ידנית. סריקות ו־PDF אינם נתמכים בגרסה זו.</p></details>
+    <div id="importMessage" role="status"></div>
+    <div id="importPreview" hidden>
+      <h3>בדיקה לפני הייבוא</h3>
+      <p class="muted">בחרי לאילו שדות לשייך את העמודות. רשומות ללא שם או גיל תקין יוצגו כהערה ולא יתווספו.</p>
+      <div id="mapping"></div>
+      <div class="table-wrap"><table><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table></div>
+      <p id="importSummary"></p>
+      <button class="primary" id="confirmImport">ייבוא הרשומות</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="helpDialog">
+  <div class="modal-head">
+    <h2>המרחב המשותף שלנו</h2>
+    <button class="icon-button close" data-close="helpDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="form-body help">
+    <h3>כל הפרטים, בקצב שלך</h3>
+    <p>הוסיפי כרטיס, מלאי פרטים ידועים והוסיפי שדות משלך. לחיצה על כרטיס פותחת את כל המידע ומאפשרת עריכה. הלב מסמן שמות לרשימת המסומנים (הרשימה משותפת לכל הצוות).</p>
+    <h3>היכן הפרטים נשמרים?</h3>
+    <p>הכרטיסים נשמרים במאגר משותף שמוגן בהתחברות. רק משתמשות שאושרו ברשימת הגישה יכולות לצפות, להוסיף ולעדכן; השינויים מופיעים אוטומטית אצל כולן בתוך כמה שניות. ליד כל כרטיס נשמר מי עדכנה אותו לאחרונה. בזמן שאין חיבור אין אפשרות לשמור.</p>
+    <h3>פרטים שלא נמסרו במקור</h3>
+    <p>חסר בשדה אינו אומר שהקובץ לא נקרא. בחלק מהמקורות לא נמסרו תאריך לידה, עיר או העדפות, ובחלקם חסר שם מזוהה. אפשר להוריד רשימה עם פרטי הקשר לבירור.</p>
+    <button class="outline" id="missingReport"><svg class="i"><use href="#i-download"/></svg> רשימת חוסרים ואנשי קשר</button>
+    <h3>גיבוי והעברה</h3>
+    <p>אפשר להוריד עותק JSON של המאגר המשותף בכל עת. הייבוא מוסיף רשומות ומדלג על כפילויות זהות בשם ובטלפון; הוא אינו מעדכן כרטיסים קיימים.</p>
+    <div class="button-row">
+      <button class="primary" id="helpBackup"><svg class="i"><use href="#i-download"/></svg> הורדת גיבוי מלא</button>
+      <button class="outline" id="exportExcel"><svg class="i"><use href="#i-download"/></svg> ייצוא Excel</button>
+    </div>
+    <h3>כרטיסים שנמחקו</h3>
+    <p>כרטיס שנמחק מוסר אצל כולן, ואפשר לשחזר אותו מכאן.</p>
+    <button class="outline" id="deletedBtn">פתיחת נמחקו לאחרונה</button>
+    <h3>נתונים מהגרסה הקודמת</h3>
+    <p>אם היו במכשיר הזה שינויים לפני המעבר למאגר המשותף, אפשר לשמור עותק של הנתונים המקומיים הקודמים.</p>
+    <button class="outline" id="legacyBackup"><svg class="i"><use href="#i-download"/></svg> גיבוי מקומי קודם</button>
+  </div>
+</dialog>
+
+<dialog id="deletedDialog">
+  <div class="modal-head"><h2>נמחקו לאחרונה</h2><button class="icon-button close" data-close="deletedDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="form-body" id="deletedList"></div>
+</dialog>
+
+<dialog id="legacyDialog">
+  <div class="modal-head"><h2>שינויים מהגרסה הקודמת</h2><button class="icon-button close" data-close="legacyDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="form-body"><p>הכרטיסים הבאים נשמרו בעבר רק במכשיר הזה. ההעברה תעדכן את הפרטים המפורטים כאן במאגר של כולן. יתר הפרטים במאגר יישארו כפי שהם.</p><ul class="legacy-list" id="legacyList"></ul></div>
+  <div class="modal-footer"><button class="primary" id="legacyConfirm">העברת השינויים למאגר של כולן</button><button class="outline" data-close="legacyDialog">ביטול</button></div>
+</dialog>
+
+<dialog id="celebrationDialog">
+  <form id="celebrationForm">
+    <div class="modal-head"><h2>יש לנו בשורה משמחת!</h2><button type="button" class="icon-button close" data-close="celebrationDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="form-body">
+      <p>דיווח על אירוסין יאיר את האתר בזיקוקים, ושלט מזל טוב יישאר בראש האתר עד חצות לפי שעון ישראל.</p>
+      <div class="form-grid">
+        <label>שם החתן<input id="groomName" list="groomOptions" required maxlength="120" placeholder="שם החתן המלא"><datalist id="groomOptions"></datalist></label>
+        <label>שם הכלה<input id="brideName" list="brideOptions" required maxlength="120" placeholder="שם הכלה המלא"><datalist id="brideOptions"></datalist></label>
+      </div>
+      <p class="muted">אפשר לבחור שם מהמאגר או להקליד שם חדש. כרטיסים תואמים מהמאגר יעברו לארכיון האירוסין.</p>
+    </div>
+    <div class="modal-footer"><button type="submit" class="primary"><svg class="i"><use href="#i-sparkles"/></svg> פרסום הבשורה — מזל טוב!</button><button type="button" class="outline" data-close="celebrationDialog">ביטול</button></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status"></div>
+<canvas id="fireworksCanvas" aria-hidden="true" hidden></canvas>
+</body>
+</html>

@@ -37,11 +37,12 @@ export function enrichRecord(r){
 export function withKnownContact(r){if(Object.prototype.hasOwnProperty.call(r,'contactEmail'))return r;const email=r.custom?.['מייל אשת קשר'];return email?{...r,contactEmail:String(email)}:r}
 export function withKnownBirthDate(r){if(Object.prototype.hasOwnProperty.call(r,'birthDate'))return r;const date=r.custom?.['תאריך לידה כפי הרזומה']||r.custom?.['תאריך לידה'];return date?{...r,birthDate:String(date)}:r}
 async function snapshot(db) {
-  const result=await db.batch([db.prepare('SELECT revision FROM shared_state WHERE id=1'),db.prepare('SELECT id,payload,version,deleted,updated_at FROM profiles ORDER BY id'),db.prepare('SELECT id,groom,bride,created_at AS createdAt,expires_at AS expiresAt FROM celebrations WHERE expires_at>? ORDER BY created_at DESC').bind(Date.now())]);
-  const all=result[1].results.map(row=>({...withKnownContact(withKnownBirthDate(enrichRecord({...JSON.parse(row.payload),id:row.id}))),id:row.id,_version:row.version,_deleted:!!row.deleted,_changedAt:row.updated_at}));
+  const result=await db.batch([db.prepare('SELECT revision FROM shared_state WHERE id=1'),db.prepare('SELECT id,payload,version,deleted,updated_at,updated_by FROM profiles ORDER BY id'),db.prepare('SELECT id,groom,bride,created_at AS createdAt,expires_at AS expiresAt FROM celebrations WHERE expires_at>? ORDER BY created_at DESC').bind(Date.now())]);
+  const all=result[1].results.map(row=>({...withKnownContact(withKnownBirthDate(enrichRecord({...JSON.parse(row.payload),id:row.id}))),id:row.id,_version:row.version,_deleted:!!row.deleted,_changedAt:row.updated_at,_updatedBy:row.updated_by||''}));
   return {revision:result[0].results[0].revision,records:all.filter(r=>!r._deleted),deleted:all.filter(r=>r._deleted),celebrations:result[2].results};
 }
-async function mutate(db,body) {
+async function mutate(db,body,actor) {
+  const by=actor?actor.name||actor.email:'';
   if(typeof body.requestId!=='string'||body.requestId.length>100||!Array.isArray(body.operations)||!body.operations.length||body.operations.length>500) return response({error:'בקשת שמירה לא תקינה'},400);
   const done=await db.prepare('SELECT revision FROM applied_requests WHERE id=?').bind(body.requestId).first();
   if(done)return response(await snapshot(db));
@@ -75,8 +76,8 @@ async function mutate(db,body) {
     const gate='EXISTS (SELECT 1 FROM shared_state WHERE id=1 AND mutation=?)';
     const statements=[db.prepare('UPDATE shared_state SET revision=revision+1,mutation=? WHERE id=1 AND revision=?').bind(token,current.revision)];
     for(const u of updates) {
-      statements.push(db.prepare(`INSERT INTO profile_history (id,profile_id,payload,version,deleted,changed_at) SELECT ?,id,payload,version,deleted,? FROM profiles WHERE id=? AND ${gate}`).bind(crypto.randomUUID(),now,u.id,token));
-      statements.push(db.prepare(`INSERT INTO profiles (id,payload,version,deleted,updated_at) SELECT ?,?,?,?,? WHERE ${gate} ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,version=excluded.version,deleted=excluded.deleted,updated_at=excluded.updated_at`).bind(u.id,JSON.stringify({...u.payload,updatedAt:now}),u.version,u.deleted,now,token));
+      statements.push(db.prepare(`INSERT INTO profile_history (id,profile_id,payload,version,deleted,changed_at,changed_by) SELECT ?,id,payload,version,deleted,?,? FROM profiles WHERE id=? AND ${gate}`).bind(crypto.randomUUID(),now,by,u.id,token));
+      statements.push(db.prepare(`INSERT INTO profiles (id,payload,version,deleted,updated_at,updated_by) SELECT ?,?,?,?,?,? WHERE ${gate} ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,version=excluded.version,deleted=excluded.deleted,updated_at=excluded.updated_at,updated_by=excluded.updated_by`).bind(u.id,JSON.stringify({...u.payload,updatedAt:now}),u.version,u.deleted,now,by,token));
     }
     for(const e of events)statements.push(db.prepare(`INSERT OR IGNORE INTO celebrations (id,groom,bride,created_at,expires_at) SELECT ?,?,?,?,? WHERE ${gate}`).bind(e.id,e.groom,e.bride,now,nextIsraelMidnight(now),token));
     statements.push(db.prepare(`INSERT OR IGNORE INTO applied_requests (id,revision) SELECT ?,revision FROM shared_state WHERE id=1 AND mutation=?`).bind(body.requestId,token));
@@ -88,7 +89,9 @@ async function mutate(db,body) {
   }
   return response({error:'המאגר מתעדכן כרגע. נסי לשמור שוב בעוד רגע.'},409);
 }
-export async function handleRecords(request,binding,seed) {
+/** @param {{id?:string,email:string,name?:string|null}|null} actor המשתמשת המחוברת, לרישום מי ביצעה כל שינוי */
+export async function handleRecords(request,binding,seed,actor=null) {
+  const user=actor?{email:actor.email,name:actor.name||''}:null;
   try {
     if(!binding)return response({error:'המאגר המשותף אינו זמין כרגע'},503);
     const db=binding.withSession?binding.withSession('first-primary'):binding;
@@ -98,13 +101,13 @@ export async function handleRecords(request,binding,seed) {
       if(Number(request.headers.get('content-length')||0)>12000000)return response({error:'הייבוא גדול מדי; פצלי אותו'},413);
       await initialize(db,seed);
       const raw=await request.text();if(raw.length>12000000)return response({error:'הייבוא גדול מדי; פצלי אותו'},413);
-      return await mutate(db,JSON.parse(raw));
+      return await mutate(db,JSON.parse(raw),actor);
     }
     await initialize(db,seed);
     const state=await db.prepare('SELECT revision FROM shared_state WHERE id=1').first();
-    const tag='"contacts-v3-'+state.revision+'-'+new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())+'"';
+    const tag='"contacts-v4-'+(user?user.email.length:0)+'-'+state.revision+'-'+new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())+'"';
     if(request.headers.get('if-none-match')===tag)return new Response(null,{status:304,headers:{'Cache-Control':'no-store','ETag':tag}});
-    const data=await snapshot(db);return response({...data,etag:tag},200,{'ETag':tag});
+    const data=await snapshot(db);return response({...data,user,etag:tag},200,{'ETag':tag});
   } catch(error) {
     console.error('Shared records request failed:',error instanceof Error?error.message:'unknown');
     return response({error:'לא ניתן להשלים את הפעולה כרגע. השינויים בטופס נשמרו; נסי שוב.'},500);

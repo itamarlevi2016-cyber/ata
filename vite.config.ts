@@ -18,6 +18,9 @@ const managedLinux = readExecutionProfile() === "managed-linux";
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  // Every request (static files included) goes through worker/index.ts, which
+  // requires an approved sign-in before serving résumés or data.
+  assets: { binding: "ASSETS", run_worker_first: true },
   d1_databases: d1
     ? [
         {
