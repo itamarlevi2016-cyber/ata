@@ -60,6 +60,7 @@
     <button class="nav" id="importNav"><svg class="i"><use href="#i-upload"/></svg><span>ייבוא מקובץ</span></button>
   </nav>
   <div class="sidebar-bottom">
+    <button class="nav" id="membersBtn" hidden><svg class="i"><use href="#i-user"/></svg><span>חברות המרחב</span><b id="pendingBadge" hidden>0</b></button>
     <button class="nav" id="helpBtn"><svg class="i"><use href="#i-help"/></svg><span>עזרה וגיבוי</span></button>
     <div class="user-chip" id="userChip" hidden>
       <svg class="i"><use href="#i-user"/></svg>
@@ -249,7 +250,7 @@
     <h3>כל הפרטים, בקצב שלך</h3>
     <p>הוסיפי כרטיס, מלאי פרטים ידועים והוסיפי שדות משלך. לחיצה על כרטיס פותחת את כל המידע ומאפשרת עריכה. הלב מסמן שמות לרשימת המסומנים (הרשימה משותפת לכל הצוות).</p>
     <h3>היכן הפרטים נשמרים?</h3>
-    <p>הכרטיסים נשמרים במאגר משותף שמוגן בהתחברות. רק משתמשות שאושרו ברשימת הגישה יכולות לצפות, להוסיף ולעדכן; השינויים מופיעים אוטומטית אצל כולן בתוך כמה שניות. ליד כל כרטיס נשמר מי עדכנה אותו לאחרונה. בזמן שאין חיבור אין אפשרות לשמור.</p>
+    <p>הכרטיסים נשמרים במאגר משותף שמוגן בהתחברות. כמו בקבוצה במייל: מי שרוצה להצטרף מתחברת ושולחת בקשה, ואחת המנהלות מאשרת אותה מתוך "חברות המרחב". רק חברות מאושרות יכולות לצפות, להוסיף ולעדכן; השינויים מופיעים אוטומטית אצל כולן בתוך כמה שניות. ליד כל כרטיס נשמר מי עדכנה אותו לאחרונה. בזמן שאין חיבור אין אפשרות לשמור.</p>
     <h3>פרטים שלא נמסרו במקור</h3>
     <p>חסר בשדה אינו אומר שהקובץ לא נקרא. בחלק מהמקורות לא נמסרו תאריך לידה, עיר או העדפות, ובחלקם חסר שם מזוהה. אפשר להוריד רשימה עם פרטי הקשר לבירור.</p>
     <button class="outline" id="missingReport"><svg class="i"><use href="#i-download"/></svg> רשימת חוסרים ואנשי קשר</button>
@@ -266,6 +267,11 @@
     <p>אם היו במכשיר הזה שינויים לפני המעבר למאגר המשותף, אפשר לשמור עותק של הנתונים המקומיים הקודמים.</p>
     <button class="outline" id="legacyBackup"><svg class="i"><use href="#i-download"/></svg> גיבוי מקומי קודם</button>
   </div>
+</dialog>
+
+<dialog id="membersDialog">
+  <div class="modal-head"><h2>חברות המרחב</h2><button class="icon-button close" data-close="membersDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="form-body" id="membersBody"><p class="muted">טוענת…</p></div>
 </dialog>
 
 <dialog id="deletedDialog">

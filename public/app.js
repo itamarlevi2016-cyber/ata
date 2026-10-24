@@ -332,7 +332,39 @@ function showUser(user) {
   $('userName').textContent = user.name || user.email; $('userEmail').textContent = user.name ? user.email : '';
   const hour = new Date().getHours(), greeting = hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : 'ערב טוב';
   $('heroGreeting').textContent = `${greeting}, ${(user.name || '').split(' ')[0] || ''}`.replace(/, $/, '');
+  const admin = user.role === 'admin', pending = Number(user.pendingRequests || 0);
+  $('membersBtn').hidden = !admin; $('pendingBadge').hidden = !pending; $('pendingBadge').textContent = pending;
+  if (admin && pending && !showUser.toldPending) { showUser.toldPending = true; toast(`${pending} בקשות הצטרפות ממתינות לאישורך`); }
 }
+
+/* ---------- חברות המרחב (מנהלות) ---------- */
+const accessApi = (body) => fetch('/api/access', body ? { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Kesher-Client': '1' }, body: JSON.stringify(body) } : { cache: 'no-store' }).then(async r => { const d = await r.json(); if (!r.ok) throw Error(d.error || 'הפעולה נכשלה'); return d; });
+function renderMembers(data) {
+  const when = t => t ? new Date(t).toLocaleDateString('he-IL') : '';
+  const pending = data.members.filter(m => m.status === 'pending'), approved = data.members.filter(m => m.status === 'approved'), rejected = data.members.filter(m => m.status === 'rejected');
+  const person = m => `<span><b>${esc(m.name || m.email)}</b><small>${esc(m.email)}${m.note ? ' · ' + esc(m.note) : ''}</small></span>`;
+  $('membersBody').innerHTML = `
+    <h3>בקשות הצטרפות ממתינות${pending.length ? ` (${pending.length})` : ''}</h3>
+    ${pending.length ? pending.map(m => `<div class="member-row">${person(m)}<small class="member-date">${when(m.requestedAt)}</small><div class="button-row"><button class="primary small" data-access="approve" data-email="${esc(m.email)}" data-name="${esc(m.name)}">${icon('check')} אישור</button><button class="outline small" data-access="reject" data-email="${esc(m.email)}">דחייה</button></div></div>`).join('') : '<p class="muted">אין בקשות ממתינות. מי שתתחבר לאתר ותשלח בקשה תופיע כאן.</p>'}
+    <h3>מנהלות קבועות</h3>
+    <p class="muted">מוגדרות בקובץ ההגדרות של האתר ולא ניתן לשנות אותן מכאן: ${data.admins.length ? data.admins.map(esc).join(', ') : 'אין'}.</p>
+    <h3>חברות מאושרות (${approved.length})</h3>
+    ${approved.length ? approved.map(m => `<div class="member-row">${person(m)}<span class="status ${m.role === 'admin' ? 'progress' : ''}">${m.role === 'admin' ? 'מנהלת' : 'חברה'}</span><small class="member-date">אושרה ${when(m.decidedAt)}${m.decidedBy ? ' · ' + esc(m.decidedBy) : ''}</small><div class="button-row">${m.email === currentUser?.email ? '<small class="muted">זו את</small>' : `<button class="outline small" data-access="${m.role === 'admin' ? 'demote' : 'promote'}" data-email="${esc(m.email)}">${m.role === 'admin' ? 'הפיכה לחברה רגילה' : 'הפיכה למנהלת'}</button><button class="text-button small danger" data-access="remove" data-email="${esc(m.email)}">הסרה</button>`}</div></div>`).join('') : '<p class="muted">עדיין אין חברות מאושרות.</p>'}
+    ${rejected.length ? `<h3>בקשות שנדחו (${rejected.length})</h3>${rejected.map(m => `<div class="member-row">${person(m)}<small class="member-date">${when(m.decidedAt)}</small><div class="button-row"><button class="outline small" data-access="approve" data-email="${esc(m.email)}" data-name="${esc(m.name)}">אישור בכל זאת</button><button class="text-button small" data-access="remove" data-email="${esc(m.email)}">מחיקה מהרשימה</button></div></div>`).join('')}` : ''}`;
+}
+async function openMembers() {
+  open('membersDialog'); $('membersBody').innerHTML = '<p class="muted">טוענת…</p>';
+  try { renderMembers(await accessApi()); } catch (e) { $('membersBody').innerHTML = `<p class="banner banner-warn">${esc(e.message)}</p>`; }
+}
+$('membersBtn').onclick = openMembers;
+$('membersDialog').addEventListener('click', async e => {
+  const b = e.target.closest('[data-access]'); if (!b) return;
+  const labels = { approve: 'לאשר את', reject: 'לדחות את הבקשה של', remove: 'להסיר את', promote: 'להפוך למנהלת את', demote: 'להפוך לחברה רגילה את' };
+  if (['remove', 'reject', 'demote'].includes(b.dataset.access) && !confirm(`${labels[b.dataset.access]} ${b.dataset.email}?`)) return;
+  b.disabled = true;
+  try { const data = await accessApi({ action: b.dataset.access, email: b.dataset.email, name: b.dataset.name || '' }); renderMembers({ ...data, admins: (await accessApi()).admins }); toast('הרשימה עודכנה'); refreshShared(true); }
+  catch (err) { toast(err.message); b.disabled = false; }
+});
 
 /* ---------- ייצוא וגיבוי ---------- */
 function download(data, name, type) { const url = URL.createObjectURL(new Blob([data], { type })), a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }

@@ -1,7 +1,8 @@
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
-import { AUTH_PATHS, authorize, deniedPage, signInRedirect } from "../server/auth.mjs";
+import { AUTH_PATHS, accessPage, adminEmails, authorize, signInRedirect } from "../server/auth.mjs";
+import { handleAccess } from "../server/access.mjs";
 
 type Env = Cloudflare.Env & {
   ASSETS?: { fetch(request: Request): Promise<Response> };
@@ -9,7 +10,7 @@ type Env = Cloudflare.Env & {
   KESHER_LOCAL_USER?: string;
 };
 
-// Assets that may be served before sign-in: the sign-in/denied pages need them.
+// Assets that may be served before sign-in: the sign-in/access pages need them.
 const PUBLIC_ASSET = /^\/(style\.css|brand-mark\.svg|favicon\.ico|fonts\/[^/]+)$/;
 // Everything else under the public folder is an application asset (scripts, résumé files).
 const APP_ROUTE = /^\/(api\/.*)?$/;
@@ -25,16 +26,18 @@ const worker = {
     const serveAsset = () => (env.ASSETS ? env.ASSETS.fetch(request) : new Response("Not found", { status: 404 }));
     if (PUBLIC_ASSET.test(path)) return serveAsset();
 
-    // Every other request — the page, the API and every file (résumés included) — requires an approved user.
-    const auth = authorize(request, env);
+    // Every other request — the page, the API and every file (résumés included) — requires an approved member.
+    const db = env.DB?.withSession ? env.DB.withSession("first-primary") : env.DB;
+    const auth = await authorize(request, env, db);
+    if (path === "/api/access") return handleAccess(request, db, auth, adminEmails(env));
     if (auth.status !== "ok") {
       if (path.startsWith("/api/")) {
-        return new Response(JSON.stringify({ error: auth.status === "anonymous" ? "יש להתחבר כדי לגשת למאגר" : "אין הרשאה לגשת למאגר" }), {
+        return new Response(JSON.stringify({ error: auth.status === "anonymous" ? "יש להתחבר כדי לגשת למאגר" : "הכניסה למאגר פתוחה לחברות מאושרות בלבד" }), {
           status: auth.status === "anonymous" ? 401 : 403,
           headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
         });
       }
-      return auth.status === "anonymous" ? signInRedirect(request) : deniedPage(auth);
+      return auth.status === "anonymous" ? signInRedirect(request) : accessPage(auth);
     }
 
     if (!APP_ROUTE.test(path)) {

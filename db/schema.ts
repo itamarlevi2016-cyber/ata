@@ -18,6 +18,13 @@ export const profileHistory = sqliteTable('profile_history', {
 export const appliedRequests = sqliteTable('applied_requests', {
   id: text('id').primaryKey(), revision: integer('revision').notNull(),
 });
+// חברות המרחב: בקשות הצטרפות ממתינות, מאושרות או נדחות. מנהלות מאשרות מתוך האתר.
+export const members = sqliteTable('members', {
+  email: text('email').primaryKey(), name: text('name').notNull().default(''),
+  status: text('status').notNull().default('pending'), role: text('role').notNull().default('member'),
+  note: text('note').notNull().default(''), requestedAt: integer('requested_at').notNull(),
+  decidedAt: integer('decided_at'), decidedBy: text('decided_by'),
+});
 export const celebrations = sqliteTable('celebrations', {
   id: text('id').primaryKey(), groom: text('groom').notNull(), bride: text('bride').notNull(),
   createdAt: integer('created_at').notNull(), expiresAt: integer('expires_at').notNull(),
