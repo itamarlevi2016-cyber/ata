@@ -18,12 +18,22 @@ export const profileHistory = sqliteTable('profile_history', {
 export const appliedRequests = sqliteTable('applied_requests', {
   id: text('id').primaryKey(), revision: integer('revision').notNull(),
 });
-// חברות המרחב: בקשות הצטרפות ממתינות, מאושרות או נדחות. מנהלות מאשרות מתוך האתר.
+// חברות המרחב. מנהלת מזמינה חברה (status=invited, קישור הזמנה חד-פעמי); החברה בוחרת סיסמה
+// (status=active) ונכנסת עם מייל וסיסמה. requested_at = מועד ההזמנה, decided_by = מי הזמינה.
 export const members = sqliteTable('members', {
   email: text('email').primaryKey(), name: text('name').notNull().default(''),
   status: text('status').notNull().default('pending'), role: text('role').notNull().default('member'),
   note: text('note').notNull().default(''), requestedAt: integer('requested_at').notNull(),
   decidedAt: integer('decided_at'), decidedBy: text('decided_by'),
+  passwordHash: text('password_hash'), passwordSalt: text('password_salt'),
+  inviteHash: text('invite_hash'), inviteExpires: integer('invite_expires'),
+  lastLogin: integer('last_login'), failedAttempts: integer('failed_attempts').notNull().default(0),
+  lockedUntil: integer('locked_until'),
+});
+// הפעלות מחוברות: המזהה הוא גיבוב של העוגייה, כך שגניבת מסד הנתונים לא מאפשרת להתחזות.
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(), email: text('email').notNull(),
+  createdAt: integer('created_at').notNull(), expiresAt: integer('expires_at').notNull(),
 });
 export const celebrations = sqliteTable('celebrations', {
   id: text('id').primaryKey(), groom: text('groom').notNull(), bride: text('bride').notNull(),

@@ -91,7 +91,7 @@ async function mutate(db,body,actor) {
 }
 /** @param {{id?:string,email:string,name?:string|null}|null} actor המשתמשת המחוברת, לרישום מי ביצעה כל שינוי */
 export async function handleRecords(request,binding,seed,actor=null) {
-  const user=actor?{email:actor.email,name:actor.name||'',role:actor.role||'member',pendingRequests:actor.pendingRequests||0}:null;
+  const user=actor?{email:actor.email,name:actor.name||'',role:actor.role||'member'}:null;
   try {
     if(!binding)return response({error:'המאגר המשותף אינו זמין כרגע'},503);
     const db=binding.withSession?binding.withSession('first-primary'):binding;

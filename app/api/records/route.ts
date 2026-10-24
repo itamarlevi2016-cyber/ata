@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 async function handle(request: Request) {
   const db = env.DB?.withSession ? env.DB.withSession('first-primary') : env.DB;
   const auth = await authorize(request, env as Record<string, string | undefined>, db);
-  if (auth.status !== 'ok') return new Response(JSON.stringify({ error: 'הכניסה למאגר פתוחה לחברות מאושרות בלבד' }), { status: 403, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
+  if (auth.status !== 'ok') return new Response(JSON.stringify({ error: 'יש להתחבר כדי לגשת למאגר' }), { status: 401, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
   return handleRecords(request, env.DB, seed, auth.user);
 }
 export function GET(request: Request) { return handle(request); }

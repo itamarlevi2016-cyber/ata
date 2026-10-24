@@ -1,45 +1,74 @@
-// בדיקת זרימת ההצטרפות: בקשה → המתנה → אישור על ידי מנהלת → כניסה, וכן דחייה, הסרה ומנהלות קבועות.
+// בדיקת ההתחברות והחברות: הזמנה → בחירת סיסמה → כניסה בעוגייה; כניסה שגויה ונעילה; ניהול חברות; שינוי סיסמה.
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { authorize } from './server/auth.mjs';
+import { authorize, handleAuth, issueInvite, joinPage, loginPage, contactEmail } from './server/auth.mjs';
 import { handleAccess } from './server/access.mjs';
 const sql = new DatabaseSync(':memory:');
-for (const name of ['0000_sad_maddog.sql', '0001_quiet_santa_claus.sql', '0002_mysterious_whistler.sql', '0003_robust_polaris.sql']) sql.exec(readFileSync('drizzle/' + name, 'utf8'));
+for (const name of readdirSync('drizzle').filter(f => f.endsWith('.sql')).sort()) sql.exec(readFileSync('drizzle/' + name, 'utf8'));
 class Statement { constructor(query, values = []) { this.query = query; this.values = values; } bind(...values) { return new Statement(this.query, values); } async first() { return sql.prepare(this.query).get(...this.values) || null; } async run() { return this.execute(); } async all() { return this.execute(); } execute() { const stmt = sql.prepare(this.query); let results = []; if (stmt.columns().length) results = stmt.all(...this.values); else stmt.run(...this.values); return { results, meta: { changes: Number(sql.prepare('SELECT changes() AS n').get().n) } }; } }
 const db = { prepare: query => new Statement(query) };
-const env = { KESHER_ALLOWED_EMAILS: 'admin@example.com' };
-const as = (email, name = '') => ({ 'oai-authenticated-user-id': 'id-' + email, 'oai-authenticated-user-email': email, 'oai-authenticated-user-full-name': encodeURIComponent(name), 'oai-authenticated-user-full-name-encoding': 'percent-encoded-utf-8' });
-const get = (email) => new Request('https://example.test/', { headers: as(email) });
-const post = (email, body, name = '') => new Request('https://example.test/api/access', { method: 'POST', headers: { ...as(email, name), 'Content-Type': 'application/json', 'X-Kesher-Client': '1' }, body: JSON.stringify(body) });
-const call = async (request) => handleAccess(request, db, await authorize(request, env, db), ['admin@example.com']);
+const env = {};
+const B = 'https://example.test';
+const jsonHeaders = { 'Content-Type': 'application/json', 'X-Kesher-Client': '1' };
+const cookie = r => (r.headers.get('set-cookie') || '').split(';')[0];
+const post = (path, body, extra = {}) => handleAuth(new Request(B + path, { method: 'POST', headers: { ...jsonHeaders, ...extra }, body: JSON.stringify(body) }), env, db, path);
+const asUser = (c, path = '/', init = {}) => new Request(B + path, { ...init, headers: { cookie: c, ...(init.headers || {}) } });
+const access = async (c, body) => handleAccess(asUser(c, '/api/access', body ? { method: 'POST', headers: jsonHeaders, body: JSON.stringify(body) } : {}), db, await authorize(asUser(c), env, db), 'admin@example.com');
 
-// אנונימית ומנהלת קבועה
-assert.equal((await authorize(new Request('https://example.test/'), env, db)).status, 'anonymous');
-let a = await authorize(get('admin@example.com'), env, db); assert.equal(a.status, 'ok'); assert.equal(a.user.role, 'admin'); assert.equal(a.user.pendingRequests, 0);
-// חדשה: לא יכולה לקרוא את רשימת החברות, אבל יכולה לבקש הצטרפות
-assert.equal((await authorize(get('rivka@example.com'), env, db)).status, 'new');
-let r = await call(new Request('https://example.test/api/access', { headers: as('rivka@example.com') })); assert.equal((await r.json()).members, undefined);
-r = await call(post('rivka@example.com', { action: 'request', note: 'הופניתי על ידי שרה' }, 'רבקה כהן')); assert.equal(r.status, 200);
-assert.equal((await authorize(get('rivka@example.com'), env, db)).status, 'pending');
-a = await authorize(get('admin@example.com'), env, db); assert.equal(a.user.pendingRequests, 1);
-// ממתינה לא יכולה לאשר את עצמה
-r = await call(post('rivka@example.com', { action: 'approve', email: 'rivka@example.com' })); assert.equal(r.status, 403);
-// מנהלת רואה את הבקשה ומאשרת
-r = await call(new Request('https://example.test/api/access', { headers: as('admin@example.com') })); let data = await r.json(); assert.equal(data.members[0].email, 'rivka@example.com'); assert.equal(data.members[0].note, 'הופניתי על ידי שרה'); assert.equal(data.members[0].name, 'רבקה כהן');
-r = await call(post('admin@example.com', { action: 'approve', email: 'rivka@example.com' })); assert.equal(r.status, 200);
-a = await authorize(get('rivka@example.com'), env, db); assert.equal(a.status, 'ok'); assert.equal(a.user.role, 'member');
-// חברה רגילה לא יכולה לנהל
-r = await call(post('rivka@example.com', { action: 'approve', email: 'x@example.com' })); assert.equal(r.status, 403);
-// קידום למנהלת, ואז היא מאשרת אחרת; הסרה; דחייה
-r = await call(post('admin@example.com', { action: 'promote', email: 'rivka@example.com' })); assert.equal((await authorize(get('rivka@example.com'), env, db)).user.role, 'admin');
-await call(post('sara@example.com', { action: 'request' }));
-r = await call(post('rivka@example.com', { action: 'reject', email: 'sara@example.com' })); assert.equal(r.status, 200); assert.equal((await authorize(get('sara@example.com'), env, db)).status, 'rejected');
-r = await call(post('rivka@example.com', { action: 'remove', email: 'rivka@example.com' })); assert.equal(r.status, 400);
-r = await call(post('rivka@example.com', { action: 'remove', email: 'admin@example.com' })); assert.equal(r.status, 400);
-r = await call(post('admin@example.com', { action: 'remove', email: 'rivka@example.com' })); assert.equal((await authorize(get('rivka@example.com'), env, db)).status, 'new');
-// ללא מנהלת קבועה וללא מנהלת מאושרת: המרחב לא מוגדר
-assert.equal((await authorize(get('someone@example.com'), {}, db)).status, 'unconfigured');
-// בקשה חוזרת אחרי דחייה
-r = await call(post('sara@example.com', { action: 'request', note: 'שוב' })); assert.equal((await authorize(get('sara@example.com'), env, db)).status, 'pending');
-console.log('PASS: join request flow, admin approval/rejection/removal, promotion, built-in admin protection');
+// לפני הזמנה: אנונימית, ודף כניסה עם מייל ליצירת קשר
+assert.equal((await authorize(new Request(B + '/'), env, db)).status, 'anonymous');
+assert.equal(await contactEmail({ KESHER_CONTACT_EMAIL: 'Admin@Example.com' }, db), 'admin@example.com');
+assert.match(await loginPage(new Request(B + '/login?return_to=%2F%23all'), 'admin@example.com').text(), /mailto:admin%40example.com/);
+
+// המנהלת הראשונה מוזמנת (כמו בסקריפט scripts/invite.mjs) ובוחרת סיסמה
+const adminToken = await issueInvite(db, { email: 'admin@example.com', name: 'רבקה כהן', role: 'admin', by: 'setup' });
+assert.match(await (await joinPage(new Request(B + '/join?token=' + adminToken), db)).text(), /רבקה כהן/);
+assert.equal((await post('/api/auth/accept', { token: adminToken, password: 'short' })).status, 400);
+let r = await post('/api/auth/accept', { token: adminToken, password: 'password-123' }); assert.equal(r.status, 200);
+const adminCookie = cookie(r); assert.match(adminCookie, /^kt_session=.{20,}/);
+let a = await authorize(asUser(adminCookie), env, db); assert.equal(a.status, 'ok'); assert.equal(a.user.role, 'admin'); assert.equal(a.user.name, 'רבקה כהן');
+// הקישור חד-פעמי
+assert.equal((await post('/api/auth/accept', { token: adminToken, password: 'password-123' })).status, 400);
+assert.equal((await joinPage(new Request(B + '/join?token=' + adminToken), db)).status, 400);
+
+// כניסה עם סיסמה, סיסמה שגויה, ונעילה אחרי 8 ניסיונות
+r = await post('/api/auth/login', { email: 'ADMIN@example.com', password: 'password-123' }); assert.equal(r.status, 200); assert.equal((await authorize(asUser(cookie(r)), env, db)).status, 'ok');
+assert.equal((await post('/api/auth/login', { email: 'admin@example.com', password: 'wrong' })).status, 401);
+assert.equal((await post('/api/auth/login', { email: 'nobody@example.com', password: 'x' })).status, 401);
+for (let i = 0; i < 7; i++) await post('/api/auth/login', { email: 'admin@example.com', password: 'wrong' });
+assert.equal((await post('/api/auth/login', { email: 'admin@example.com', password: 'password-123' })).status, 429);
+sql.exec("UPDATE members SET locked_until=NULL, failed_attempts=0");
+// CSRF: בלי הכותרת של הלקוח
+assert.equal((await handleAuth(new Request(B + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), env, db, '/api/auth/login')).status, 403);
+
+// המנהלת מזמינה חברה; החברה נכנסת; חברה לא יכולה לנהל
+r = await access(adminCookie, { action: 'invite', name: 'שרה לוי', email: 'Sara@example.com', role: 'member' }); let d = await r.json(); assert.equal(r.status, 200); assert.match(d.inviteUrl, /^https:\/\/example\.test\/join\?token=/);
+assert.equal(d.members.find(m => m.email === 'sara@example.com').status, 'invited');
+const saraToken = new URL(d.inviteUrl).searchParams.get('token');
+assert.equal((await post('/api/auth/login', { email: 'sara@example.com', password: 'anything-1' })).status, 401);
+r = await post('/api/auth/accept', { token: saraToken, password: 'sara-pass-1' }); const saraCookie = cookie(r);
+a = await authorize(asUser(saraCookie), env, db); assert.equal(a.user.role, 'member'); assert.equal(a.user.name, 'שרה לוי');
+assert.equal((await access(saraCookie)).status, 403);
+assert.equal((await access('kt_session=bogus')).status, 401);
+// הזמנה כפולה לחברה פעילה נדחית; "קישור חדש" מאפס סיסמה ושומר תפקיד
+assert.equal((await access(adminCookie, { action: 'invite', name: 'שרה', email: 'sara@example.com' })).status, 409);
+r = await access(adminCookie, { action: 'promote', email: 'sara@example.com' }); assert.equal((await r.json()).members.find(m => m.email === 'sara@example.com').role, 'admin');
+r = await access(adminCookie, { action: 'reinvite', email: 'sara@example.com' }); d = await r.json(); const reset = new URL(d.inviteUrl).searchParams.get('token');
+assert.equal((await post('/api/auth/login', { email: 'sara@example.com', password: 'sara-pass-1' })).status, 200, 'old password still works until the link is used');
+r = await post('/api/auth/accept', { token: reset, password: 'sara-pass-2' }); assert.equal(r.status, 200);
+assert.equal((await post('/api/auth/login', { email: 'sara@example.com', password: 'sara-pass-1' })).status, 401);
+assert.equal((await authorize(asUser(saraCookie), env, db)).status, 'anonymous', 'old sessions end after a password reset');
+assert.equal((await authorize(asUser(cookie(r)), env, db)).user.role, 'admin');
+// שינוי סיסמה על ידי החברה עצמה
+const sara2 = cookie(r);
+assert.equal((await handleAuth(asUser(sara2, '/api/auth/password', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ current: 'wrong', next: 'sara-pass-3' }) }), env, db, '/api/auth/password')).status, 401);
+assert.equal((await handleAuth(asUser(sara2, '/api/auth/password', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ current: 'sara-pass-2', next: 'sara-pass-3' }) }), env, db, '/api/auth/password')).status, 200);
+assert.equal((await post('/api/auth/login', { email: 'sara@example.com', password: 'sara-pass-3' })).status, 200);
+// השבתה מנתקת מיד, הפעלה מחזירה; הסרה; הגנה עצמית; התנתקות
+await access(adminCookie, { action: 'disable', email: 'sara@example.com' }); assert.equal((await authorize(asUser(sara2), env, db)).status, 'anonymous'); assert.equal((await post('/api/auth/login', { email: 'sara@example.com', password: 'sara-pass-3' })).status, 401);
+r = await access(adminCookie, { action: 'enable', email: 'sara@example.com' }); assert.equal((await r.json()).members.find(m => m.email === 'sara@example.com').status, 'active');
+assert.equal((await access(adminCookie, { action: 'remove', email: 'admin@example.com' })).status, 400);
+r = await access(adminCookie, { action: 'remove', email: 'sara@example.com' }); assert.equal((await r.json()).members.length, 1);
+r = await handleAuth(asUser(adminCookie, '/logout'), env, db, '/logout'); assert.equal(r.status, 302); assert.equal((await authorize(asUser(adminCookie), env, db)).status, 'anonymous');
+console.log('PASS: invite link → password → cookie session, login lockout, CSRF, member management, password reset and change, logout');

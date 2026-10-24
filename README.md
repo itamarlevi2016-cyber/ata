@@ -1,9 +1,7 @@
 # קשר טוב — מרחב השידוכים המשותף
 
 אפליקציית ניהול שידוכים בעברית: מאגר שמות משותף, כרטיסים, ייבוא מקבצים ורזומות.
-מבוססת על vinext + Cloudflare Workers + D1.
+מבוססת על vinext + Cloudflare Workers + D1, עם כניסה עצמאית (מייל + סיסמה) והזמנות שמנהלות שולחות במייל.
 
-- הוראות הפעלה, פרסום והגדרת רשימת הגישה: [START-HERE-HE.txt](START-HERE-HE.txt)
-- `pnpm dev` — פיתוח מקומי · `pnpm build` — בנייה · `pnpm start` — הרצת הגרסה הבנויה עם wrangler
-
-**לפני פרסום**: להגדיר את `KESHER_ALLOWED_EMAILS` או את `server/allowed-emails.mjs`, אחרת האתר נעול לכולן.
+- הוראות כניסה, פרסום ב-Cloudflare והפעלה מקומית: [START-HERE-HE.txt](START-HERE-HE.txt)
+- `pnpm deploy` — פרסום (דורש `KESHER_D1_ID`) · `pnpm invite <email> "<שם>"` — הזמנת המנהלת הראשונה · `pnpm test` — בדיקות

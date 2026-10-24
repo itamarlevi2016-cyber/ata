@@ -60,12 +60,12 @@
     <button class="nav" id="importNav"><svg class="i"><use href="#i-upload"/></svg><span>ייבוא מקובץ</span></button>
   </nav>
   <div class="sidebar-bottom">
-    <button class="nav" id="membersBtn" hidden><svg class="i"><use href="#i-user"/></svg><span>חברות המרחב</span><b id="pendingBadge" hidden>0</b></button>
+    <button class="nav" id="membersBtn" hidden><svg class="i"><use href="#i-user"/></svg><span>חברות המרחב</span></button>
     <button class="nav" id="helpBtn"><svg class="i"><use href="#i-help"/></svg><span>עזרה וגיבוי</span></button>
     <div class="user-chip" id="userChip" hidden>
       <svg class="i"><use href="#i-user"/></svg>
       <span><b id="userName"></b><small id="userEmail"></small></span>
-      <a href="/signout-with-chatgpt?return_to=%2F" class="icon-button" title="התנתקות" aria-label="התנתקות"><svg class="i"><use href="#i-logout"/></svg></a>
+      <button type="button" id="logoutBtn" class="icon-button" title="התנתקות" aria-label="התנתקות"><svg class="i"><use href="#i-logout"/></svg></button>
     </div>
   </div>
 </aside>
@@ -250,7 +250,7 @@
     <h3>כל הפרטים, בקצב שלך</h3>
     <p>הוסיפי כרטיס, מלאי פרטים ידועים והוסיפי שדות משלך. לחיצה על כרטיס פותחת את כל המידע ומאפשרת עריכה. הלב מסמן שמות לרשימת המסומנים (הרשימה משותפת לכל הצוות).</p>
     <h3>היכן הפרטים נשמרים?</h3>
-    <p>הכרטיסים נשמרים במאגר משותף שמוגן בהתחברות. כמו בקבוצה במייל: מי שרוצה להצטרף מתחברת ושולחת בקשה, ואחת המנהלות מאשרת אותה מתוך "חברות המרחב". רק חברות מאושרות יכולות לצפות, להוסיף ולעדכן; השינויים מופיעים אוטומטית אצל כולן בתוך כמה שניות. ליד כל כרטיס נשמר מי עדכנה אותו לאחרונה. בזמן שאין חיבור אין אפשרות לשמור.</p>
+    <p>הכרטיסים נשמרים במאגר משותף שמוגן בכניסה עם מייל וסיסמה. כמו בקבוצה במייל: מי שרוצה להצטרף שולחת בקשה במייל למנהלת, והמנהלת מזמינה אותה מתוך "חברות המרחב" בקישור אישי. רק חברות שהוזמנו יכולות לצפות, להוסיף ולעדכן; השינויים מופיעים אוטומטית אצל כולן בתוך כמה שניות. ליד כל כרטיס נשמר מי עדכנה אותו לאחרונה. בזמן שאין חיבור אין אפשרות לשמור.</p>
     <h3>פרטים שלא נמסרו במקור</h3>
     <p>חסר בשדה אינו אומר שהקובץ לא נקרא. בחלק מהמקורות לא נמסרו תאריך לידה, עיר או העדפות, ובחלקם חסר שם מזוהה. אפשר להוריד רשימה עם פרטי הקשר לבירור.</p>
     <button class="outline" id="missingReport"><svg class="i"><use href="#i-download"/></svg> רשימת חוסרים ואנשי קשר</button>
@@ -260,6 +260,13 @@
       <button class="primary" id="helpBackup"><svg class="i"><use href="#i-download"/></svg> הורדת גיבוי מלא</button>
       <button class="outline" id="exportExcel"><svg class="i"><use href="#i-download"/></svg> ייצוא Excel</button>
     </div>
+    <h3>הסיסמה שלך</h3>
+    <form id="passwordForm" class="form-grid password-form">
+      <label>סיסמה נוכחית<input name="current" type="password" required autocomplete="current-password"></label>
+      <label>סיסמה חדשה<input name="next" type="password" required minlength="8" autocomplete="new-password"></label>
+      <label>הסיסמה החדשה שוב<input name="again" type="password" required autocomplete="new-password"></label>
+      <div class="wide"><button class="outline" type="submit">עדכון הסיסמה</button></div>
+    </form>
     <h3>כרטיסים שנמחקו</h3>
     <p>כרטיס שנמחק מוסר אצל כולן, ואפשר לשחזר אותו מכאן.</p>
     <button class="outline" id="deletedBtn">פתיחת נמחקו לאחרונה</button>
@@ -271,7 +278,24 @@
 
 <dialog id="membersDialog">
   <div class="modal-head"><h2>חברות המרחב</h2><button class="icon-button close" data-close="membersDialog" aria-label="סגירה"><svg class="i"><use href="#i-x"/></svg></button></div>
-  <div class="form-body" id="membersBody"><p class="muted">טוענת…</p></div>
+  <div class="form-body">
+    <form id="inviteForm" class="invite-form">
+      <h3>הזמנת חברה חדשה</h3>
+      <p class="muted">קיבלת במייל בקשת הצטרפות ואישרת אותה? הזיני כאן את הפרטים. ייווצר קישור הזמנה אישי לשליחה חזרה במייל; בלחיצה עליו היא תבחר סיסמה ותיכנס. הקישור תקף לשבוע.</p>
+      <div class="form-grid">
+        <label>שם<input name="name" required maxlength="120" placeholder="שם מלא"></label>
+        <label>מייל<input name="email" type="email" required maxlength="200" placeholder="name@example.com"></label>
+        <label>תפקיד<select name="role"><option value="member">חברה</option><option value="admin">מנהלת (יכולה להזמין ולאשר)</option></select></label>
+      </div>
+      <button class="primary" type="submit"><svg class="i"><use href="#i-plus"/></svg> יצירת קישור הזמנה</button>
+    </form>
+    <div id="inviteResult" class="invite-result" hidden>
+      <strong>הקישור מוכן — שלחי אותו במייל:</strong>
+      <div class="invite-link"><input id="inviteLink" readonly aria-label="קישור ההזמנה"><button type="button" class="outline small" id="copyInvite">העתקה</button><a class="primary small" id="inviteMail" href="#"><svg class="i"><use href="#i-mail"/></svg> שליחה במייל</a></div>
+      <small>הקישור מוצג פעם אחת. אם אבד, אפשר ליצור "קישור חדש" מהרשימה למטה.</small>
+    </div>
+    <div id="membersList"></div>
+  </div>
 </dialog>
 
 <dialog id="deletedDialog">

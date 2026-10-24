@@ -1,5 +1,5 @@
-# Copy to .dev.vars for local testing with `pnpm start` (wrangler dev).
-# A comma-separated list of ChatGPT account emails that may open the site.
-KESHER_ALLOWED_EMAILS=you@example.com
-# Local only: pretend this email is signed in (never set this in production).
+# Copy to dist/server/.dev.vars for local testing with `pnpm start` (wrangler dev).
+# Where join requests should be emailed (shown on the login page). Defaults to the first admin.
+KESHER_CONTACT_EMAIL=you@example.com
+# Local only: skip the login and act as this admin (never set this in production).
 KESHER_LOCAL_USER=you@example.com
