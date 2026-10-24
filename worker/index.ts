@@ -1,7 +1,7 @@
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
-import { authorize, contactEmail, handleAuth, joinPage, loginPage, signInRedirect } from "../server/auth.mjs";
+import { authorize, contactEmail, handleAuth, joinPage, loginPage, needsSetup, setupPage, signInRedirect } from "../server/auth.mjs";
 import { handleAccess } from "../server/access.mjs";
 
 type Env = Cloudflare.Env & {
@@ -26,7 +26,13 @@ const worker = {
     const db = env.DB?.withSession ? env.DB.withSession("first-primary") : env.DB;
 
     // Sign-in, invitation and sign-out are handled here, before any protected content.
-    if (path === "/login") return loginPage(request, await contactEmail(env, db));
+    // First run: until the first admin exists, the site offers a setup page instead of a login.
+    if (path === "/login" || path === "/setup") {
+      const fresh = await needsSetup(db);
+      if (path === "/setup") return fresh ? setupPage() : new Response(null, { status: 302, headers: { Location: "/login" } });
+      if (fresh) return new Response(null, { status: 302, headers: { Location: "/setup", "Cache-Control": "no-store" } });
+      return loginPage(request, await contactEmail(env, db));
+    }
     if (path === "/join") return joinPage(request, db);
     if (path === "/logout" || path.startsWith("/api/auth/")) return handleAuth(request, env, db, path);
 

@@ -109,6 +109,17 @@ export async function handleAuth(request, env, db, path) {
       return json({ ok: true }, 200, { 'Set-Cookie': await createSession(request, db, m.email) });
     }
 
+    if (path === '/api/auth/setup') {
+      // הקמה ראשונית: כל עוד אין אף חברה במאגר, המבקרת הראשונה יוצרת את חשבון המנהלת.
+      if (!(await needsSetup(db))) return json({ error: 'המרחב כבר הוקם. היכנסי בדף הכניסה.' }, 409);
+      const email = normalizeEmail(body.email), name = String(body.name || '').trim().slice(0, 120), password = String(body.password || '');
+      if (!validEmail(email) || !name) return json({ error: 'יש למלא שם ומייל תקין' }, 400);
+      if (password.length < MIN_PASSWORD) return json({ error: `הסיסמה צריכה להכיל לפחות ${MIN_PASSWORD} תווים` }, 400);
+      const { salt, hash } = await hashPassword(password);
+      await db.prepare("INSERT INTO members (email,name,status,role,note,requested_at,decided_at,decided_by,password_hash,password_salt,last_login) VALUES (?,?,'active','admin','',?,?,'setup',?,?,?)").bind(email, name, now, now, hash, salt, now).run();
+      return json({ ok: true }, 200, { 'Set-Cookie': await createSession(request, db, email) });
+    }
+
     if (path === '/api/auth/password') {
       const user = await getUser(request, env, db); if (!user || user.local) return json({ error: 'יש להתחבר תחילה' }, 401);
       const current = String(body.current || ''), next = String(body.next || '');
@@ -133,6 +144,15 @@ export function signInRedirect(request) {
 }
 const safeReturn = v => (v && v.startsWith('/') && !v.startsWith('//') && !v.startsWith('/login') ? v : '/');
 const page = (title, body) => `<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — קשר טוב</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/brand-mark.svg"><link rel="stylesheet" href="/style.css"><style>.access{max-width:440px;margin:7vh auto;padding:0 20px;line-height:1.7;color:#5c5062}.access h1{margin:14px 0 6px;font-size:26px;color:#6e0f42}.access .lead{margin-bottom:18px}.access label{display:flex;flex-direction:column;gap:5px;margin:14px 0;font-size:14px}.access input{border:1px solid #d4cad0;border-radius:8px;padding:11px 12px;font:inherit;font-size:16px}.access input:focus{border-color:#8f1a57;outline:none;box-shadow:0 0 0 3px #fbeef4}.access .primary{width:100%;margin-top:6px}.access .msg{min-height:24px;color:#b3261e;font-size:14px;margin-top:10px}.access .aside{margin-top:28px;padding-top:18px;border-top:1px solid #e7e0e4;font-size:14px}.access .aside a{font-weight:500}</style></head><body><main class="access"><img src="/brand-mark.svg" width="60" height="60" alt="">${body}</main></body></html>`;
+
+export async function needsSetup(db) { return db ? !(await db.prepare('SELECT 1 AS ok FROM members LIMIT 1').first()) : false; }
+
+// דף ההקמה: מוצג רק כל עוד אין אף חברה. המנהלת הראשונה בוחרת שם, מייל וסיסמה.
+export function setupPage() {
+  return html(page('הקמת המרחב', `<h1>ברוכה הבאה לקשר טוב!</h1><p class="lead">האתר פורסם ועדיין אין בו אף חברה. צרי כאן את חשבון המנהלת הראשונה. אחר כך תוכלי להזמין את שאר הצוות מתוך האתר.</p>
+<form id="f"><label>שם מלא<input name="name" required maxlength="120" autofocus></label><label>מייל<input name="email" type="email" required autocomplete="username"></label><label>סיסמה (לפחות ${MIN_PASSWORD} תווים)<input name="password" type="password" required minlength="${MIN_PASSWORD}" autocomplete="new-password"></label><label>הסיסמה שוב<input name="again" type="password" required autocomplete="new-password"></label><button class="primary" type="submit">יצירת החשבון וכניסה</button><p class="msg" id="msg" role="status"></p></form>
+<script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button'),m=document.getElementById('msg');if(e.target.password.value!==e.target.again.value){m.textContent='שתי הסיסמאות אינן זהות';return}b.disabled=true;m.textContent='';try{const r=await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify({name:e.target.name.value,email:e.target.email.value,password:e.target.password.value})});const d=await r.json();if(!r.ok)throw Error(d.error);location.href='/'}catch(err){m.textContent=err.message||'ההקמה נכשלה';b.disabled=false}};</script>`));
+}
 
 // דף הכניסה. מי שאין לה גישה מוזמנת לשלוח בקשת הצטרפות במייל למנהלת.
 export function loginPage(request, contact) {

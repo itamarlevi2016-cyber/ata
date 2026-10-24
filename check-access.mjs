@@ -2,7 +2,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { authorize, handleAuth, issueInvite, joinPage, loginPage, contactEmail } from './server/auth.mjs';
+import { authorize, handleAuth, issueInvite, joinPage, loginPage, contactEmail, needsSetup } from './server/auth.mjs';
 import { handleAccess } from './server/access.mjs';
 const sql = new DatabaseSync(':memory:');
 for (const name of readdirSync('drizzle').filter(f => f.endsWith('.sql')).sort()) sql.exec(readFileSync('drizzle/' + name, 'utf8'));
@@ -12,6 +12,7 @@ const env = {};
 const B = 'https://example.test';
 const jsonHeaders = { 'Content-Type': 'application/json', 'X-Kesher-Client': '1' };
 const cookie = r => (r.headers.get('set-cookie') || '').split(';')[0];
+let r, a;
 const post = (path, body, extra = {}) => handleAuth(new Request(B + path, { method: 'POST', headers: { ...jsonHeaders, ...extra }, body: JSON.stringify(body) }), env, db, path);
 const asUser = (c, path = '/', init = {}) => new Request(B + path, { ...init, headers: { cookie: c, ...(init.headers || {}) } });
 const access = async (c, body) => handleAccess(asUser(c, '/api/access', body ? { method: 'POST', headers: jsonHeaders, body: JSON.stringify(body) } : {}), db, await authorize(asUser(c), env, db), 'admin@example.com');
@@ -21,13 +22,22 @@ assert.equal((await authorize(new Request(B + '/'), env, db)).status, 'anonymous
 assert.equal(await contactEmail({ KESHER_CONTACT_EMAIL: 'Admin@Example.com' }, db), 'admin@example.com');
 assert.match(await loginPage(new Request(B + '/login?return_to=%2F%23all'), 'admin@example.com').text(), /mailto:admin%40example.com/);
 
+// הקמה ראשונית מהדפדפן: עובדת רק כל עוד אין אף חברה
+assert.equal(await needsSetup(db), true);
+assert.equal((await post('/api/auth/setup', { name: 'הקמה', email: 'bad', password: 'password-123' })).status, 400);
+r = await post('/api/auth/setup', { name: 'מקימה', email: 'founder@example.com', password: 'password-123' }); assert.equal(r.status, 200);
+a = await authorize(asUser(cookie(r)), env, db); assert.equal(a.user.role, 'admin'); assert.equal(a.user.name, 'מקימה');
+assert.equal(await needsSetup(db), false);
+assert.equal((await post('/api/auth/setup', { name: 'שוב', email: 'x@example.com', password: 'password-123' })).status, 409);
+sql.exec("DELETE FROM members; DELETE FROM sessions");
+
 // המנהלת הראשונה מוזמנת (כמו בסקריפט scripts/invite.mjs) ובוחרת סיסמה
 const adminToken = await issueInvite(db, { email: 'admin@example.com', name: 'רבקה כהן', role: 'admin', by: 'setup' });
 assert.match(await (await joinPage(new Request(B + '/join?token=' + adminToken), db)).text(), /רבקה כהן/);
 assert.equal((await post('/api/auth/accept', { token: adminToken, password: 'short' })).status, 400);
-let r = await post('/api/auth/accept', { token: adminToken, password: 'password-123' }); assert.equal(r.status, 200);
+r = await post('/api/auth/accept', { token: adminToken, password: 'password-123' }); assert.equal(r.status, 200);
 const adminCookie = cookie(r); assert.match(adminCookie, /^kt_session=.{20,}/);
-let a = await authorize(asUser(adminCookie), env, db); assert.equal(a.status, 'ok'); assert.equal(a.user.role, 'admin'); assert.equal(a.user.name, 'רבקה כהן');
+a = await authorize(asUser(adminCookie), env, db); assert.equal(a.status, 'ok'); assert.equal(a.user.role, 'admin'); assert.equal(a.user.name, 'רבקה כהן');
 // הקישור חד-פעמי
 assert.equal((await post('/api/auth/accept', { token: adminToken, password: 'password-123' })).status, 400);
 assert.equal((await joinPage(new Request(B + '/join?token=' + adminToken), db)).status, 400);

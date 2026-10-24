@@ -14,20 +14,31 @@
 כל שינוי בכרטיס נרשם עם שם החברה שביצעה אותו. הרזומות והנתונים מוגשים רק לחברות מחוברות.
 אין צורך בשום חשבון חיצוני (לא ChatGPT ולא Google).
 
-── פרסום בענן (פעם ראשונה) ──
-דרישות: Node.js 22.13 ומעלה, pnpm (גרסה ב-package.json), וחשבון Cloudflare חינמי.
+── פרסום בענן בלי טרמינל (מומלץ) ──
+כל השלבים באתר של Cloudflare (dash.cloudflare.com, חשבון חינמי). הקוד נמשך ישירות מ-GitHub.
+1. מסד נתונים: בתפריט השמאלי Storage & Databases → D1 SQL Database → Create → שם: kesher-tov → Create.
+   בעמוד שנפתח מופיע Database ID — לחצו Copy.
+2. האתר: Workers & Pages → Create → לשונית Workers → Import a repository → חברו את חשבון GitHub ובחרו את הריפו ata.
+   בהגדרות הפרויקט:
+   • Project name: kesher-tov   (חייב להיות בדיוק כך)
+   • Branch: הענף שבו הקוד (למשל claude/hopeful-cannon-j39req, או main אחרי מיזוג)
+   • Build command:  pnpm build
+   • Deploy command: npx wrangler d1 migrations apply DB --remote --config dist/server/wrangler.json && npx wrangler deploy --config dist/server/wrangler.json
+   • Build variables (Variables and Secrets / Environment variables של ה-build): הוסיפו משתנה
+     KESHER_D1_ID  =  ה-Database ID שהועתק בשלב 1
+   לחצו Create and deploy. הבנייה הראשונה אורכת 2–4 דקות; בסיום מוצגת כתובת: https://kesher-tov.<חשבון>.workers.dev
+3. הקמה: פתחו את הכתובת בדפדפן. כל עוד אין אף חברה, האתר מציג "דף הקמה": שם, מייל וסיסמה למנהלת הראשונה.
+   מכאן הכול מתנהל מתוך האתר (הזמנת חברות ב"חברות המרחב").
+עדכון גרסה בהמשך: כל דחיפה (push) לענף שנבחר מפורסמת אוטומטית.
+אופציונלי: Settings של ה-Worker → Variables and Secrets → KESHER_CONTACT_EMAIL — לאיזה מייל נשלחות בקשות הצטרפות (ברירת מחדל: המנהלת הראשונה).
+
+── פרסום מהטרמינל (חלופה למפתחים) ──
+דרישות: Node.js 22.13 ומעלה, pnpm (גרסה ב-package.json), וחשבון Cloudflare.
 1. pnpm install
-2. npx wrangler login                      (פותח דפדפן לאישור החשבון)
-3. npx wrangler d1 create kesher-tov       (מדפיס database_id — שמרו אותו)
+2. npx wrangler login
+3. npx wrangler d1 create kesher-tov       (מדפיס database_id)
 4. KESHER_D1_ID=<database_id> pnpm deploy  (ב-Windows PowerShell: $env:KESHER_D1_ID="<id>"; pnpm deploy)
-   הפקודה בונה את האתר, מריצה את המיגרציות ומעלה. בסיום מודפסת כתובת האתר (https://kesher-tov.<חשבון>.workers.dev).
-5. יצירת המנהלת הראשונה:
-   node scripts/invite.mjs <המייל שלך> "<השם שלך>" --url https://<כתובת-האתר>
-   מודפס קישור הזמנה — פתחו אותו בדפדפן ובחרו סיסמה. מכאן הכול מתנהל מתוך האתר.
-   (אותה פקודה משמשת גם לחילוץ אם כל המנהלות ננעלו בחוץ.)
-אופציונלי: npx wrangler secret put KESHER_CONTACT_EMAIL --config dist/server/wrangler.json
-   כדי לקבוע לאיזה מייל נשלחות בקשות ההצטרפות (ברירת מחדל: המנהלת הראשונה).
-עדכון גרסה בהמשך: שוב KESHER_D1_ID=<id> pnpm deploy.
+5. פתחו את הכתובת שהודפסה: דף ההקמה יוצר את המנהלת הראשונה. (חלופה/חילוץ: node scripts/invite.mjs <email> "<שם>" --url https://<כתובת>)
 
 ── הפעלה מקומית למפתח ──
 pnpm install → pnpm build → pnpm d1:migrate:local → pnpm start (מריץ את הגרסה הבנויה על 127.0.0.1:8787)
