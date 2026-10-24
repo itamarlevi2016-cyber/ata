@@ -16,7 +16,9 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
 
 const localBindingConfig = {
-  name: "kesher-tov",
+  // Must match the Worker (project) name in the Cloudflare dashboard; "ata" is what
+  // Cloudflare picks when the GitHub repository is imported.
+  name: process.env.KESHER_WORKER_NAME || "ata",
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   // Every request (static files included) goes through worker/index.ts, which

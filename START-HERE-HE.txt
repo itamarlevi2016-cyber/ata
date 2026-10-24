@@ -20,13 +20,13 @@
    בעמוד שנפתח מופיע Database ID — לחצו Copy.
 2. האתר: Workers & Pages → Create → לשונית Workers → Import a repository → חברו את חשבון GitHub ובחרו את הריפו ata.
    בהגדרות הפרויקט:
-   • Project name: kesher-tov   (חייב להיות בדיוק כך)
+   • Project name: ata   (ברירת המחדל, כשם הריפו. שם אחר דורש משתנה בנייה KESHER_WORKER_NAME עם אותו שם)
    • Branch: הענף שבו הקוד (למשל claude/hopeful-cannon-j39req, או main אחרי מיזוג)
    • Build command:  pnpm build
    • Deploy command: npx wrangler d1 migrations apply DB --remote --config dist/server/wrangler.json && npx wrangler deploy --config dist/server/wrangler.json
    • Build variables (Variables and Secrets / Environment variables של ה-build): הוסיפו משתנה
      KESHER_D1_ID  =  ה-Database ID שהועתק בשלב 1
-   לחצו Create and deploy. הבנייה הראשונה אורכת 2–4 דקות; בסיום מוצגת כתובת: https://kesher-tov.<חשבון>.workers.dev
+   לחצו Create and deploy. הבנייה הראשונה אורכת 2–4 דקות; בסיום מוצגת כתובת: https://ata.<חשבון>.workers.dev
 3. הקמה: פתחו את הכתובת בדפדפן. כל עוד אין אף חברה, האתר מציג "דף הקמה": שם, מייל וסיסמה למנהלת הראשונה.
    מכאן הכול מתנהל מתוך האתר (הזמנת חברות ב"חברות המרחב").
 עדכון גרסה בהמשך: כל דחיפה (push) לענף שנבחר מפורסמת אוטומטית.
