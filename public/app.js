@@ -1,7 +1,7 @@
 'use strict';
 /* קשר טוב — תצוגה, חיפוש, סינון וטפסים. הסנכרון עם השרת נמצא ב-shared.js. */
 
-try { const t = new URLSearchParams(location.search).get('theme'); if (t) localStorage.setItem('kt-theme', t === 'default' ? '' : t); const th = localStorage.getItem('kt-theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
+try { const t = new URLSearchParams(location.search).get('theme'); if (t) localStorage.setItem('kt-theme', t); document.documentElement.dataset.theme = localStorage.getItem('kt-theme') || 'vivid'; } catch {}
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = name => `<svg class="i" aria-hidden="true"><use href="#i-${name}"/></svg>`;
