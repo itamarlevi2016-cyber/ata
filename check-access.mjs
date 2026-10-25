@@ -24,12 +24,15 @@ assert.match(await loginPage(new Request(B + '/login?return_to=%2F%23all'), 'adm
 
 // הקמה ראשונית מהדפדפן: עובדת רק כל עוד אין אף חברה
 assert.equal(await needsSetup(db), true);
+sql.exec("INSERT INTO members (email,name,status,role,note,requested_at) VALUES ('listed@example.com','','invited','member','',1)");
+assert.equal(await needsSetup(db), true, 'imported members alone do not count as setup');
 assert.equal((await post('/api/auth/setup', { name: 'הקמה', email: 'bad', password: 'password-123' })).status, 400);
 r = await post('/api/auth/setup', { name: 'מקימה', email: 'founder@example.com', password: 'password-123' }); assert.equal(r.status, 200);
 a = await authorize(asUser(cookie(r)), env, db); assert.equal(a.user.role, 'admin'); assert.equal(a.user.name, 'מקימה');
 assert.equal(await needsSetup(db), false);
 assert.equal((await post('/api/auth/setup', { name: 'שוב', email: 'x@example.com', password: 'password-123' })).status, 409);
 sql.exec("DELETE FROM members; DELETE FROM sessions");
+assert.equal(await needsSetup(db), true);
 
 // המנהלת הראשונה מוזמנת (כמו בסקריפט scripts/invite.mjs) ובוחרת סיסמה
 const adminToken = await issueInvite(db, { email: 'admin@example.com', name: 'רבקה כהן', role: 'admin', by: 'setup' });
@@ -83,6 +86,10 @@ r = await access(adminCookie, { action: 'remove', email: 'sara@example.com' }); 
 r = await handleAuth(asUser(adminCookie, '/logout'), env, db, '/logout'); assert.equal(r.status, 302); assert.equal((await authorize(asUser(adminCookie), env, db)).status, 'anonymous');
 // רשימה מאושרת מראש + קוד הצטרפות: ייבוא, הרשמה עצמית, קוד שגוי, מייל שלא ברשימה
 assert.deepEqual(parseEmailList('rivka@Example.com\nשרה לוי <sara@example.com>\nlea@example.com, לאה גולד\nלא מייל\nrivka@example.com'), [{ email: 'rivka@example.com', name: '' }, { email: 'sara@example.com', name: 'שרה לוי' }, { email: 'lea@example.com', name: 'לאה גולד' }]);
+// כפי שמעתיקים משדה "אל" של מייל: הכול בשורה אחת
+assert.deepEqual(parseEmailList('"חנה רוז" <hana@example.com>, Dina Katz <dina@example.com>, tova@example.com; miri@example.com'), [{ email: 'hana@example.com', name: 'חנה רוז' }, { email: 'dina@example.com', name: 'Dina Katz' }, { email: 'tova@example.com', name: '' }, { email: 'miri@example.com', name: '' }]);
+// שלב המייל בדף הכניסה
+assert.equal((await (await post('/api/auth/lookup', { email: 'nobody@example.com' })).json()).state, 'unknown');
 const adminToken2 = await issueInvite(db, { email: 'admin@example.com', name: 'רבקה', role: 'admin', by: 'setup' }, true);
 r = await post('/api/auth/accept', { token: adminToken2, password: 'password-123' }); const adminCookie2 = cookie(r);
 r = await access(adminCookie2, { action: 'import', text: 'miri@example.com\nדינה כץ <dina@example.com>' }); d = await r.json(); assert.equal(r.status, 200); assert.equal(d.added, 2);
@@ -91,7 +98,9 @@ r = await access(adminCookie2, { action: 'import', text: 'miri@example.com' }); 
 assert.equal((await access(adminCookie2, { action: 'import', text: 'שום דבר' })).status, 400);
 // בלי קוד שנקבע: המייל מהרשימה מספיק; מי שלא ברשימה נדחית
 assert.equal((await post('/api/auth/register', { email: 'stranger@example.com', password: 'x-pass-123' })).status, 401);
+assert.deepEqual(await (await post('/api/auth/lookup', { email: 'miri@example.com' })).json(), { state: 'new', codeRequired: false });
 r = await post('/api/auth/register', { email: 'Miri@example.com', password: 'miri-pass-1' }); assert.equal(r.status, 200);
+assert.equal((await (await post('/api/auth/lookup', { email: 'MIRI@example.com' })).json()).state, 'active');
 a = await authorize(asUser(cookie(r)), env, db); assert.equal(a.status, 'ok'); assert.equal(a.user.email, 'miri@example.com');
 assert.equal((await post('/api/auth/register', { email: 'miri@example.com', password: 'again-pass-1' })).status, 409, 'cannot re-register a member who has a password');
 assert.equal((await post('/api/auth/login', { email: 'miri@example.com', password: 'miri-pass-1' })).status, 200);
@@ -99,6 +108,7 @@ await access(adminCookie2, { action: 'import', text: 'tova@example.com' });
 // עם קוד: חובה להזין אותו
 assert.equal((await access(adminCookie2, { action: 'joinCode', code: '123' })).status, 400);
 r = await access(adminCookie2, { action: 'joinCode', code: 'shidduch-2026' }); assert.equal(r.status, 200);
+assert.deepEqual(await (await post('/api/auth/lookup', { email: 'tova@example.com' })).json(), { state: 'new', codeRequired: true });
 r = await access(adminCookie2); assert.equal((await r.json()).joinCode, 'shidduch-2026');
 assert.equal((await post('/api/auth/register', { email: 'tova@example.com', code: 'wrong', password: 'tova-pass-1' })).status, 401);
 assert.equal((await post('/api/auth/register', { email: 'tova@example.com', password: 'tova-pass-1' })).status, 401, 'code required once set');
@@ -111,5 +121,8 @@ assert.equal((await post('/api/auth/register', { email: 'dina@example.com', code
 // ביטול הקוד: שוב המייל מספיק
 await access(adminCookie2, { action: 'joinCode', code: '' }); sql.exec("UPDATE members SET locked_until=NULL, failed_attempts=0");
 assert.equal((await post('/api/auth/register', { email: 'dina@example.com', password: 'dina-pass-1' })).status, 200);
+// קובץ הרשימה הקבועה (roster) נטען אוטומטית, לא דורס חברות קיימות
+const { seedRoster } = await import('./server/migrate.mjs').catch(() => ({ seedRoster: null }));
+if (seedRoster) { await seedRoster(db); }
 console.log('PASS: pre-approved email list import, join code, self-registration, lockout');
 console.log('PASS: invite link → password → cookie session, login lockout, CSRF, member management, password reset and change, logout');

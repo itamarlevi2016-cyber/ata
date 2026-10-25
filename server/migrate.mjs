@@ -6,6 +6,8 @@ import m0002 from '../drizzle/0002_mysterious_whistler.sql?raw';
 import m0003 from '../drizzle/0003_robust_polaris.sql?raw';
 import m0004 from '../drizzle/0004_spicy_iron_fist.sql?raw';
 import m0005 from '../drizzle/0005_faithful_may_parker.sql?raw';
+import roster from './roster.json';
+import { importMembers, parseEmailList } from './auth.mjs';
 
 // סדר ההרצה חשוב. קובץ חדש בתיקיית drizzle צריך להתווסף גם כאן.
 export const migrations = [
@@ -35,9 +37,15 @@ export async function migrate(db) {
 }
 
 // פעם אחת לכל מופע של ה-Worker; כישלון מאפשר ניסיון חוזר בבקשה הבאה.
+// רשימת חברות קבועה (server/roster.json): כתובות שנוספות לרשימת החברות אוטומטית בכל פרסום,
+// כך שאפשר להעביר את כל חברות הקבוצה בבת אחת בלי להדביק באתר. כתובת שכבר קיימת לא משתנה.
+export async function seedRoster(db) {
+  const list = Array.isArray(roster) ? roster.flatMap(entry => typeof entry === 'string' ? parseEmailList(entry) : entry?.email ? parseEmailList(`${entry.name || ''} <${entry.email}>`) : []) : [];
+  if (list.length) await importMembers(db, list, 'roster');
+}
 let pending = null;
 export function ensureMigrated(db) {
   if (!db) return Promise.resolve();
-  if (!pending) pending = migrate(db).catch(error => { pending = null; throw error; });
+  if (!pending) pending = migrate(db).then(() => seedRoster(db)).catch(error => { pending = null; throw error; });
   return pending;
 }

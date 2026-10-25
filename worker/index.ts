@@ -1,7 +1,7 @@
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
-import { authorize, contactEmail, handleAuth, joinPage, loginPage, needsSetup, registerPage, setupPage, signInRedirect } from "../server/auth.mjs";
+import { authorize, contactEmail, handleAuth, joinPage, loginPage, needsSetup, setupPage, signInRedirect } from "../server/auth.mjs";
 import { handleAccess } from "../server/access.mjs";
 import { ensureMigrated } from "../server/migrate.mjs";
 
@@ -40,7 +40,7 @@ const worker = {
       return loginPage(request, await contactEmail(env, db));
     }
     if (path === "/join") return joinPage(request, db);
-    if (path === "/register") return registerPage();
+    if (path === "/register") return new Response(null, { status: 302, headers: { Location: "/login" } });
     if (path === "/logout" || path.startsWith("/api/auth/")) return handleAuth(request, env, db, path);
 
     // Every other request — the page, the API and every file (résumés included) — requires a signed-in member.

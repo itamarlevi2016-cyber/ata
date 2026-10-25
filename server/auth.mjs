@@ -76,13 +76,14 @@ export async function setJoinCode(db, code) {
 // מפרקת רשימה מודבקת: שורה לכל כתובת, בפורמטים "מייל", "שם <מייל>", "מייל, שם" או "שם, מייל".
 export function parseEmailList(text) {
   const out = new Map();
+  const add = (email, name) => { email = normalizeEmail(email); if (validEmail(email) && !out.has(email)) out.set(email, (name || '').replace(/[<>,"';]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)); };
   for (const raw of String(text || '').split(/\r?\n|;/)) {
     const line = raw.trim(); if (!line) continue;
-    const m = line.match(/<([^<>\s]+@[^<>\s]+)>/) || line.match(/([^\s,"']+@[^\s,"']+)/);
-    if (!m) continue;
-    const email = normalizeEmail(m[1]); if (!validEmail(email)) continue;
-    const name = line.replace(m[0], '').replace(/[<>,"']/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
-    if (!out.has(email)) out.set(email, name);
+    const emails = line.match(/[^\s<>,"']+@[^\s<>,"']+/g) || [];
+    if (!emails.length) continue;
+    if (emails.length === 1) { add(emails[0], line.replace(emails[0], '')); continue; }
+    // כמה כתובות בשורה אחת, כפי שמעתיקים משדה "אל" של מייל: "שם <מייל>, שם <מייל>, מייל, …"
+    for (const piece of line.split(/,(?![^<]*>)/)) { const e = piece.match(/[^\s<>,"']+@[^\s<>,"']+/); if (e) add(e[0], piece.replace(e[0], '')); }
   }
   return [...out].map(([email, name]) => ({ email, name }));
 }
@@ -149,6 +150,16 @@ export async function handleAuth(request, env, db, path) {
       return json({ ok: true }, 200, { 'Set-Cookie': await createSession(request, db, email) });
     }
 
+    if (path === '/api/auth/lookup') {
+      // שלב ראשון בכניסה: לפי המייל מחליטים אם לבקש סיסמה קיימת, לבחור סיסמה ראשונה, או שהמייל לא ברשימה.
+      const email = normalizeEmail(body.email); if (!validEmail(email)) return json({ state: 'unknown' });
+      const m = await db.prepare("SELECT status,password_hash FROM members WHERE email=?").bind(email).first();
+      if (!m || m.status === 'disabled') return json({ state: 'unknown' });
+      if (m.password_hash && m.status === 'active') return json({ state: 'active' });
+      if (m.status === 'invited' && !m.password_hash) return json({ state: 'new', codeRequired: !!(await getJoinCode(db)) });
+      return json({ state: 'unknown' });
+    }
+
     if (path === '/api/auth/register') {
       // הרשמה ראשונה של חברה מהרשימה המאושרת מראש: מייל (+ קוד הצטרפות, אם המנהלת קבעה) → סיסמה.
       const email = normalizeEmail(body.email), code = String(body.code || '').trim(), password = String(body.password || '');
@@ -192,11 +203,12 @@ export function signInRedirect(request) {
 const safeReturn = v => (v && v.startsWith('/') && !v.startsWith('//') && !v.startsWith('/login') ? v : '/');
 const page = (title, body) => `<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — קשר טוב</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/brand-mark.svg"><link rel="stylesheet" href="/style.css"><style>.access{max-width:440px;margin:7vh auto;padding:0 20px;line-height:1.7;color:#5c5062}.access h1{margin:14px 0 6px;font-size:26px;color:#6e0f42}.access .lead{margin-bottom:18px}.access label{display:flex;flex-direction:column;gap:5px;margin:14px 0;font-size:14px}.access input{border:1px solid #d4cad0;border-radius:8px;padding:11px 12px;font:inherit;font-size:16px}.access input:focus{border-color:#8f1a57;outline:none;box-shadow:0 0 0 3px #fbeef4}.access .primary{width:100%;margin-top:6px}.access .msg{min-height:24px;color:#b3261e;font-size:14px;margin-top:10px}.access .aside{margin-top:28px;padding-top:18px;border-top:1px solid #e7e0e4;font-size:14px}.access .aside a{font-weight:500}</style></head><body><main class="access"><img src="/brand-mark.svg" width="60" height="60" alt="">${body}</main></body></html>`;
 
-export async function needsSetup(db) { return db ? !(await db.prepare('SELECT 1 AS ok FROM members LIMIT 1').first()) : false; }
+// דף ההקמה מוצג כל עוד אין מנהלת פעילה (גם אם כבר יובאו כתובות מרשימת הקבוצה).
+export async function needsSetup(db) { return db ? !(await db.prepare("SELECT 1 AS ok FROM members WHERE role='admin' AND status='active' LIMIT 1").first()) : false; }
 
 // דף ההקמה: מוצג רק כל עוד אין אף חברה. המנהלת הראשונה בוחרת שם, מייל וסיסמה.
 export function setupPage() {
-  return html(page('הקמת המרחב', `<h1>ברוכה הבאה לקשר טוב!</h1><p class="lead">האתר פורסם ועדיין אין בו אף חברה. צרי כאן את חשבון המנהלת הראשונה. אחר כך תוכלי להזמין את שאר הצוות מתוך האתר.</p>
+  return html(page('הקמת המרחב', `<h1>ברוכה הבאה לקשר טוב!</h1><p class="lead">האתר פורסם ועדיין אין בו מנהלת. צרי כאן את חשבון המנהלת הראשונה. אחר כך תוכלי להזמין את שאר הצוות מתוך האתר.</p>
 <form id="f"><label>שם מלא<input name="name" required maxlength="120" autofocus></label><label>מייל<input name="email" type="email" required autocomplete="username"></label><label>סיסמה (לפחות ${MIN_PASSWORD} תווים)<input name="password" type="password" required minlength="${MIN_PASSWORD}" autocomplete="new-password"></label><label>הסיסמה שוב<input name="again" type="password" required autocomplete="new-password"></label><button class="primary" type="submit">יצירת החשבון וכניסה</button><p class="msg" id="msg" role="status"></p></form>
 <script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button'),m=document.getElementById('msg');if(e.target.password.value!==e.target.again.value){m.textContent='שתי הסיסמאות אינן זהות';return}b.disabled=true;m.textContent='';try{const r=await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify({name:e.target.name.value,email:e.target.email.value,password:e.target.password.value})});const d=await r.json();if(!r.ok)throw Error(d.error);location.href='/'}catch(err){m.textContent=err.message||'ההקמה נכשלה';b.disabled=false}};</script>`));
 }
@@ -205,10 +217,25 @@ export function setupPage() {
 export function loginPage(request, contact) {
   const returnTo = safeReturn(new URL(request.url).searchParams.get('return_to'));
   const mailto = contact ? `mailto:${encodeURIComponent(contact)}?subject=${encodeURIComponent('בקשת הצטרפות למרחב קשר טוב')}&body=${encodeURIComponent('שלום,\nאשמח להצטרף למרחב השידוכים "קשר טוב".\nשמי: \nכתובת המייל שלי: \nמי הפנה אותי: \n')}` : '';
-  return html(page('כניסה', `<h1>כניסה למרחב</h1><p class="lead">מרחב סגור לחברות הצוות. הכניסה עם המייל והסיסמה שבחרת בהזמנה.</p>
-<form id="f"><label>מייל<input name="email" type="email" required autocomplete="username" autofocus></label><label>סיסמה<input name="password" type="password" required autocomplete="current-password"></label><button class="primary" type="submit">כניסה</button><p class="msg" id="msg" role="status"></p></form>
-<div class="aside"><p><b>עדיין אין לך גישה?</b> ${contact ? `<a href="${mailto}">שלחי בקשת הצטרפות במייל</a> למנהלת המרחב (${esc(contact)}).` : 'פני למנהלת המרחב.'} אחרי האישור תקבלי במייל קישור אישי לבחירת סיסמה.</p><p><b>פעם ראשונה כאן והמייל שלך כבר ברשימת החברות?</b> <a href="/register">הגדרת סיסמה בכניסה הראשונה</a>.</p><p>שכחת סיסמה? בקשי מהמנהלת קישור חדש.</p></div>
-<script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button'),m=document.getElementById('msg');b.disabled=true;m.textContent='';try{const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify({email:e.target.email.value,password:e.target.password.value})});const d=await r.json();if(!r.ok)throw Error(d.error);location.href=${JSON.stringify(returnTo)}}catch(err){m.textContent=err.message||'הכניסה נכשלה';b.disabled=false}};</script>`));
+  return html(page('כניסה', `<h1>ברוכה הבאה לקשר טוב</h1><p class="lead" id="lead">הזיני את כתובת המייל שלך כדי להיכנס.</p>
+<form id="f" novalidate>
+  <label>מייל<input name="email" type="email" required autocomplete="username" autofocus></label>
+  <div id="stepPassword" hidden><label>סיסמה<input name="password" type="password" autocomplete="current-password"></label></div>
+  <div id="stepCreate" hidden><p class="lead">זו הכניסה הראשונה שלך. בחרי סיסמה שתשמש אותך מעכשיו.</p><div id="codeWrap" hidden><label>קוד הצטרפות (נשלח בקבוצה)<input name="code" autocomplete="off"></label></div><label>סיסמה חדשה (לפחות ${MIN_PASSWORD} תווים)<input name="newPassword" type="password" minlength="${MIN_PASSWORD}" autocomplete="new-password"></label><label>הסיסמה שוב<input name="again" type="password" autocomplete="new-password"></label></div>
+  <button class="primary" type="submit" id="go">המשך</button><p class="msg" id="msg" role="status"></p>
+</form>
+<div class="aside"><p><b>המייל שלך לא ברשימה?</b> ${contact ? `<a href="${mailto}">שלחי בקשת הצטרפות במייל</a> למנהלת המרחב (${esc(contact)}).` : 'פני למנהלת המרחב.'}</p><p>שכחת סיסמה? בקשי מהמנהלת קישור לאיפוס.</p></div>
+<script>
+const f=document.getElementById('f'),msg=document.getElementById('msg'),go=document.getElementById('go'),lead=document.getElementById('lead');let step='email';
+const post=async(path,body)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error);return d};
+const show=(s)=>{step=s;document.getElementById('stepPassword').hidden=s!=='password';document.getElementById('stepCreate').hidden=s!=='create';go.textContent=s==='email'?'המשך':s==='password'?'כניסה':'שמירה וכניסה';lead.textContent=s==='email'?'הזיני את כתובת המייל שלך כדי להיכנס.':s==='password'?'שלום! הזיני את הסיסמה שלך.':'המייל שלך ברשימת החברות.';const el=f.querySelector(s==='password'?'[name=password]':s==='create'?'[name=code]:not([hidden]) , [name=newPassword]':'[name=email]');if(el)el.focus()};
+f.email.addEventListener('input',()=>{if(step!=='email'){show('email');msg.textContent=''}});
+f.onsubmit=async e=>{e.preventDefault();msg.textContent='';go.disabled=true;try{
+  if(step==='email'){const d=await post('/api/auth/lookup',{email:f.email.value});if(d.state==='active')show('password');else if(d.state==='new'){document.getElementById('codeWrap').hidden=!d.codeRequired;show('create')}else msg.textContent='כתובת המייל הזו אינה ברשימת החברות. בדקי את הכתובת, או שלחי בקשת הצטרפות למנהלת (למטה).';}
+  else if(step==='password'){await post('/api/auth/login',{email:f.email.value,password:f.password.value});location.href=${JSON.stringify(returnTo)};}
+  else{if(f.newPassword.value.length<${MIN_PASSWORD}){msg.textContent='הסיסמה צריכה להכיל לפחות ${MIN_PASSWORD} תווים';}else if(f.newPassword.value!==f.again.value){msg.textContent='שתי הסיסמאות אינן זהות';}else{await post('/api/auth/register',{email:f.email.value,code:f.code.value,password:f.newPassword.value});location.href=${JSON.stringify(returnTo)};}}
+}catch(err){msg.textContent=err.message||'משהו השתבש, נסי שוב'}finally{go.disabled=false}};
+</script>`));
 }
 
 // דף ההרשמה לחברות מהרשימה המאושרת מראש: מייל + קוד הצטרפות → סיסמה.
