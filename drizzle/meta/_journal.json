@@ -36,6 +36,13 @@
       "when": 1792876287112,
       "tag": "0004_spicy_iron_fist",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792909910528,
+      "tag": "0005_faithful_may_parker",
+      "breakpoints": true
     }
   ]
 }

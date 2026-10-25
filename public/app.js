@@ -343,7 +343,8 @@ const when = t => t ? new Date(t).toLocaleDateString('he-IL') : '';
 function memberStatus(m) {
   if (m.status === 'active') return `<span class="status free">פעילה</span>`;
   if (m.status === 'disabled') return `<span class="status">מושבתת</span>`;
-  return m.inviteExpires && m.inviteExpires > Date.now() ? `<span class="status pending">הוזמנה · הקישור בתוקף עד ${when(m.inviteExpires)}</span>` : `<span class="status progress">ההזמנה פגה · נדרש קישור חדש</span>`;
+  if (!m.inviteExpires) return `<span class="status waiting">ברשימה · טרם נרשמה</span>`;
+  return m.inviteExpires > Date.now() ? `<span class="status pending">הוזמנה · הקישור בתוקף עד ${when(m.inviteExpires)}</span>` : `<span class="status progress">ההזמנה פגה · נדרש קישור חדש</span>`;
 }
 function renderMembers(data) {
   const me = currentUser?.email;
@@ -363,9 +364,19 @@ function showInvite(url, name, email) {
   $('inviteMail').href = `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
 }
 async function openMembers() {
-  open('membersDialog'); $('inviteResult').hidden = true; $('inviteForm').reset(); $('membersList').innerHTML = '<p class="muted">טוענת…</p>';
-  try { renderMembers(await accessApi()); } catch (e) { $('membersList').innerHTML = `<p class="banner banner-warn">${esc(e.message)}</p>`; }
+  open('membersDialog'); $('inviteResult').hidden = true; $('inviteForm').reset(); $('importForm').reset(); $('membersList').innerHTML = '<p class="muted">טוענת…</p>';
+  try { const data = await accessApi(); $('joinCodeForm').code.value = data.joinCode || ''; renderMembers(data); } catch (e) { $('membersList').innerHTML = `<p class="banner banner-warn">${esc(e.message)}</p>`; }
 }
+$('importForm').onsubmit = async e => {
+  e.preventDefault(); const f = e.target, btn = f.querySelector('[type=submit]'); btn.disabled = true;
+  try { const data = await accessApi({ action: 'import', text: f.text.value }); renderMembers(data); f.reset(); toast(`נוספו ${data.added} כתובות${data.skipped ? ` · ${data.skipped} כבר היו ברשימה` : ''}`); }
+  catch (err) { toast(err.message); } finally { btn.disabled = false; }
+};
+$('joinCodeForm').onsubmit = async e => {
+  e.preventDefault(); const f = e.target;
+  try { await accessApi({ action: 'joinCode', code: f.code.value.trim() }); toast(f.code.value.trim() ? 'קוד ההצטרפות נשמר. שלחי אותו לקבוצה.' : 'קוד ההצטרפות בוטל'); } catch (err) { toast(err.message); }
+};
+$('clearJoinCode').onclick = async () => { if (!confirm('לבטל את קוד ההצטרפות? חברות מהרשימה יירשמו עם המייל בלבד.')) return; try { await accessApi({ action: 'joinCode', code: '' }); $('joinCodeForm').code.value = ''; toast('קוד ההצטרפות בוטל'); } catch (err) { toast(err.message); } };
 $('membersBtn').onclick = openMembers;
 $('inviteForm').onsubmit = async e => {
   e.preventDefault(); const f = e.target, btn = f.querySelector('[type=submit]'); btn.disabled = true;

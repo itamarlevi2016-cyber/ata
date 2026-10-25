@@ -294,6 +294,19 @@
       <div class="invite-link"><input id="inviteLink" readonly aria-label="קישור ההזמנה"><button type="button" class="outline small" id="copyInvite">העתקה</button><a class="primary small" id="inviteMail" href="#"><svg class="i"><use href="#i-mail"/></svg> שליחה במייל</a></div>
       <small>הקישור מוצג פעם אחת. אם אבד, אפשר ליצור "קישור חדש" מהרשימה למטה.</small>
     </div>
+    <details class="import-box">
+      <summary><strong>ייבוא רשימת מיילים מהקבוצה</strong> — חברות שלא צריכות אישור</summary>
+      <p class="muted">הדביקי את כל הכתובות מהקבוצה במייל, אחת בכל שורה (אפשר גם „שם &lt;מייל&gt;” או „מייל, שם”). כל מי שברשימה תוכל להיכנס לאתר בפעם הראשונה ולבחור סיסמה לבד, עם המייל שלה בלבד. בלי לחכות לאישור ובלי קישור אישי.</p>
+      <form id="importForm">
+        <textarea name="text" rows="6" placeholder="rivka@example.com&#10;שרה לוי &lt;sara@example.com&gt;&#10;lea@example.com, לאה גולד"></textarea>
+        <div class="button-row"><button class="primary" type="submit"><svg class="i"><use href="#i-upload"/></svg> הוספה לרשימת החברות</button></div>
+      </form>
+      <form id="joinCodeForm" class="join-code">
+        <label>קוד הצטרפות משותף — לא חובה (לפחות 6 תווים)<input name="code" minlength="6" maxlength="60" placeholder="למשל: שידוכים2026"></label>
+        <div class="button-row"><button class="outline" type="submit">שמירת הקוד</button><button class="text-button" type="button" id="clearJoinCode">ביטול הקוד</button></div>
+        <small>שכבת הגנה נוספת, אם רוצים: כשנקבע קוד, חברה מהרשימה צריכה להזין אותו בהרשמה הראשונה. שולחים אותו פעם אחת בקבוצה. בלי קוד, המייל מהרשימה מספיק.</small>
+      </form>
+    </details>
     <div id="membersList"></div>
   </div>
 </dialog>

@@ -66,6 +66,35 @@ export async function issueInvite(db, { email, name, role = 'member', by = '' },
 }
 export const inviteUrl = (origin, token) => `${origin}/join?token=${token}`;
 
+/* ---------- קוד הצטרפות ורשימה מאושרת מראש ---------- */
+// חברות שיובאו ברשימה (status=invited בלי קישור) נרשמות לבד עם המייל + קוד ההצטרפות המשותף.
+export async function getJoinCode(db) { const row = await db.prepare("SELECT value FROM kt_settings WHERE key='join_code'").first(); return row?.value || ''; }
+export async function setJoinCode(db, code) {
+  if (!code) return db.prepare("DELETE FROM kt_settings WHERE key='join_code'").run();
+  return db.prepare("INSERT INTO kt_settings (key,value) VALUES ('join_code',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(code).run();
+}
+// מפרקת רשימה מודבקת: שורה לכל כתובת, בפורמטים "מייל", "שם <מייל>", "מייל, שם" או "שם, מייל".
+export function parseEmailList(text) {
+  const out = new Map();
+  for (const raw of String(text || '').split(/\r?\n|;/)) {
+    const line = raw.trim(); if (!line) continue;
+    const m = line.match(/<([^<>\s]+@[^<>\s]+)>/) || line.match(/([^\s,"']+@[^\s,"']+)/);
+    if (!m) continue;
+    const email = normalizeEmail(m[1]); if (!validEmail(email)) continue;
+    const name = line.replace(m[0], '').replace(/[<>,"']/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (!out.has(email)) out.set(email, name);
+  }
+  return [...out].map(([email, name]) => ({ email, name }));
+}
+export async function importMembers(db, list, by = '') {
+  const now = Date.now(); let added = 0, skipped = 0;
+  for (const { email, name } of list) {
+    const r = await db.prepare("INSERT OR IGNORE INTO members (email,name,status,role,note,requested_at,decided_at,decided_by,failed_attempts) VALUES (?,?,'invited','member','',?,?,?,0)").bind(email, name, now, now, by).run();
+    if (r.meta?.changes) added++; else skipped++;
+  }
+  return { added, skipped };
+}
+
 /* ---------- בקשות API ---------- */
 function csrfOk(request) {
   if (!request.headers.get('content-type')?.includes('application/json') || request.headers.get('x-kesher-client') !== '1' || request.headers.get('sec-fetch-site') === 'cross-site') return false;
@@ -120,6 +149,24 @@ export async function handleAuth(request, env, db, path) {
       return json({ ok: true }, 200, { 'Set-Cookie': await createSession(request, db, email) });
     }
 
+    if (path === '/api/auth/register') {
+      // הרשמה ראשונה של חברה מהרשימה המאושרת מראש: מייל (+ קוד הצטרפות, אם המנהלת קבעה) → סיסמה.
+      const email = normalizeEmail(body.email), code = String(body.code || '').trim(), password = String(body.password || '');
+      const wrong = () => json({ error: 'המייל אינו ברשימת החברות, או שקוד ההצטרפות שגוי' }, 401);
+      if (!validEmail(email)) return wrong();
+      if (password.length < MIN_PASSWORD) return json({ error: `הסיסמה צריכה להכיל לפחות ${MIN_PASSWORD} תווים` }, 400);
+      const m = await db.prepare("SELECT email,status,password_hash,failed_attempts,locked_until FROM members WHERE email=?").bind(email).first();
+      if (m?.locked_until && m.locked_until > now) return json({ error: `יותר מדי ניסיונות. נסי שוב בעוד ${Math.ceil((m.locked_until - now) / 60000)} דקות.` }, 429);
+      const expected = await getJoinCode(db);
+      if (!m || m.status !== 'invited' || m.password_hash || (expected && !sameString(code, expected))) {
+        if (m) { const attempts = (m.failed_attempts || 0) + 1; await db.prepare('UPDATE members SET failed_attempts=?,locked_until=? WHERE email=?').bind(attempts, attempts >= MAX_FAILED ? now + LOCK_MINUTES * 60000 : null, email).run(); }
+        return m?.password_hash ? json({ error: 'לכתובת הזו כבר יש סיסמה. היכנסי בדף הכניסה, או בקשי מהמנהלת קישור לאיפוס.' }, 409) : wrong();
+      }
+      const { salt, hash } = await hashPassword(password);
+      await db.prepare("UPDATE members SET password_hash=?,password_salt=?,status='active',invite_hash=NULL,invite_expires=NULL,failed_attempts=0,locked_until=NULL,last_login=? WHERE email=?").bind(hash, salt, now, email).run();
+      return json({ ok: true }, 200, { 'Set-Cookie': await createSession(request, db, email) });
+    }
+
     if (path === '/api/auth/password') {
       const user = await getUser(request, env, db); if (!user || user.local) return json({ error: 'יש להתחבר תחילה' }, 401);
       const current = String(body.current || ''), next = String(body.next || '');
@@ -160,8 +207,16 @@ export function loginPage(request, contact) {
   const mailto = contact ? `mailto:${encodeURIComponent(contact)}?subject=${encodeURIComponent('בקשת הצטרפות למרחב קשר טוב')}&body=${encodeURIComponent('שלום,\nאשמח להצטרף למרחב השידוכים "קשר טוב".\nשמי: \nכתובת המייל שלי: \nמי הפנה אותי: \n')}` : '';
   return html(page('כניסה', `<h1>כניסה למרחב</h1><p class="lead">מרחב סגור לחברות הצוות. הכניסה עם המייל והסיסמה שבחרת בהזמנה.</p>
 <form id="f"><label>מייל<input name="email" type="email" required autocomplete="username" autofocus></label><label>סיסמה<input name="password" type="password" required autocomplete="current-password"></label><button class="primary" type="submit">כניסה</button><p class="msg" id="msg" role="status"></p></form>
-<div class="aside"><p><b>עדיין אין לך גישה?</b> ${contact ? `<a href="${mailto}">שלחי בקשת הצטרפות במייל</a> למנהלת המרחב (${esc(contact)}).` : 'פני למנהלת המרחב.'} אחרי האישור תקבלי במייל קישור אישי לבחירת סיסמה.</p><p>שכחת סיסמה? בקשי מהמנהלת קישור חדש.</p></div>
+<div class="aside"><p><b>עדיין אין לך גישה?</b> ${contact ? `<a href="${mailto}">שלחי בקשת הצטרפות במייל</a> למנהלת המרחב (${esc(contact)}).` : 'פני למנהלת המרחב.'} אחרי האישור תקבלי במייל קישור אישי לבחירת סיסמה.</p><p><b>פעם ראשונה כאן והמייל שלך כבר ברשימת החברות?</b> <a href="/register">הגדרת סיסמה בכניסה הראשונה</a>.</p><p>שכחת סיסמה? בקשי מהמנהלת קישור חדש.</p></div>
 <script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button'),m=document.getElementById('msg');b.disabled=true;m.textContent='';try{const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify({email:e.target.email.value,password:e.target.password.value})});const d=await r.json();if(!r.ok)throw Error(d.error);location.href=${JSON.stringify(returnTo)}}catch(err){m.textContent=err.message||'הכניסה נכשלה';b.disabled=false}};</script>`));
+}
+
+// דף ההרשמה לחברות מהרשימה המאושרת מראש: מייל + קוד הצטרפות → סיסמה.
+export function registerPage() {
+  return html(page('הגדרת סיסמה', `<h1>הגדרת סיסמה</h1><p class="lead">למי שכתובת המייל שלה כבר נמצאת ברשימת החברות: הזיני את המייל ובחרי סיסמה. קוד הצטרפות נדרש רק אם המנהלת מסרה אחד.</p>
+<form id="f"><label>מייל<input name="email" type="email" required autocomplete="username" autofocus></label><label>קוד הצטרפות (רק אם נמסר לך)<input name="code" autocomplete="off"></label><label>סיסמה (לפחות ${MIN_PASSWORD} תווים)<input name="password" type="password" required minlength="${MIN_PASSWORD}" autocomplete="new-password"></label><label>הסיסמה שוב<input name="again" type="password" required autocomplete="new-password"></label><button class="primary" type="submit">שמירה וכניסה</button><p class="msg" id="msg" role="status"></p></form>
+<div class="aside"><p>המייל שלך לא ברשימה? <a href="/login">בקשי הצטרפות</a> מהמנהלת.</p></div>
+<script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button'),m=document.getElementById('msg');if(e.target.password.value!==e.target.again.value){m.textContent='שתי הסיסמאות אינן זהות';return}b.disabled=true;m.textContent='';try{const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json','X-Kesher-Client':'1'},body:JSON.stringify({email:e.target.email.value,code:e.target.code.value,password:e.target.password.value})});const d=await r.json();if(!r.ok)throw Error(d.error);location.href='/'}catch(err){m.textContent=err.message||'ההרשמה נכשלה';b.disabled=false}};</script>`));
 }
 
 // דף ההזמנה: בחירת סיסמה דרך קישור חד-פעמי.

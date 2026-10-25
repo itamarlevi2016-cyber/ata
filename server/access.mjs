@@ -1,8 +1,8 @@
 // ניהול חברות המרחב על ידי מנהלות (API בנתיב /api/access): הזמנה, קישור חדש, השבתה, הסרה, תפקיד.
-import { issueInvite, inviteUrl, normalizeEmail, validEmail } from './auth.mjs';
+import { issueInvite, inviteUrl, normalizeEmail, validEmail, getJoinCode, setJoinCode, parseEmailList, importMembers } from './auth.mjs';
 
 const response = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
-const ACTIONS = new Set(['invite', 'reinvite', 'remove', 'disable', 'enable', 'promote', 'demote']);
+const ACTIONS = new Set(['invite', 'reinvite', 'remove', 'disable', 'enable', 'promote', 'demote', 'import', 'joinCode']);
 
 async function listMembers(db) {
   return (await db.prepare("SELECT email,name,status,role,requested_at AS invitedAt,decided_by AS invitedBy,invite_expires AS inviteExpires,last_login AS lastLogin FROM members ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'invited' THEN 1 ELSE 2 END, name, email").all()).results;
@@ -14,12 +14,25 @@ export async function handleAccess(request, db, auth, contact = '') {
     if (!db) return response({ error: 'המאגר המשותף אינו זמין כרגע' }, 503);
     if (auth.status !== 'ok') return response({ error: 'יש להתחבר תחילה' }, 401);
     if (auth.user.role !== 'admin') return response({ error: 'פעולה זו שמורה למנהלות' }, 403);
-    if (request.method === 'GET') return response({ me: auth.user, contact, members: await listMembers(db) });
+    if (request.method === 'GET') return response({ me: auth.user, contact, joinCode: await getJoinCode(db), members: await listMembers(db) });
     if (request.method !== 'POST') return response({ error: 'שיטה לא נתמכת' }, 405);
     if (!request.headers.get('content-type')?.includes('application/json') || request.headers.get('x-kesher-client') !== '1' || request.headers.get('sec-fetch-site') === 'cross-site') return response({ error: 'בקשה לא מורשית' }, 403);
     const origin = request.headers.get('origin'); if (origin && origin !== new URL(request.url).origin) return response({ error: 'מקור בקשה לא תקין' }, 403);
     const body = JSON.parse(await request.text());
     if (!ACTIONS.has(body.action)) return response({ error: 'פעולה לא מוכרת' }, 400);
+    if (body.action === 'joinCode') {
+      const code = String(body.code || '').trim();
+      if (code && code.length < 6) return response({ error: 'קוד ההצטרפות צריך להכיל לפחות 6 תווים' }, 400);
+      await setJoinCode(db, code);
+      return response({ ok: true, joinCode: code });
+    }
+    if (body.action === 'import') {
+      const list = parseEmailList(body.text);
+      if (!list.length) return response({ error: 'לא נמצאו כתובות מייל תקינות ברשימה' }, 400);
+      if (list.length > 2000) return response({ error: 'ניתן לייבא עד 2,000 כתובות בכל פעם' }, 400);
+      const result = await importMembers(db, list, auth.user.name || auth.user.email);
+      return response({ ok: true, ...result, members: await listMembers(db) });
+    }
     const email = normalizeEmail(body.email);
     if (!validEmail(email)) return response({ error: 'כתובת מייל לא תקינה' }, 400);
     if (email === auth.user.email && body.action !== 'reinvite') return response({ error: 'אי אפשר לשנות את ההרשאה של עצמך' }, 400);

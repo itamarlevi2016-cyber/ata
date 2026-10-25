@@ -5,6 +5,7 @@ import m0001 from '../drizzle/0001_quiet_santa_claus.sql?raw';
 import m0002 from '../drizzle/0002_mysterious_whistler.sql?raw';
 import m0003 from '../drizzle/0003_robust_polaris.sql?raw';
 import m0004 from '../drizzle/0004_spicy_iron_fist.sql?raw';
+import m0005 from '../drizzle/0005_faithful_may_parker.sql?raw';
 
 // סדר ההרצה חשוב. קובץ חדש בתיקיית drizzle צריך להתווסף גם כאן.
 export const migrations = [
@@ -13,6 +14,7 @@ export const migrations = [
   ['0002_mysterious_whistler', m0002],
   ['0003_robust_polaris', m0003],
   ['0004_spicy_iron_fist', m0004],
+  ['0005_faithful_may_parker', m0005],
 ];
 
 const ALREADY = /already exists|duplicate column/i;

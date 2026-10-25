@@ -35,6 +35,10 @@ export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(), email: text('email').notNull(),
   createdAt: integer('created_at').notNull(), expiresAt: integer('expires_at').notNull(),
 });
+// הגדרות המרחב, למשל קוד ההצטרפות המשותף.
+export const settings = sqliteTable('kt_settings', {
+  key: text('key').primaryKey(), value: text('value').notNull(),
+});
 export const celebrations = sqliteTable('celebrations', {
   id: text('id').primaryKey(), groom: text('groom').notNull(), bride: text('bride').notNull(),
   createdAt: integer('created_at').notNull(), expiresAt: integer('expires_at').notNull(),
