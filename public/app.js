@@ -1,6 +1,7 @@
 'use strict';
 /* קשר טוב — תצוגה, חיפוש, סינון וטפסים. הסנכרון עם השרת נמצא ב-shared.js. */
 
+try { const t = new URLSearchParams(location.search).get('theme'); if (t) localStorage.setItem('kt-theme', t === 'default' ? '' : t); const th = localStorage.getItem('kt-theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = name => `<svg class="i" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -34,6 +35,7 @@ const PAGE_SIZE = 24;
 const VIEWS = ['home', 'all', 'fav', 'progress', 'pending', 'archive'];
 const ENGAGED = 'מאורס/ת';
 
+let mainCommunities = new Set();
 let page = 0, records = [], editing = null, nav = 'home', listView = false;
 let importRows = [], importHeaders = [], importMap = {};
 let failedStorage = false, legacyRecords = [], editingBase = null, newEditingId = null, newEditingCreatedAt = null;
@@ -92,7 +94,7 @@ function filtered() {
   const result = records.filter(r =>
     (nav === 'archive' ? r.status === ENGAGED : nav === 'pending' ? r.needsCompletion : !r.needsCompletion && r.status !== ENGAGED)
     && (nav !== 'fav' || r.favorite) && (nav !== 'progress' || progress(r))
-    && (!gender || r.gender === gender) && (!community || r.community === community) && (!status || r.status === status)
+    && (!gender || r.gender === gender) && (!community || (community === '__other' ? r.community && !mainCommunities.has(r.community) : r.community === community)) && (!status || r.status === status)
     && (!minAge || (Number(r.age) > 0 && Number(r.age) >= minAge)) && (!maxAge || (Number(r.age) > 0 && Number(r.age) <= maxAge))
     && (!city || (r.city || '').includes(city)) && (!missing || !String(r[missing] || '').trim())
     && (!q || searchable(r).includes(q) || (qDigits.length >= 4 && [r.phone, r.contactPhone].some(p => digits(p).includes(qDigits)))));
@@ -120,7 +122,7 @@ function cleanContact(r) {
 function contactStrip(r) {
   const c = cleanContact(r), phone = String(r.contactPhone || '').trim(), email = String(contactEmail(r) || '').trim();
   const who = c.name || 'איש קשר לא צוין';
-  const btns = [phone && validPhone(phone) ? `<a class="cs-btn call" href="tel:${phone.replace(/[^+\d]/g, '')}" title="חיוג אל ${esc(who)}">${icon('phone')}<bdi>${esc(phone)}</bdi></a>` : '', email && validEmail(email) ? `<a class="cs-btn mail" href="mailto:${encodeURIComponent(email)}" title="מייל אל ${esc(who)}" aria-label="מייל אל ${esc(who)}">${icon('mail')}<span>מייל</span></a>` : ''].join('');
+  const btns = [phone && validPhone(phone) ? `<a class="cs-btn call" href="tel:${phone.replace(/[^+\d]/g, '')}" title="חיוג אל ${esc(who)}">${icon('phone')}<bdi>${esc(phone)}</bdi></a>` : '', email && validEmail(email) ? `<a class="cs-btn mail" href="mailto:${encodeURIComponent(email)}" title="מייל אל ${esc(who)}" aria-label="מייל אל ${esc(who)}">${icon('mail')}<bdi>${esc(email)}</bdi></a>` : ''].join('');
   return `<div class="contact-strip"><div class="cs-who"><small>איש/אשת קשר לבירורים</small><strong title="${esc(r.contact || '')}">${esc(who)}${c.note ? ` <em>${esc(c.note)}</em>` : ''}</strong></div>${btns ? `<div class="cs-actions">${btns}</div>` : '<span class="contact-none">אין טלפון או מייל — ראי בכרטיס</span>'}</div>`;
 }
 function linkContacts(t) {
@@ -169,8 +171,11 @@ function render() {
   document.querySelector('.hero').hidden = !isHome; document.querySelector('.stats').hidden = !isHome; $('homeShortcuts').hidden = !isHome; document.querySelector('.database').hidden = isHome;
   const active = records.filter(r => !r.needsCompletion && r.status !== ENGAGED), pending = records.filter(r => r.needsCompletion && r.status !== ENGAGED).length;
   for (const [id, n] of [['pendingCount', pending], ['pendingHome', pending], ['archiveCount', records.filter(r => r.status === ENGAGED).length], ['countAll', active.length], ['navCount', active.length], ['countMale', active.filter(r => r.gender === 'מועמד').length], ['countFemale', active.filter(r => r.gender === 'מועמדת').length], ['countProgress', active.filter(progress).length]]) $(id).textContent = n;
-  const communities = [...new Set(records.map(r => r.community).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'he')), selected = $('communityFilter').value;
-  $('communityFilter').innerHTML = '<option value="">כל העדות</option>' + communities.map(c => `<option ${c === selected ? 'selected' : ''}>${esc(c)}</option>`).join('');
+  const communityCounts = new Map(); for (const r of records) if (r.community) communityCounts.set(r.community, (communityCounts.get(r.community) || 0) + 1);
+  const communities = [...communityCounts].filter(([, n]) => n >= 5).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'he')).map(([c]) => c), selected = $('communityFilter').value;
+  mainCommunities = new Set(communities);
+  const hasOther = [...communityCounts.keys()].some(c => !mainCommunities.has(c));
+  $('communityFilter').innerHTML = '<option value="">כל העדות</option>' + communities.map(c => `<option ${c === selected ? 'selected' : ''}>${esc(c)}</option>`).join('') + (hasOther ? `<option value="__other" ${selected === '__other' ? 'selected' : ''}>אחר</option>` : '');
   const result = filtered();
   updateDirectoryTools(result.length);
   $('sectionHint').textContent = nav === 'pending' ? 'הפרטים שנמסרו סודרו; נדרש שם מלא או אימות זהות מהמציעה' : nav === 'archive' ? 'דווח על אירוסין — הרשומות הוסרו מהמאגר הפעיל' : nav === 'fav' ? 'שמות שסומנו בלב. הרשימה משותפת לכל הצוות' : 'הגילים לפי הדיווח המקורי · יש לבדוק זמינות ופרטים עדכניים';

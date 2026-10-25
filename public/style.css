@@ -479,3 +479,103 @@ details summary{cursor:pointer;color:var(--plum)}
   .dsec dl{grid-template-columns:1fr}
   .cards{padding-bottom:70px}
 }
+
+.cs-btn{max-width:100%;min-width:0}
+.cs-btn bdi{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr}
+
+/* ---------- ערכת צבעים חיה (הדגמה): ‎?theme=vivid‎ ‎·‎ חזרה לרגילה: ‎?theme=default‎ ---------- */
+html[data-theme=vivid]{
+  --bg:#f3eefb;--line:#d9cbee;--line-2:#c4b0e2;
+  --plum:#c2185b;--plum-dark:#8e0f43;--plum-soft:#ffe0ee;--plum-line:#f5a3c8;
+  --rose:#e91e63;--rose-soft:#ffd9e8;
+  --teal:#00838f;--teal-soft:#d6f4f6;
+  --gold:#ffb300;--gold-soft:#fff0b8;
+}
+html[data-theme=vivid] body{background:linear-gradient(180deg,#f3eefb 0,#fdf1f7 60%,#fff6e3 100%) fixed}
+html[data-theme=vivid] .sidebar{background:linear-gradient(180deg,#7b1fa2 0,#c2185b 55%,#e8590c 130%);border-left:0;color:#fff}
+html[data-theme=vivid] .brand,html[data-theme=vivid] .brand b{color:#fff}
+html[data-theme=vivid] .brand small{color:#ffe3f1}
+html[data-theme=vivid] .nav{color:#ffe9f4}
+html[data-theme=vivid] .nav .i{color:#ffd1e6}
+html[data-theme=vivid] .nav:hover{background:#ffffff26;color:#fff}
+html[data-theme=vivid] .nav.active{background:#fff;color:var(--plum-dark)}
+html[data-theme=vivid] .nav.active .i{color:var(--plum)}
+html[data-theme=vivid] .nav b{background:#ffffff33;color:#fff}
+html[data-theme=vivid] .nav.active b{background:var(--plum);color:#fff}
+html[data-theme=vivid] .sidebar-bottom{border-top-color:#ffffff40}
+html[data-theme=vivid] .sidebar-bottom *{color:#fff}
+html[data-theme=vivid] .topbar{background:#ffffffee}
+html[data-theme=vivid] .section-head h2{background:linear-gradient(270deg,#7b1fa2,#e91e63);-webkit-background-clip:text;background-clip:text}
+html[data-theme=vivid] .toolbar{border-color:var(--line-2);box-shadow:0 2px 10px #7b1fa22b}
+html[data-theme=vivid] button.primary,html[data-theme=vivid] .primary{background:linear-gradient(90deg,#c2185b,#e91e63);color:#fff}
+
+/* כרטיסים: כותרת צבעונית מלאה */
+html[data-theme=vivid] .card{padding:0;border:0;box-shadow:0 3px 14px #4a148c2e;background:#fff;gap:0}
+html[data-theme=vivid] .card::before{display:none}
+html[data-theme=vivid] .card:hover,html[data-theme=vivid] .card:focus-within{box-shadow:0 8px 26px #4a148c47;transform:translateY(-2px)}
+html[data-theme=vivid] .card-top{padding:14px 14px 12px;background:linear-gradient(135deg,#8e24aa,#e91e63);color:#fff}
+html[data-theme=vivid] .card.male .card-top{background:linear-gradient(135deg,#1565c0,#00acc1)}
+html[data-theme=vivid] .card h3,html[data-theme=vivid] .card h3 button{color:#fff}
+html[data-theme=vivid] .card h3 button:hover{color:#fff;text-decoration:underline}
+html[data-theme=vivid] .subline{color:#ffffffd9}
+html[data-theme=vivid] .subline b{color:#fff;background:#ffffff33;border-radius:999px;padding:1px 9px;font-size:13px}
+html[data-theme=vivid] .initials{background:#fff;color:#c2185b;box-shadow:0 2px 6px #0003}
+html[data-theme=vivid] .male .initials{color:#1565c0}
+html[data-theme=vivid] .fav{color:#fff}
+html[data-theme=vivid] .fav:hover{background:#ffffff33;color:#fff}
+html[data-theme=vivid] .fav.on{color:#ffeb3b}
+html[data-theme=vivid] .card-top .status{background:#ffeb3b;color:#4e342e;font-weight:700}
+html[data-theme=vivid] .tags,html[data-theme=vivid] .facts,html[data-theme=vivid] .card-empty{margin:12px 14px 0}
+html[data-theme=vivid] .tag{font-weight:700;color:#fff}
+html[data-theme=vivid] .tag.c-community{background:#f57c00;color:#fff}
+html[data-theme=vivid] .tag.c-style{background:#7b1fa2;color:#fff}
+html[data-theme=vivid] .fact{border-right-width:4px;background:color-mix(in srgb,var(--fc) 9%,#fff);border-radius:8px;padding:5px 9px}
+html[data-theme=vivid] .fact small{font-size:12px}
+html[data-theme=vivid] .f-study{--fc:#00897b}html[data-theme=vivid] .f-work{--fc:#1565c0}html[data-theme=vivid] .f-looking{--fc:#e65100}
+html[data-theme=vivid] .contact-strip{margin:12px 0 0;border:0;border-radius:0;padding:12px 14px;background:linear-gradient(135deg,#00796b,#00acc1);color:#fff}
+html[data-theme=vivid] .cs-who small{color:#d0f7f2}
+html[data-theme=vivid] .cs-who strong{color:#fff}
+html[data-theme=vivid] .cs-who em{color:#e0f7fa}
+html[data-theme=vivid] .cs-btn{background:#fff;color:#00695c;font-weight:700}
+html[data-theme=vivid] .cs-btn.mail{background:#ffeb3b;color:#37474f}
+html[data-theme=vivid] .contact-strip .contact-none{color:#e0f7fa}
+html[data-theme=vivid] .card-bottom{padding:12px 14px;border-top:0}
+
+/* כרטיס מלא */
+html[data-theme=vivid] .detail-hero{background:linear-gradient(135deg,#8e24aa,#e91e63);color:#fff;border-bottom:0}
+html[data-theme=vivid] .detail-hero.male{background:linear-gradient(135deg,#1565c0,#00acc1)}
+html[data-theme=vivid] .detail-hero h2,html[data-theme=vivid] .detail-hero .muted{color:#fff}
+html[data-theme=vivid] .detail-hero .initials{background:#fff;color:#c2185b}
+html[data-theme=vivid] .detail-hero.male .initials{color:#1565c0}
+html[data-theme=vivid] .contact-panel{background:linear-gradient(135deg,#00796b,#00acc1);color:#fff}
+html[data-theme=vivid] .contact-panel>strong{color:#fff}
+html[data-theme=vivid] .contact-panel em{color:#e0f7fa}
+html[data-theme=vivid] .contact-link{background:#fff;color:#00695c;font-weight:700}
+html[data-theme=vivid] .contact-source summary,html[data-theme=vivid] .contact-source a{color:#fff;text-decoration:underline}
+html[data-theme=vivid] .contact-source>div{border-top-color:#ffffff55}
+html[data-theme=vivid] .dsec{border-top-width:5px;background:color-mix(in srgb,var(--sc) 6%,#fff)}
+html[data-theme=vivid] .g-person{--sc:#c2185b}html[data-theme=vivid] .g-work{--sc:#00897b}html[data-theme=vivid] .g-looking{--sc:#e65100}html[data-theme=vivid] .g-family{--sc:#7b1fa2}html[data-theme=vivid] .g-status{--sc:#1565c0}
+
+/* דף הבית */
+html[data-theme=vivid] .hero{background:linear-gradient(120deg,#7b1fa2,#e91e63 60%,#ff9800);border:0;color:#fff}
+html[data-theme=vivid] .hero h1,html[data-theme=vivid] .hero p,html[data-theme=vivid] .eyebrow{color:#fff}
+html[data-theme=vivid] .stats button{border:0;color:#fff}
+html[data-theme=vivid] .stats button:nth-child(1){background:linear-gradient(135deg,#7b1fa2,#c2185b)}
+html[data-theme=vivid] .stats button:nth-child(2){background:linear-gradient(135deg,#1565c0,#00acc1)}
+html[data-theme=vivid] .stats button:nth-child(3){background:linear-gradient(135deg,#c2185b,#ff4081)}
+html[data-theme=vivid] .stats button:nth-child(4){background:linear-gradient(135deg,#ef6c00,#ffb300)}
+html[data-theme=vivid] .stats strong,html[data-theme=vivid] .stats span{color:#fff!important}
+html[data-theme=vivid] .home-shortcuts button{border:0;box-shadow:0 2px 10px #4a148c22}
+html[data-theme=vivid] .home-shortcuts button:nth-of-type(1){border-top:5px solid #c2185b}html[data-theme=vivid] .home-shortcuts button:nth-of-type(2){border-top:5px solid #e65100}html[data-theme=vivid] .home-shortcuts button:nth-of-type(3){border-top:5px solid #00897b}html[data-theme=vivid] .home-shortcuts button:nth-of-type(4){border-top:5px solid #1565c0}
+html[data-theme=vivid] .contact-strip{margin:auto 0 0}
+html[data-theme=vivid] .card .facts,html[data-theme=vivid] .card .tags,html[data-theme=vivid] .card .card-empty{margin-bottom:12px}
+html[data-theme=vivid] .card .card-empty{margin-bottom:auto}
+html[data-theme=vivid] .hero-actions .outline,html[data-theme=vivid] .hero-actions .text-button{color:#fff;border-color:#ffffffaa;background:#ffffff1f}
+html[data-theme=vivid] .hero-actions .primary{background:#fff;color:var(--plum-dark)}
+@media(max-width:760px){
+  html[data-theme=vivid] .sidebar nav .nav{color:#5c5062}
+  html[data-theme=vivid] .sidebar nav .nav .i{color:#7f7484}
+  html[data-theme=vivid] .sidebar nav .nav.active{background:var(--plum-soft);color:var(--plum-dark)}
+  html[data-theme=vivid] .sidebar nav .nav.active .i{color:var(--plum)}
+  html[data-theme=vivid] .sidebar{background:linear-gradient(90deg,#7b1fa2,#c2185b)}
+}
