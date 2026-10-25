@@ -579,3 +579,34 @@ html[data-theme=vivid] .hero-actions .primary{background:#fff;color:var(--plum-d
   html[data-theme=vivid] .sidebar nav .nav.active .i{color:var(--plum)}
   html[data-theme=vivid] .sidebar{background:linear-gradient(90deg,#7b1fa2,#c2185b)}
 }
+
+/* ---------- עידון הערכה החיה: גוונים רכים יותר, אותם מבנה וצבעים ---------- */
+html[data-theme=vivid]{--bg:#f7f3fa;--line:#e3d9ee;--line-2:#d0c2e2;--plum:#a3256a;--plum-dark:#7a1b50;--plum-soft:#fbe6f0;--rose:#c9477f;--teal:#17808a}
+html[data-theme=vivid] body{background:linear-gradient(180deg,#f7f3fa 0,#fcf4f8 70%,#fff8ea 100%) fixed}
+html[data-theme=vivid] .sidebar{background:linear-gradient(180deg,#6d2f87 0,#9c2f6e 100%)}
+html[data-theme=vivid] .nav:hover{background:#ffffff1f}
+html[data-theme=vivid] .section-head h2{background:linear-gradient(270deg,#6d2f87,#b13a76);-webkit-background-clip:text;background-clip:text}
+html[data-theme=vivid] button.primary,html[data-theme=vivid] .primary{background:linear-gradient(90deg,#a3256a,#c9477f)}
+html[data-theme=vivid] .card{box-shadow:0 2px 10px #4a148c1f}
+html[data-theme=vivid] .card-top{background:linear-gradient(135deg,#7d3f98,#c2477e)}
+html[data-theme=vivid] .card.male .card-top,html[data-theme=vivid] .detail-hero.male{background:linear-gradient(135deg,#2e6db0,#2a9aa8)}
+html[data-theme=vivid] .detail-hero{background:linear-gradient(135deg,#7d3f98,#c2477e)}
+html[data-theme=vivid] .card-top .status{background:#fff3b0}
+html[data-theme=vivid] .tag.c-community{background:#fdebc8;color:#9a5300}
+html[data-theme=vivid] .tag.c-style{background:#eadcf6;color:#5e2a85}
+html[data-theme=vivid] .fact{background:color-mix(in srgb,var(--fc) 6%,#fff)}
+html[data-theme=vivid] .contact-strip,html[data-theme=vivid] .contact-panel{background:#e2f3f4;color:#0e5560;border-top:1px solid #bfe0e3}
+html[data-theme=vivid] .cs-who small,html[data-theme=vivid] .contact-panel>small{color:#17808a}
+html[data-theme=vivid] .cs-who strong,html[data-theme=vivid] .contact-panel>strong{color:#1f2d33}
+html[data-theme=vivid] .cs-who em,html[data-theme=vivid] .contact-panel em,html[data-theme=vivid] .contact-strip .contact-none{color:#4d6a70}
+html[data-theme=vivid] .cs-btn,html[data-theme=vivid] .contact-link{background:#17808a;color:#fff}
+html[data-theme=vivid] .cs-btn.mail{background:#2e6db0;color:#fff}
+html[data-theme=vivid] .contact-source summary,html[data-theme=vivid] .contact-source a{color:#a3256a}
+html[data-theme=vivid] .contact-source>div{border-top-color:#bfe0e3}
+html[data-theme=vivid] .dsec{background:#fff;border-top-width:4px}
+html[data-theme=vivid] .hero{background:linear-gradient(120deg,#6d2f87,#b13a76 65%,#e08a3c)}
+html[data-theme=vivid] .stats button:nth-child(1){background:linear-gradient(135deg,#6d2f87,#a3256a)}
+html[data-theme=vivid] .stats button:nth-child(2){background:linear-gradient(135deg,#2e6db0,#2a9aa8)}
+html[data-theme=vivid] .stats button:nth-child(3){background:linear-gradient(135deg,#a3256a,#d65a8c)}
+html[data-theme=vivid] .stats button:nth-child(4){background:linear-gradient(135deg,#d9782b,#eaa93c)}
+@media(max-width:760px){html[data-theme=vivid] .sidebar{background:linear-gradient(90deg,#6d2f87,#9c2f6e)}}
