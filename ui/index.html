@@ -8,11 +8,11 @@
 <meta name="description" content="קשר טוב — מאגר שידוכים משותף, כרטיסים ורזומות במקום אחד">
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/brand-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css?v=color6">
+<link rel="stylesheet" href="/style.css?v=color7">
 <script defer src="/profile-export.js"></script>
 <script defer src="/celebration.js"></script>
 <script defer src="/shared.js"></script>
-<script defer src="/app.js?v=color6"></script>
+<script defer src="/app.js?v=color7"></script>
 </head>
 <body>
 <svg hidden aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -54,7 +54,6 @@
     <button class="nav active" data-nav="home"><svg class="i"><use href="#i-home"/></svg><span>הבית</span></button>
     <button class="nav" data-nav="all"><svg class="i"><use href="#i-users"/></svg><span>מאגר השמות</span><b id="navCount">0</b></button>
     <button class="nav" data-nav="fav"><svg class="i"><use href="#i-heart"/></svg><span>מסומנים</span></button>
-    <button class="nav" data-nav="progress"><svg class="i"><use href="#i-trend"/></svg><span>בתהליך היכרות</span></button>
     <button class="nav" data-nav="pending"><svg class="i"><use href="#i-pencil"/></svg><span>להשלמה</span><b id="pendingCount">0</b></button>
     <button class="nav" data-nav="archive"><svg class="i"><use href="#i-archive"/></svg><span>ארכיון אירוסין</span><b id="archiveCount">0</b></button>
     <button class="nav" id="importNav"><svg class="i"><use href="#i-upload"/></svg><span>ייבוא מקובץ</span></button>
@@ -110,14 +109,12 @@
       <button data-stat="all"><strong id="countAll">0</strong><span>שמות במאגר</span></button>
       <button data-stat="male"><strong id="countMale">0</strong><span>מועמדים</span></button>
       <button data-stat="female"><strong id="countFemale">0</strong><span>מועמדות</span></button>
-      <button data-stat="progress"><strong id="countProgress">0</strong><span>בתהליך היכרות</span></button>
     </section>
 
     <section class="home-shortcuts" id="homeShortcuts">
       <h2>מה תרצי לעשות היום?</h2>
       <button data-go="all"><svg class="i"><use href="#i-search"/></svg><span><strong>למצוא את החיבור הבא</strong><small>חיפוש וסינון במאגר השמות</small></span></button>
       <button data-go="pending"><svg class="i"><use href="#i-pencil"/></svg><span><strong>להשלים את התמונה</strong><small>כרטיסים שמחכים לפרטים נוספים (<span id="pendingHome">0</span>)</small></span></button>
-      <button data-go="progress"><svg class="i"><use href="#i-trend"/></svg><span><strong>לעקוב אחרי ההיכרויות</strong><small>מי בבירור ומי כבר בהיכרות</small></span></button>
       <button id="homeCelebrate"><svg class="i"><use href="#i-sparkles"/></svg><span><strong>לשתף בשמחה</strong><small>דיווח על אירוסין ומזל טוב לכולן</small></span></button>
     </section>
 
@@ -138,7 +135,7 @@
         <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="search" type="search" placeholder="חיפוש לפי שם, עיר, מקום לימודים, מקצוע…" aria-label="חיפוש במאגר"></label>
         <select id="genderFilter" aria-label="סינון מועמדים"><option value="">מועמדים ומועמדות</option><option value="מועמד">מועמדים</option><option value="מועמדת">מועמדות</option></select>
         <select id="communityFilter" aria-label="סינון לפי עדה"><option value="">כל העדות</option></select>
-        <select id="statusFilter" aria-label="סינון לפי מצב"><option value="">כל המצבים</option><option>לא נבדק</option><option>פנוי/ה</option><option>בבירור</option><option>בהיכרות</option><option>מאורס/ת</option><option>לא פעיל/ה</option></select>
+        <select id="statusFilter" aria-label="סינון לפי מצב"><option value="">כל המצבים</option><option>לא נבדק</option><option>פנוי/ה</option><option>מאורס/ת</option><option>לא פעיל/ה</option></select>
         <button class="outline filter-toggle" id="moreFilters" aria-controls="extraFilters" aria-expanded="false"><svg class="i"><use href="#i-filter"/></svg> סינון נוסף <b id="filterCount" hidden></b></button>
         <label class="sort"><span>מיון</span><select id="sort"><option value="name">שם א–ת</option><option value="recent">נוספו לאחרונה</option><option value="age">גיל — מהצעיר</option><option value="ageDesc">גיל — מהמבוגר</option><option value="community">עדה</option><option value="city">עיר מגורים</option></select></label>
         <div class="view-toggle" role="group" aria-label="תצוגה">

@@ -18,7 +18,7 @@ const fields = [
   ['height', 'גובה (ס״מ)', 'number'],
   ['religious', 'סגנון / השקפה', 'text'],
   ['marital', 'מצב משפחתי', ['לא נמסר', 'רווק/ה', 'גרוש/ה', 'אלמן/ה']],
-  ['status', 'מצב השידוך', ['לא נבדק', 'פנוי/ה', 'בבירור', 'בהיכרות', 'מאורס/ת', 'לא פעיל/ה']],
+  ['status', 'מצב השידוך', ['לא נבדק', 'פנוי/ה', 'מאורס/ת', 'לא פעיל/ה']],
   ['phone', 'טלפון', 'tel'],
   ['contact', 'איש / אשת קשר', 'text'],
   ['contactPhone', 'טלפון לבירורים', 'tel'],
@@ -32,7 +32,7 @@ const fields = [
 const labels = Object.fromEntries([...fields.map(f => [f[0], f[1]]), ['notes', 'הערות']]);
 const KEY = 'kesher-tov-v1';
 const PAGE_SIZE = 24;
-const VIEWS = ['home', 'all', 'fav', 'progress', 'pending', 'archive'];
+const VIEWS = ['home', 'all', 'fav', 'pending', 'archive'];
 const ENGAGED = 'מאורס/ת';
 
 let mainCommunities = new Set();
@@ -45,10 +45,12 @@ try { const saved = JSON.parse(localStorage.getItem(KEY) || '[]'); if (!Array.is
 try { listView = localStorage.getItem(KEY + ':view') === 'list'; } catch {}
 
 const uid = () => typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-const progress = r => ['בבירור', 'בהיכרות'].includes(r.status);
+// סטטוסים פרטיים שאינם מוצגים ואינם נשמרים באתר (ערכים ישנים מוסתרים בתצוגה)
+const PRIVATE_STATUS = ['בבירור', 'בהיכרות'];
+const shownStatus = r => PRIVATE_STATUS.includes(r.status) ? '' : r.status;
 const initial = r => (r.name || '').split(/\s+/).slice(0, 2).map(x => x[0]).join('');
-const statusClass = r => r.needsCompletion ? 'pending' : r.status === ENGAGED ? 'engaged' : progress(r) ? 'progress' : r.status === 'פנוי/ה' ? 'free' : '';
-const statusText = r => r.needsCompletion ? 'שם להשלמה' : r.status || 'לא נבדק';
+const statusClass = r => r.needsCompletion ? 'pending' : r.status === ENGAGED ? 'engaged' : shownStatus(r) === 'פנוי/ה' ? 'free' : '';
+const statusText = r => r.needsCompletion ? 'שם להשלמה' : shownStatus(r) || 'לא נבדק';
 
 function toast(t) { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').classList.remove('show'), 4000); }
 function open(id) { $(id).showModal(); }
@@ -93,7 +95,7 @@ function filtered() {
   const minAge = Number($('minAge').value), maxAge = Number($('maxAge').value), city = $('cityFilter').value.trim(), missing = $('missingFilter').value;
   const result = records.filter(r =>
     (nav === 'archive' ? r.status === ENGAGED : nav === 'pending' ? r.needsCompletion : !r.needsCompletion && r.status !== ENGAGED)
-    && (nav !== 'fav' || r.favorite) && (nav !== 'progress' || progress(r))
+    && (nav !== 'fav' || r.favorite)
     && (!gender || r.gender === gender) && (!community || (community === '__other' ? r.community && !mainCommunities.has(r.community) : r.community === community)) && (!status || r.status === status)
     && (!minAge || (Number(r.age) > 0 && Number(r.age) >= minAge)) && (!maxAge || (Number(r.age) > 0 && Number(r.age) <= maxAge))
     && (!city || (r.city || '').includes(city)) && (!missing || !String(r[missing] || '').trim())
@@ -148,7 +150,7 @@ function cardHtml(r) {
   const chips = [['community', 'c-community'], ['religious', 'c-style']].filter(([k]) => r[k]).map(([k, c]) => `<span class="tag ${c}" title="${esc(r[k])}">${esc(chipTxt(r[k]))}</span>`).join('');
   const facts = [['school', 'לימודים', 'f-study'], ['occupation', 'עיסוק', 'f-work'], ['looking', 'מחפש/ת', 'f-looking']].filter(([k]) => r[k]).map(([k, l, c]) => `<p class="fact ${c}"><small>${l}</small><span title="${esc(r[k])}">${esc(r[k])}</span></p>`).join('');
   const body = chips || facts ? `${chips ? `<div class="tags">${chips}</div>` : ''}${facts ? `<div class="facts">${facts}</div>` : ''}` : '<p class="card-empty">עדיין אין פרטים נוספים בכרטיס</p>';
-  const showStatus = r.needsCompletion || (r.status && r.status !== 'לא נבדק');
+  const showStatus = r.needsCompletion || (shownStatus(r) && shownStatus(r) !== 'לא נבדק');
   return `<article class="card ${r.gender === 'מועמד' ? 'male' : 'female'}" data-id="${esc(r.id)}" tabindex="0" aria-label="פתיחת הכרטיס של ${esc(r.name)}">
     <div class="card-top"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h3><button data-detail="${esc(r.id)}">${esc(r.name)}</button></h3><div class="subline"><b>${r.gender === 'מועמד' ? 'מועמד' : 'מועמדת'}</b>${esc([r.age ? ' · גיל ' + r.age : '', r.city ? ' · ' + r.city : ''].join('')) || ' · פרטים להשלמה'}</div></div>${showStatus ? `<span class="status ${statusClass(r)}">${esc(statusText(r))}</span>` : ''}<button class="fav ${r.favorite ? 'on' : ''}" data-fav="${esc(r.id)}" aria-label="${r.favorite ? 'הסרה מהמסומנים' : 'סימון השם'}" aria-pressed="${!!r.favorite}">${icon('heart')}</button></div>
     ${body}
@@ -170,7 +172,7 @@ function render() {
   const isHome = nav === 'home';
   document.querySelector('.hero').hidden = !isHome; document.querySelector('.stats').hidden = !isHome; $('homeShortcuts').hidden = !isHome; document.querySelector('.database').hidden = isHome;
   const active = records.filter(r => !r.needsCompletion && r.status !== ENGAGED), pending = records.filter(r => r.needsCompletion && r.status !== ENGAGED).length;
-  for (const [id, n] of [['pendingCount', pending], ['pendingHome', pending], ['archiveCount', records.filter(r => r.status === ENGAGED).length], ['countAll', active.length], ['navCount', active.length], ['countMale', active.filter(r => r.gender === 'מועמד').length], ['countFemale', active.filter(r => r.gender === 'מועמדת').length], ['countProgress', active.filter(progress).length]]) $(id).textContent = n;
+  for (const [id, n] of [['pendingCount', pending], ['pendingHome', pending], ['archiveCount', records.filter(r => r.status === ENGAGED).length], ['countAll', active.length], ['navCount', active.length], ['countMale', active.filter(r => r.gender === 'מועמד').length], ['countFemale', active.filter(r => r.gender === 'מועמדת').length]]) $(id).textContent = n;
   const communityCounts = new Map(); for (const r of records) if (r.community) communityCounts.set(r.community, (communityCounts.get(r.community) || 0) + 1);
   const communities = [...communityCounts].filter(([, n]) => n >= 5).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'he')).map(([c]) => c), selected = $('communityFilter').value;
   mainCommunities = new Set(communities);
@@ -180,7 +182,7 @@ function render() {
   updateDirectoryTools(result.length);
   $('sectionHint').textContent = nav === 'pending' ? 'הפרטים שנמסרו סודרו; נדרש שם מלא או אימות זהות מהמציעה' : nav === 'archive' ? 'דווח על אירוסין — הרשומות הוסרו מהמאגר הפעיל' : nav === 'fav' ? 'שמות שסומנו בלב. הרשימה משותפת לכל הצוות' : 'הגילים לפי הדיווח המקורי · יש לבדוק זמינות ופרטים עדכניים';
   $('resultCount').textContent = result.length;
-  $('sectionTitle').firstChild.textContent = { archive: 'ארכיון אירוסין ', pending: 'שמות להשלמה ', fav: 'שמות מסומנים ', progress: 'בתהליך היכרות ' }[nav] || 'מאגר השמות ';
+  $('sectionTitle').firstChild.textContent = { archive: 'ארכיון אירוסין ', pending: 'שמות להשלמה ', fav: 'שמות מסומנים ' }[nav] || 'מאגר השמות ';
   $('empty').hidden = !!result.length;
   $('empty').querySelector('h3').textContent = records.length ? 'לא נמצאו שמות מתאימים' : 'כאן מתחילים חיבורים חדשים';
   $('empty').querySelector('p').textContent = records.length ? 'נסי לשנות את החיפוש או את הסינון.' : 'הוסיפי שם ראשון או ייבאי רשימה קיימת מקובץ.';
@@ -286,7 +288,7 @@ function detail(id, fromHash = false) {
   const rest = [...fields.filter(([k]) => !used.has(k) && r[k]).map(([k, l]) => [l, r[k]]), ...Object.entries(r.custom || {})];
   const updated = r._changedAt ? new Date(r._changedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' }) : '';
   $('detailContent').innerHTML = `<div class="modal-head"><h2>הכרטיס המלא</h2><button class="icon-button close" data-close="detailDialog" aria-label="סגירה">${icon('x')}</button></div>
-    <div class="detail-hero ${r.gender === 'מועמד' ? 'male' : 'female'}"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h2>${esc(r.name)}</h2><p class="muted">${esc(subline(r))}</p></div>${r.needsCompletion || (r.status && r.status !== 'לא נבדק') ? `<span class="status ${statusClass(r)}">${esc(statusText(r))}</span>` : ''}</div>
+    <div class="detail-hero ${r.gender === 'מועמד' ? 'male' : 'female'}"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h2>${esc(r.name)}</h2><p class="muted">${esc(subline(r))}</p></div>${r.needsCompletion || (shownStatus(r) && shownStatus(r) !== 'לא נבדק') ? `<span class="status ${statusClass(r)}">${esc(statusText(r))}</span>` : ''}</div>
     <div class="form-body">
       ${contactBlock(r, true)}
       ${sections}
@@ -341,7 +343,7 @@ $('moreFilters').onclick = () => { $('extraFilters').hidden = !$('extraFilters')
 function resetFilters() { page = 0; for (const id of ['search', 'genderFilter', 'communityFilter', 'statusFilter', 'minAge', 'maxAge', 'cityFilter', 'missingFilter']) $(id).value = ''; }
 $('clearFilters').onclick = () => { resetFilters(); render(); };
 document.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => goToSection(b.dataset.nav));
-document.querySelectorAll('[data-stat]').forEach(b => b.onclick = () => { resetFilters(); nav = b.dataset.stat === 'progress' ? 'progress' : 'all'; $('genderFilter').value = b.dataset.stat === 'male' ? 'מועמד' : b.dataset.stat === 'female' ? 'מועמדת' : ''; setHash(nav); render(); window.scrollTo({ top: 0, behavior: 'instant' }); });
+document.querySelectorAll('[data-stat]').forEach(b => b.onclick = () => { resetFilters(); nav = 'all'; $('genderFilter').value = b.dataset.stat === 'male' ? 'מועמד' : b.dataset.stat === 'female' ? 'מועמדת' : ''; setHash(nav); render(); window.scrollTo({ top: 0, behavior: 'instant' }); });
 for (const [id, v] of [['listBtn', true], ['gridBtn', false]]) $(id).onclick = () => { listView = v; try { localStorage.setItem(KEY + ':view', v ? 'list' : 'grid'); } catch {} render(); };
 $('clearDemo').onclick = async () => { if (confirm('להסיר את כל כרטיסי ההדגמה?')) await persist(records.filter(r => !r.demo)); };
 $('statusFilter').addEventListener('change', () => { if ($('statusFilter').value === ENGAGED) nav = 'archive'; else if (nav === 'archive') nav = 'all'; render(); });
@@ -501,7 +503,8 @@ function convertRows() {
     if (!r.name || (r.age && (!/^\d+(?:\.\d+)?$/.test(r.age) || +r.age < 18 || +r.age > 120))) { invalid++; continue; }
     if (r.gender) { if (['זכר', 'גבר', 'בחור', 'male'].includes(r.gender.toLowerCase())) r.gender = 'מועמד'; if (['נקבה', 'אישה', 'בחורה', 'female'].includes(r.gender.toLowerCase())) r.gender = 'מועמדת'; }
     if (!['מועמד', 'מועמדת'].includes(r.gender)) { if (r.gender) r.custom['מגדר כפי שיובא'] = r.gender; r.gender = ''; }
-    if (!['לא נבדק', 'פנוי/ה', 'בבירור', 'בהיכרות', 'מאורס/ת', 'לא פעיל/ה'].includes(r.status)) { r.custom['מצב כפי שיובא'] = r.status; r.status = 'לא נבדק'; }
+    if (['בבירור', 'בהיכרות'].includes(r.status)) r.status = 'לא נבדק';
+    else if (!['לא נבדק', 'פנוי/ה', 'מאורס/ת', 'לא פעיל/ה'].includes(r.status)) { r.custom['מצב כפי שיובא'] = r.status; r.status = 'לא נבדק'; }
     const key = norm(r.name) + '|' + norm(r.phone || ''); if (used.has(key)) { duplicates++; continue; } used.add(key); valid.push(r);
   }
   return { valid, invalid, duplicates };
