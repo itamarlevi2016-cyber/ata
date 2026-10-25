@@ -16,32 +16,29 @@
 
 ── פרסום בענן בלי טרמינל (מומלץ) ──
 כל השלבים באתר של Cloudflare (dash.cloudflare.com, חשבון חינמי). הקוד נמשך ישירות מ-GitHub.
-1. מסד נתונים: בתפריט השמאלי Storage & Databases → D1 SQL Database → Create → שם: kesher-tov → Create.
-   בעמוד שנפתח מופיע Database ID — לחצו Copy.
-2. האתר: Workers & Pages → Create → לשונית Workers → Import a repository → חברו את חשבון GitHub ובחרו את הריפו ata.
-   בהגדרות הפרויקט:
-   • Project name: ata   (ברירת המחדל, כשם הריפו. שם אחר דורש משתנה בנייה KESHER_WORKER_NAME עם אותו שם)
+טיפ: אם Chrome מתרגם את הדף לעברית, בטלו את התרגום (אייקון התרגום בשורת הכתובת → "הצג את המקור"); התרגום משבש שמירת טפסים.
+1. מסד נתונים: Storage & Databases → D1 SQL Database → Create → שם: kesher-tov.
+   המזהה (Database ID) של המסד צריך להופיע בקובץ wrangler.jsonc שבריפו, בשורה "database_id".
+   (המזהה של המסד שנוצר כבר נמצא שם; אם יוצרים מסד חדש, יש לעדכן את השורה הזו ב-GitHub.)
+2. האתר: Workers & Pages → Create → Workers → Import a repository → חברו את GitHub ובחרו את הריפו ata.
+   • Project name: ata (ברירת המחדל, כשם הריפו; שם אחר דורש לעדכן את "name" ב-wrangler.jsonc)
    • Branch: הענף שבו הקוד (למשל claude/hopeful-cannon-j39req, או main אחרי מיזוג)
    • Build command:  pnpm build
-   • Deploy command: npx wrangler d1 migrations apply DB --remote --config dist/server/wrangler.json && npx wrangler deploy --config dist/server/wrangler.json
-   • Build variables (Variables and Secrets / Environment variables של ה-build): הוסיפו משתנה
-     KESHER_D1_ID  =  ה-Database ID שהועתק בשלב 1
-   לחצו Create and deploy. הבנייה הראשונה אורכת 2–4 דקות; בסיום מוצגת כתובת: https://ata.<חשבון>.workers.dev
-3. הקמה: פתחו את הכתובת בדפדפן. כל עוד אין אף חברה, האתר מציג "דף הקמה": שם, מייל וסיסמה למנהלת הראשונה.
-   מכאן הכול מתנהל מתוך האתר (הזמנת חברות ב"חברות המרחב").
+   • Deploy command: npx wrangler deploy   (זו ברירת המחדל)
+   • אין צורך במשתני בנייה.
+   לחצו Create and deploy (או Save and deploy / Retry build בפרויקט קיים). הבנייה אורכת 2–4 דקות.
+   בסיום, בלשונית Overview של ה-Worker, מופיעה הכתובת: https://ata.<חשבון>.workers.dev
+3. הקמה: פתחו את הכתובת בדפדפן. הטבלאות במסד נוצרות לבד, וכל עוד אין אף חברה האתר מציג "דף הקמה":
+   שם, מייל וסיסמה למנהלת הראשונה. מכאן הכול מתנהל מתוך האתר (הזמנת חברות ב"חברות המרחב").
 עדכון גרסה בהמשך: כל דחיפה (push) לענף שנבחר מפורסמת אוטומטית.
 אופציונלי: Settings של ה-Worker → Variables and Secrets → KESHER_CONTACT_EMAIL — לאיזה מייל נשלחות בקשות הצטרפות (ברירת מחדל: המנהלת הראשונה).
 
 ── פרסום מהטרמינל (חלופה למפתחים) ──
-דרישות: Node.js 22.13 ומעלה, pnpm (גרסה ב-package.json), וחשבון Cloudflare.
-1. pnpm install
-2. npx wrangler login
-3. npx wrangler d1 create kesher-tov       (מדפיס database_id)
-4. KESHER_D1_ID=<database_id> pnpm deploy  (ב-Windows PowerShell: $env:KESHER_D1_ID="<id>"; pnpm deploy)
-5. פתחו את הכתובת שהודפסה: דף ההקמה יוצר את המנהלת הראשונה. (חלופה/חילוץ: node scripts/invite.mjs <email> "<שם>" --url https://<כתובת>)
+pnpm install → npx wrangler login → pnpm deploy. פתחו את הכתובת שהודפסה: דף ההקמה יוצר את המנהלת הראשונה.
+(חילוץ אם כל המנהלות ננעלו בחוץ: node scripts/invite.mjs <email> "<שם>" --url https://<כתובת>)
 
 ── הפעלה מקומית למפתח ──
-pnpm install → pnpm build → pnpm d1:migrate:local → pnpm start (מריץ את הגרסה הבנויה על 127.0.0.1:8787)
+pnpm install → pnpm build → pnpm start (מריץ את הגרסה הבנויה על 127.0.0.1:8787; הטבלאות נוצרות לבד)
 יצירת מנהלת מקומית: node scripts/invite.mjs you@example.com "שם" --local
 לפיתוח שוטף: pnpm dev (ראו .dev.vars.example למשתני הסביבה המקומיים).
 בדיקות: pnpm test
@@ -57,6 +54,7 @@ server/access.mjs — ניהול חברות על ידי מנהלות.
 server/records.mjs — טיפול במאגר המשותף.
 server/seed.json — 222 רשומות המקור (אינו צילום עדכני של האתר החי).
 public/documents — הרזומות המקוריים.
-drizzle/ — סכמת מסד הנתונים והמיגרציות (מורצות אוטומטית ב-pnpm deploy).
+drizzle/ — סכמת מסד הנתונים והמיגרציות (רצות מתוך האתר, server/migrate.mjs).
+wrangler.jsonc — הגדרות ה-Worker ומזהה מסד הנתונים ב-Cloudflare.
 
 כדי לקבל גם את הנתונים העדכניים מהאתר הישן: פתחו אותו ולחצו "גיבוי המאגר", ואז ייבאו את קובץ ה-JSON באתר החדש.

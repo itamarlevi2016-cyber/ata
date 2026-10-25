@@ -1,50 +1,16 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
 import { configureToolEnvironment } from "./scripts/tool-environment.mjs";
 import { sites } from "./scripts/vite/sites-vite-plugin";
 import { connectorPreview } from "./scripts/vite/connector-preview-plugin.mjs";
 
-const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
-  "00000000-0000-4000-8000-000000000000";
-
-const { d1, r2 } = hostingConfig;
+// The Worker configuration (name, entry, D1 database, assets) lives in ./wrangler.jsonc,
+// which the Cloudflare plugin reads for both `pnpm dev` and `pnpm build`.
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
-
-const localBindingConfig = {
-  // Must match the Worker (project) name in the Cloudflare dashboard; "ata" is what
-  // Cloudflare picks when the GitHub repository is imported.
-  name: process.env.KESHER_WORKER_NAME || "ata",
-  main: "./worker/index.ts",
-  compatibility_flags: ["nodejs_compat"],
-  // Every request (static files included) goes through worker/index.ts, which
-  // requires an approved sign-in before serving résumés or data.
-  assets: { binding: "ASSETS", run_worker_first: true },
-  d1_databases: d1
-    ? [
-        {
-          binding: d1,
-          database_name: "site-creator-d1",
-          // Set KESHER_D1_ID (see START-HERE-HE.txt) when deploying to your own Cloudflare account.
-          database_id: process.env.KESHER_D1_ID || SITE_CREATOR_PLACEHOLDER_DATABASE_ID,
-          // Migrations live in ./drizzle; the generated config sits in dist/server.
-          migrations_dir: "../../drizzle",
-        },
-      ]
-    : [],
-  r2_buckets: r2
-    ? [
-        {
-          binding: r2,
-          bucket_name: "site-creator-r2",
-        },
-      ]
-    : [],
-};
 
 export default defineConfig(async ({ command }) => {
   configureToolEnvironment(process.cwd());
@@ -68,10 +34,10 @@ export default defineConfig(async ({ command }) => {
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
-        config: {
-          ...localBindingConfig,
-          ...(command === "serve"
-            ? {
+        ...(command === "serve"
+          ? {
+              // Local preview only: the connector preview service binding and its worker.
+              config: {
                 services: [
                   {
                     binding: "CONNECTORS",
@@ -79,11 +45,7 @@ export default defineConfig(async ({ command }) => {
                     entrypoint: "ConnectorPreview",
                   },
                 ],
-              }
-            : {}),
-        },
-        ...(command === "serve"
-          ? {
+              },
               auxiliaryWorkers: [
                 {
                   config: {

@@ -14,7 +14,6 @@
     "db:generate": "drizzle-kit generate",
     "deploy": "node scripts/deploy.mjs",
     "invite": "node scripts/invite.mjs",
-    "d1:migrate:local": "node ./node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --local --persist-to .wrangler/state --config dist/server/wrangler.json",
     "test": "node check-import.cjs && node check-docx.cjs && node --input-type=module -e \"await import('./check-shared.mjs'); await import('./check-access.mjs')\""
   },
   "dependencies": {

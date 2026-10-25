@@ -3,6 +3,7 @@ import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { authorize, contactEmail, handleAuth, joinPage, loginPage, needsSetup, setupPage, signInRedirect } from "../server/auth.mjs";
 import { handleAccess } from "../server/access.mjs";
+import { ensureMigrated } from "../server/migrate.mjs";
 
 type Env = Cloudflare.Env & {
   ASSETS?: { fetch(request: Request): Promise<Response> };
@@ -24,6 +25,11 @@ const worker = {
     if (PUBLIC_ASSET.test(path)) return serveAsset();
 
     const db = env.DB?.withSession ? env.DB.withSession("first-primary") : env.DB;
+    // Create or upgrade the database tables on first use, so a plain `wrangler deploy` is enough.
+    try { await ensureMigrated(db); } catch (error) {
+      console.error("Database migration failed:", error instanceof Error ? error.message : "unknown");
+      return new Response("מסד הנתונים אינו זמין כרגע. נסי שוב בעוד רגע.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
 
     // Sign-in, invitation and sign-out are handled here, before any protected content.
     // First run: until the first admin exists, the site offers a setup page instead of a login.

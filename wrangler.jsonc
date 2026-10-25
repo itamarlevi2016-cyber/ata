@@ -1,0 +1,23 @@
+// הגדרות ה-Worker של האתר ב-Cloudflare. קובץ זה משמש גם את הבנייה (pnpm build / pnpm dev)
+// וגם את הפרסום: אחרי הבנייה מספיק `npx wrangler deploy` (ברירת המחדל כשמחברים את הריפו בלוח הבקרה).
+// המיגרציות של מסד הנתונים רצות מתוך האתר עצמו (server/migrate.mjs), כך שאין צורך בפקודות נוספות.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // חייב להתאים לשם ה-Worker בלוח הבקרה של Cloudflare (נקבע לפי שם הריפו כשמייבאים מ-GitHub).
+  "name": "ata",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  // כל בקשה, כולל קבצים סטטיים, עוברת דרך worker/index.ts שדורש כניסה לפני הגשת רזומות ונתונים.
+  "assets": { "binding": "ASSETS", "run_worker_first": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kesher-tov",
+      // מזהה מסד הנתונים D1 בחשבון Cloudflare של בעלת האתר (Storage & Databases → D1 → kesher-tov).
+      "database_id": "3bfb23bd-e2d7-468f-b48f-09e2d3675680",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": { "enabled": true }
+}

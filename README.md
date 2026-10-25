@@ -4,4 +4,4 @@
 מבוססת על vinext + Cloudflare Workers + D1, עם כניסה עצמאית (מייל + סיסמה) והזמנות שמנהלות שולחות במייל.
 
 - הוראות כניסה, פרסום ב-Cloudflare והפעלה מקומית: [START-HERE-HE.txt](START-HERE-HE.txt)
-- `pnpm deploy` — פרסום (דורש `KESHER_D1_ID`) · `pnpm invite <email> "<שם>"` — הזמנת המנהלת הראשונה · `pnpm test` — בדיקות
+- `pnpm deploy` — פרסום מהטרמינל · `pnpm test` — בדיקות · בלוח הבקרה של Cloudflare: build `pnpm build`, deploy `npx wrangler deploy`
