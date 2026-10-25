@@ -112,11 +112,21 @@ function contactLink(value, type) {
   const safe = type === 'email' ? validEmail(v) : validPhone(v);
   return safe ? `<a class="contact-link" href="${type === 'email' ? 'mailto:' + encodeURIComponent(v) : 'tel:' + v.replace(/[^+\d]/g, '')}">${icon(type === 'email' ? 'mail' : 'phone')}<bdi>${esc(v)}</bdi></a>` : `<span class="contact-value">${esc(v)}</span>`;
 }
-function contactInline(r) {
-  const phone = String(r.contactPhone || '').trim(), email = String(contactEmail(r) || '').trim();
-  if (phone && validPhone(phone)) return `<a class="contact-inline" href="tel:${phone.replace(/[^+\d]/g, '')}" title="חיוג אל ${esc(r.contact || phone)}">${icon('phone')}<span>${esc(r.contact || phone)}</span></a>`;
-  if (email && validEmail(email)) return `<a class="contact-inline" href="mailto:${encodeURIComponent(email)}" title="מייל אל ${esc(r.contact || email)}">${icon('mail')}<span>${esc(r.contact || email)}</span></a>`;
-  return `<span class="contact-none">${r.contact ? esc(r.contact) + ' · ' : ''}אין טלפון</span>`;
+function cleanContact(r) {
+  const name = String(r.contact || '').replace(/\s*\([^)]*[A-Za-z][^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  const m = name.match(/^(.*?)\s*\(([^)]+)\)$/);
+  return m ? { name: m[1], note: m[2] } : { name, note: '' };
+}
+function contactStrip(r) {
+  const c = cleanContact(r), phone = String(r.contactPhone || '').trim(), email = String(contactEmail(r) || '').trim();
+  const who = c.name || 'איש קשר לא צוין';
+  const btns = [phone && validPhone(phone) ? `<a class="cs-btn call" href="tel:${phone.replace(/[^+\d]/g, '')}" title="חיוג אל ${esc(who)}">${icon('phone')}<bdi>${esc(phone)}</bdi></a>` : '', email && validEmail(email) ? `<a class="cs-btn mail" href="mailto:${encodeURIComponent(email)}" title="מייל אל ${esc(who)}" aria-label="מייל אל ${esc(who)}">${icon('mail')}<span>מייל</span></a>` : ''].join('');
+  return `<div class="contact-strip"><div class="cs-who"><small>איש/אשת קשר לבירורים</small><strong title="${esc(r.contact || '')}">${esc(who)}${c.note ? ` <em>${esc(c.note)}</em>` : ''}</strong></div>${btns ? `<div class="cs-actions">${btns}</div>` : '<span class="contact-none">אין טלפון או מייל — ראי בכרטיס</span>'}</div>`;
+}
+function linkContacts(t) {
+  const re = /((?:\+972[\s-]?[1-9]|0[2-9])[\s-]?\d(?:[\s-]?\d){6,7}\b)|([^\s<>@;]+@[^\s<>@;]+\.[a-z]{2,})/gi; let out = '', last = 0, m;
+  while ((m = re.exec(t))) { const lead = t.slice(last, m.index).replace(/[\s\-–:,;]+$/, ''); out += (lead ? esc(lead) + ' · ' : '') + (m[1] ? `<a href="tel:${m[1].replace(/[^+\d]/g, '')}"><bdi>${esc(m[1])}</bdi></a>` : `<a href="mailto:${encodeURIComponent(m[2])}"><bdi>${esc(m[2])}</bdi></a>`); last = re.lastIndex; }
+  return out + esc(t.slice(last));
 }
 function sourceContacts(r) {
   const phone = /(?:\+972[\s-]?[1-9]|0[2-9])[\s-]?\d(?:[\s-]?\d){6,7}\b/, email = /[^\s<>@;]+@[^\s<>@;]+\.[a-z]{2,}/i;
@@ -124,22 +134,30 @@ function sourceContacts(r) {
   return [...new Set(texts.filter(Boolean).flatMap(t => String(t).split(/\n|;\s*/)).map(t => t.trim()).filter(t => phone.test(t) || email.test(t)))].filter(t => t !== r.contactPhone && t !== contactEmail(r));
 }
 function contactBlock(r, full = false) {
-  const email = contactEmail(r), extra = sourceContacts(r);
-  return `<section class="contact-panel" aria-label="פרטי קשר לבירורים"><small>יצירת קשר לבירורים</small><strong>${esc(r.contact || 'איש קשר לא צוין')}</strong><div class="contact-actions">${contactLink(r.contactPhone, 'phone')}${contactLink(email, 'email')}</div>${!r.contactPhone && !email ? '<p class="contact-missing">לא נמסרו טלפון או מייל של איש הקשר</p>' : ''}${r.phone ? `<div class="candidate-contact"><small>טלפון המועמד/ת</small>${contactLink(r.phone, 'phone')}</div>` : ''}${extra.length ? `<details class="contact-source" ${full ? 'open' : ''}><summary>פרטי קשר נוספים מהמקור (${extra.length})</summary><p>יש לקרוא את התיאור לצד המספר כדי לזהות למי הוא שייך.</p>${extra.map(t => `<div dir="auto">${esc(t)}</div>`).join('')}</details>` : ''}</section>`;
+  const email = contactEmail(r), extra = sourceContacts(r), c = cleanContact(r);
+  return `<section class="contact-panel" aria-label="פרטי קשר לבירורים"><small>איש/אשת קשר לבירורים — עם מי מדברים</small><strong>${esc(c.name || 'איש קשר לא צוין')}${c.note ? ` <em>${esc(c.note)}</em>` : ''}</strong><div class="contact-actions">${contactLink(r.contactPhone, 'phone')}${contactLink(email, 'email')}</div>${!r.contactPhone && !email ? '<p class="contact-missing">לא נמסרו טלפון או מייל של איש הקשר</p>' : ''}${r.phone ? `<div class="candidate-contact"><small>טלפון המועמד/ת</small>${contactLink(r.phone, 'phone')}</div>` : ''}${extra.length ? `<details class="contact-source"><summary>מספרים נוספים שהופיעו במקור (${extra.length})</summary><p>הטקסט שלצד המספר מסביר למי הוא שייך.</p>${extra.map(t => `<div dir="auto">${linkContacts(t)}</div>`).join('')}</details>` : ''}</section>`;
 }
 
 /* ---------- תצוגה ---------- */
 function subline(r) { return [r.gender, r.age ? `גיל ${r.age}` : '', r.city].filter(Boolean).join(' · '); }
 
+const chipTxt = v => { const t = String(v || '').trim(); return t.length > 34 ? t.slice(0, 33).replace(/[\s,;·]+\S*$/, '') + '…' : t; };
 function cardHtml(r) {
-  const data = [['community', 'עדה'], ['religious', 'סגנון / השקפה'], ['occupation', 'עיסוק'], ['school', 'מקום לימודים']].filter(([k]) => r[k]).slice(0, 4);
-  const looking = r.looking ? `<div class="wide"><small>מה מחפש/ת</small><span>${esc(r.looking)}</span></div>` : '';
-  const body = data.length || looking ? `<div class="card-data">${data.map(([k, l]) => `<div><small>${l}</small><span title="${esc(r[k])}">${esc(r[k])}</span></div>`).join('')}${looking}</div>` : '<p class="card-empty">עדיין אין פרטים נוספים בכרטיס</p>';
-  return `<article class="card ${r.gender === 'מועמד' ? 'male' : ''}" data-id="${esc(r.id)}" tabindex="0" aria-label="פתיחת הכרטיס של ${esc(r.name)}">
-    <div class="card-top"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h3><button data-detail="${esc(r.id)}">${esc(r.name)}</button></h3><div class="subline">${esc(subline(r)) || 'פרטים להשלמה'}</div></div><button class="fav ${r.favorite ? 'on' : ''}" data-fav="${esc(r.id)}" aria-label="${r.favorite ? 'הסרה מהמסומנים' : 'סימון השם'}" aria-pressed="${!!r.favorite}">${icon('heart')}</button></div>
+  const chips = [['community', 'c-community'], ['religious', 'c-style']].filter(([k]) => r[k]).map(([k, c]) => `<span class="tag ${c}" title="${esc(r[k])}">${esc(chipTxt(r[k]))}</span>`).join('');
+  const facts = [['school', 'לימודים', 'f-study'], ['occupation', 'עיסוק', 'f-work'], ['looking', 'מחפש/ת', 'f-looking']].filter(([k]) => r[k]).map(([k, l, c]) => `<p class="fact ${c}"><small>${l}</small><span title="${esc(r[k])}">${esc(r[k])}</span></p>`).join('');
+  const body = chips || facts ? `${chips ? `<div class="tags">${chips}</div>` : ''}${facts ? `<div class="facts">${facts}</div>` : ''}` : '<p class="card-empty">עדיין אין פרטים נוספים בכרטיס</p>';
+  const showStatus = r.needsCompletion || (r.status && r.status !== 'לא נבדק');
+  return `<article class="card ${r.gender === 'מועמד' ? 'male' : 'female'}" data-id="${esc(r.id)}" tabindex="0" aria-label="פתיחת הכרטיס של ${esc(r.name)}">
+    <div class="card-top"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h3><button data-detail="${esc(r.id)}">${esc(r.name)}</button></h3><div class="subline"><b>${r.gender === 'מועמד' ? 'מועמד' : 'מועמדת'}</b>${esc([r.age ? ' · גיל ' + r.age : '', r.city ? ' · ' + r.city : ''].join('')) || ' · פרטים להשלמה'}</div></div>${showStatus ? `<span class="status ${statusClass(r)}">${esc(statusText(r))}</span>` : ''}<button class="fav ${r.favorite ? 'on' : ''}" data-fav="${esc(r.id)}" aria-label="${r.favorite ? 'הסרה מהמסומנים' : 'סימון השם'}" aria-pressed="${!!r.favorite}">${icon('heart')}</button></div>
     ${body}
-    <div class="card-bottom"><span class="status ${statusClass(r)}">${esc(statusText(r))}</span>${r.needsCompletion ? `<button class="complete-card" data-edit="${esc(r.id)}">${icon('pencil')} השלמת השם</button>` : contactInline(r)}</div>
+    ${r.needsCompletion ? `<div class="card-bottom"><button class="complete-card" data-edit="${esc(r.id)}">${icon('pencil')} השלמת השם</button></div>` : contactStrip(r)}
   </article>`;
+}
+function contactInline(r) {
+  const c = cleanContact(r), phone = String(r.contactPhone || '').trim(), email = String(contactEmail(r) || '').trim(), who = c.name || phone || email;
+  if (phone && validPhone(phone)) return `<a class="contact-inline" href="tel:${phone.replace(/[^+\d]/g, '')}" title="חיוג אל ${esc(who)}">${icon('phone')}<span>${esc(who)} · <bdi>${esc(phone)}</bdi></span></a>`;
+  if (email && validEmail(email)) return `<a class="contact-inline" href="mailto:${encodeURIComponent(email)}" title="מייל אל ${esc(who)}">${icon('mail')}<span>${esc(who)}</span></a>`;
+  return `<span class="contact-none">${c.name ? esc(c.name) + ' · ' : ''}אין טלפון</span>`;
 }
 function rowHtml(r) {
   return `<tr><td><button class="name-cell" data-detail="${esc(r.id)}">${esc(r.name)}</button></td><td>${esc(r.age)}</td><td>${esc(r.community)}</td><td>${esc(r.city)}</td><td>${esc(r.occupation || r.school)}</td><td><span class="status ${statusClass(r)}">${esc(statusText(r))}</span></td><td>${contactInline(r)}</td><td><div class="row-actions"><button class="icon-button" data-edit="${esc(r.id)}" aria-label="עריכת ${esc(r.name)}">${icon('pencil')}</button></div></td></tr>`;
@@ -245,16 +263,30 @@ function downloadProfile(id) {
 function detail(id, fromHash = false) {
   const r = records.find(x => x.id === id); if (!r) return;
   $('detailContent').dataset.recordId = id; $('detailContent').dataset.version = String(r._version);
-  const essentials = [['birthDate', 'תאריך לידה'], ['city', 'עיר מגורים'], ['looking', 'מה מחפש/ת'], ['verifiedAt', 'בדיקת פרטים אחרונה']];
-  const rest = [...fields.filter(([k]) => !['name', 'gender', 'birthDate', 'city', 'looking', 'verifiedAt', 'contact', 'contactPhone', 'contactEmail', 'phone'].includes(k) && r[k]).map(([k, l]) => [l, r[k]]), ...Object.entries(r.custom || {})];
+  const groups = [
+    ['פרטים אישיים', 'g-person', ['birthDate', 'city', 'community', 'height', 'marital', 'religious']],
+    ['לימודים ועיסוק', 'g-work', ['school', 'occupation']],
+    ['מה מחפש/ת', 'g-looking', ['looking', 'preferredAge', 'preferredLocation']],
+    ['משפחה', 'g-family', ['family']],
+    ['מצב השידוך', 'g-status', ['status', 'verifiedAt']],
+  ];
+  const wide = new Set(['looking', 'family', 'religious', 'community']), used = new Set(['name', 'gender', 'age', 'contact', 'contactPhone', 'contactEmail', 'phone']);
+  const section = ([title, cls, keys]) => {
+    keys.forEach(k => used.add(k));
+    const have = keys.filter(k => r[k]);
+    return have.length ? `<section class="dsec ${cls}"><h3>${title}</h3><dl>${have.map(k => `<div class="${wide.has(k) ? 'wide' : ''}"><dt>${esc(labels[k])}</dt><dd>${esc(r[k])}</dd></div>`).join('')}</dl></section>` : '';
+  };
+  const sections = groups.map(section).join('');
+  const missing = ['birthDate', 'city', 'community', 'looking', 'verifiedAt'].filter(k => !r[k]).map(k => labels[k].replace(/ — .*/, ''));
+  const rest = [...fields.filter(([k]) => !used.has(k) && r[k]).map(([k, l]) => [l, r[k]]), ...Object.entries(r.custom || {})];
   const updated = r._changedAt ? new Date(r._changedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' }) : '';
   $('detailContent').innerHTML = `<div class="modal-head"><h2>הכרטיס המלא</h2><button class="icon-button close" data-close="detailDialog" aria-label="סגירה">${icon('x')}</button></div>
-    <div class="detail-hero ${r.gender === 'מועמד' ? 'male' : ''}"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h2>${esc(r.name)}</h2><p class="muted">${esc(subline(r))}</p></div><span class="status ${statusClass(r)}">${esc(statusText(r))}</span></div>
+    <div class="detail-hero ${r.gender === 'מועמד' ? 'male' : 'female'}"><span class="initials" aria-hidden="true">${esc(initial(r))}</span><div><h2>${esc(r.name)}</h2><p class="muted">${esc(subline(r))}</p></div>${r.needsCompletion || (r.status && r.status !== 'לא נבדק') ? `<span class="status ${statusClass(r)}">${esc(statusText(r))}</span>` : ''}</div>
     <div class="form-body">
       ${contactBlock(r, true)}
-      <p class="source-date">דיווח מקורי: ${esc(r.custom?.['תאריך דיווח'] || 'לא נמסר')} · שדה ריק מציין מידע שטרם נמסר</p>
-      <section class="profile-essentials">${essentials.map(([k, l]) => `<p><strong>${l}</strong><span class="${r[k] ? '' : 'none'}">${esc(r[k] || 'טרם נמסר')}</span></p>`).join('')}</section>
-      ${rest.length ? `<div class="detail-grid">${rest.map(([k, v]) => `<div><small>${esc(k)}</small><span>${esc(v)}</span></div>`).join('')}</div>` : ''}
+      ${sections}
+      ${rest.length ? `<section class="dsec g-more"><h3>פרטים נוספים</h3><dl>${rest.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></section>` : ''}
+      <p class="source-date">דיווח מקורי: ${esc(r.custom?.['תאריך דיווח'] || 'לא נמסר')}${missing.length ? ` · טרם נמסר: ${esc(missing.join(', '))}` : ''}</p>
       ${r.documents?.length ? `<div class="source-files"><h3>קובצי הרזומה המקוריים</h3>${sourceLinks(r)}</div>` : ''}
       ${r.notes ? `<h3>הערות ומידע נוסף</h3><div class="detail-notes">${esc(r.notes)}</div>` : ''}
       ${r.resumeText ? `<details class="resume-source"><summary>הצגת טקסט הרזומה המלא</summary><div>${esc(r.resumeText)}</div></details>` : ''}
@@ -300,7 +332,7 @@ $('addCustom').onclick = () => customRow();
 ['helpBtn', 'helpTop'].forEach(id => $(id).onclick = () => open('helpDialog'));
 ['importBtn', 'heroImport', 'importNav'].forEach(id => $(id).onclick = () => open('importDialog'));
 for (const id of ['search', 'genderFilter', 'communityFilter', 'statusFilter', 'minAge', 'maxAge', 'cityFilter', 'missingFilter', 'sort']) $(id).addEventListener('input', () => { page = 0; render(); });
-$('moreFilters').onclick = () => { $('extraFilters').hidden = !$('extraFilters').hidden; $('moreFilters').setAttribute('aria-expanded', String(!$('extraFilters').hidden)); };
+$('moreFilters').onclick = () => { $('extraFilters').hidden = !$('extraFilters').hidden; document.querySelector('.toolbar').classList.toggle('open', !$('extraFilters').hidden); $('moreFilters').setAttribute('aria-expanded', String(!$('extraFilters').hidden)); };
 function resetFilters() { page = 0; for (const id of ['search', 'genderFilter', 'communityFilter', 'statusFilter', 'minAge', 'maxAge', 'cityFilter', 'missingFilter']) $(id).value = ''; }
 $('clearFilters').onclick = () => { resetFilters(); render(); };
 document.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => goToSection(b.dataset.nav));
