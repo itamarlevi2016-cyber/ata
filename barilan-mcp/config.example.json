@@ -1,0 +1,12 @@
+{
+  "backend": "uia",
+  "process_name": "",
+  "exe_path": "",
+  "search_box": {"control_type": "Edit", "found_index": 0},
+  "search_button": {"title_re": ".*(חפש|חיפוש|Search).*", "control_type": "Button"},
+  "submit_with_enter": false,
+  "results_list": {"control_type": "List", "found_index": 0},
+  "document_view": {"control_type": "Document", "found_index": 0},
+  "open_result_action": "select",
+  "wait_seconds": 30
+}
