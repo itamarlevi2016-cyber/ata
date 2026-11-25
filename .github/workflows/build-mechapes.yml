@@ -1,0 +1,74 @@
+name: Build Mechapes (Windows)
+
+on:
+  push:
+    paths: ["mechapes/**", ".github/workflows/build-mechapes.yml"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: mechapes
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller pytest python-docx openpyxl python-pptx pillow
+
+      - name: Tests
+        run: python -m pytest -q tests
+
+      - name: GUI smoke test + screenshot
+        run: |
+          python tests/make_samples.py "$env:RUNNER_TEMP\samples"
+          python tests/gui_screenshot.py "$env:RUNNER_TEMP\samples" screenshot.png
+
+      - name: Build exe
+        run: pyinstaller --noconfirm mechapes.spec
+
+      - name: Test the built exe
+        run: |
+          $p = Start-Process dist\Mechapes\Mechapes.exe -ArgumentList "--selftest","$env:RUNNER_TEMP\samples","$env:RUNNER_TEMP\st1.db","$env:RUNNER_TEMP\st1.txt" -Wait -PassThru
+          Get-Content "$env:RUNNER_TEMP\st1.txt"
+          if ($p.ExitCode -ne 0) { exit 1 }
+          $p = Start-Process dist\Mechapes-single.exe -ArgumentList "--selftest","$env:RUNNER_TEMP\samples","$env:RUNNER_TEMP\st2.db","$env:RUNNER_TEMP\st2.txt" -Wait -PassThru
+          Get-Content "$env:RUNNER_TEMP\st2.txt"
+          if ($p.ExitCode -ne 0) { exit 1 }
+
+      - name: Package
+        run: |
+          Copy-Item README.md dist\Mechapes\
+          Compress-Archive -Path dist\Mechapes -DestinationPath dist\Mechapes-portable.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mechapes-windows
+          path: |
+            mechapes/dist/Mechapes-portable.zip
+            mechapes/dist/Mechapes-single.exe
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshot
+          path: mechapes/screenshot.png
+
+      - name: Release (on version tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            mechapes/dist/Mechapes-portable.zip
+            mechapes/dist/Mechapes-single.exe
