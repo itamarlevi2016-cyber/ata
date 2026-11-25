@@ -41,10 +41,30 @@ def step3():
     app.on_close()
 
 
+def watchdog():
+    """If the GUI gets stuck (e.g. a dialog box), capture the whole screen
+    so the problem is visible, then exit."""
+    print("WATCHDOG: GUI did not finish; status:", flush=True)
+    try:
+        print(app.status.cget("text"), flush=True)
+    except Exception as e:  # noqa: BLE001
+        print("status unavailable:", e, flush=True)
+    try:
+        from PIL import ImageGrab
+        ImageGrab.grab().save(ok["out"])
+    except Exception as e:  # noqa: BLE001
+        print("screenshot failed:", e, flush=True)
+    os._exit(2)
+
+
 def main():
     global app, root
     samples, out = sys.argv[1], sys.argv[2]
     ok["out"] = out
+    import threading
+    t = threading.Timer(120, watchdog)
+    t.daemon = True
+    t.start()
     root = tk.Tk()
     app = gui.App(root)
     Indexer.add_folder(app.con, samples)
