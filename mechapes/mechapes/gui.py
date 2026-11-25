@@ -94,7 +94,9 @@ class App:
         self.search_seq = 0
 
         root.title(f"{APP_NAME} – חיפוש בתוך קבצים")
-        root.geometry(self.settings.get("geometry", "1150x720"))
+        sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
+        default = f"{min(1150, sw - 20)}x{min(720, sh - 80)}+10+10"
+        root.geometry(self.settings.get("geometry", default))
         root.minsize(800, 500)
         self._build_ui()
         self.refresh_folders()
@@ -220,12 +222,15 @@ class App:
         res_frame = ttk.Frame(left)
         cols = ("modified", "size", "hits", "folder", "name")
         self.tree = ttk.Treeview(res_frame, columns=cols, show="headings", selectmode="browse")
-        heads = {"name": ("שם הקובץ", 230), "folder": ("תיקייה", 330), "hits": ("התאמות", 70),
-                 "size": ("גודל", 80), "modified": ("תאריך שינוי", 125)}
+        # Only the folder column stretches, so the file name (rightmost)
+        # always stays visible, even in a narrow window.
+        heads = {"name": ("שם הקובץ", 230, 140), "folder": ("תיקייה", 150, 60),
+                 "hits": ("התאמות", 60, 50), "size": ("גודל", 75, 60),
+                 "modified": ("תאריך שינוי", 135, 125)}
         for c in cols:
-            title, w = heads[c]
+            title, w, mw = heads[c]
             self.tree.heading(c, text=title, anchor="e", command=lambda c=c: self.sort_by(c))
-            self.tree.column(c, width=w, anchor="e", stretch=c in ("folder", "name"))
+            self.tree.column(c, width=w, minwidth=mw, anchor="e", stretch=c == "folder")
         ysb = ttk.Scrollbar(res_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=ysb.set)
         ysb.pack(side="left", fill="y")
