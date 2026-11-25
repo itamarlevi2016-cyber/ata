@@ -376,6 +376,7 @@ class App:
                 if kind == "progress":
                     last_progress = data
                 elif kind == "done":
+                    last_progress = None
                     self.progress.pack_forget()
                     self.cancel_btn.pack_forget()
                     self.refresh_folders()
@@ -395,6 +396,7 @@ class App:
                         self.rerun_pending = False
                         self.update_index()
                 elif kind == "error":
+                    last_progress = None
                     self.progress.pack_forget()
                     self.cancel_btn.pack_forget()
                     messagebox.showerror(APP_NAME, f"שגיאה בעדכון המאגר:\n{data}")
