@@ -1,5 +1,6 @@
 """The on-disk index (SQLite) and the indexing process."""
 import concurrent.futures as cf
+from concurrent.futures.process import BrokenProcessPool
 import multiprocessing
 import os
 import sqlite3
@@ -325,18 +326,24 @@ class Indexer:
             while pending or solo or in_flight:
                 if self.cancelled():
                     break
-                # submit work
-                if solo:
-                    if not in_flight:
-                        path = solo.popleft()
-                        in_flight[pool.submit(process_file, path)] = (path, time.time(), True)
-                else:
-                    while pending and len(in_flight) < self.workers:
-                        path = pending.popleft()
-                        in_flight[pool.submit(process_file, path)] = (path, time.time(), False)
+                # submit work (the pool may break between two checks if a
+                # worker crashed; then the file goes back and the pool restarts)
+                restart = False
+                try:
+                    if solo:
+                        if not in_flight:
+                            path = solo[0]
+                            in_flight[pool.submit(process_file, path)] = (path, time.time(), True)
+                            solo.popleft()
+                    else:
+                        while pending and len(in_flight) < self.workers:
+                            path = pending[0]
+                            in_flight[pool.submit(process_file, path)] = (path, time.time(), False)
+                            pending.popleft()
+                except BrokenProcessPool:
+                    restart = True
 
                 finished, _ = cf.wait(in_flight, timeout=0.5, return_when=cf.FIRST_COMPLETED)
-                restart = False
                 for fut in finished:
                     path, _, is_solo = in_flight.pop(fut)
                     try:
