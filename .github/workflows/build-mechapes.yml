@@ -2,6 +2,7 @@ name: Build Mechapes (Windows)
 
 on:
   push:
+    branches: ["**"]
     paths: ["mechapes/**", ".github/workflows/build-mechapes.yml"]
     tags: ["v*"]
   workflow_dispatch:
