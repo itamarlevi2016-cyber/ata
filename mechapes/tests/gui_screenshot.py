@@ -5,6 +5,9 @@ import sys
 import tempfile
 import time
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("LOCALAPPDATA", tempfile.mkdtemp())
 
@@ -28,17 +31,32 @@ def step2():
     root.after(2000, step3)
 
 
+def dump_image(path):
+    """Print the screenshot into the CI log (base64), so it can be seen
+    without downloading artifacts."""
+    import base64
+    with open(path, "rb") as f:
+        data = base64.b64encode(f.read()).decode()
+    print("SCREENSHOT-BEGIN")
+    for i in range(0, len(data), 2000):
+        print(data[i:i + 2000])
+    print("SCREENSHOT-END", flush=True)
+
+
 def step3():
-    ok["rows"] = len(app.tree.get_children())
-    print("status:", app.status.cget("text"), "rows:", ok["rows"])
-    root.lift()
-    root.attributes("-topmost", True)
-    root.update()
-    time.sleep(1)
-    from PIL import ImageGrab
-    x, y = root.winfo_rootx(), root.winfo_rooty()
-    ImageGrab.grab((x, y, x + root.winfo_width(), y + root.winfo_height())).save(ok["out"])
-    app.on_close()
+    try:
+        ok["rows"] = len(app.tree.get_children())
+        print("status:", app.status.cget("text"), "rows:", ok["rows"], flush=True)
+        root.lift()
+        root.attributes("-topmost", True)
+        root.update()
+        time.sleep(1)
+        from PIL import ImageGrab
+        x, y = root.winfo_rootx(), root.winfo_rooty()
+        ImageGrab.grab((x, y, x + root.winfo_width(), y + root.winfo_height())).save(ok["out"])
+        dump_image(ok["out"])
+    finally:
+        app.on_close()
 
 
 def watchdog():
