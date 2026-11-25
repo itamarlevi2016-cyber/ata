@@ -13,7 +13,9 @@ def selftest(folder, db_path, out_path):
     results, _, missing = se.run_search(con, "משה העם", mode=se.MODE_NEAR, gap=3)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(f"index={res}\nresults={sorted(r.path for r in results)}\nmissing={missing}\n")
-    return 0 if results and not res.get("errors") else 1
+    # PDF must be found too: proves PyMuPDF was bundled correctly
+    has_pdf = any(r.path.lower().endswith(".pdf") for r in results)
+    return 0 if has_pdf and not res.get("errors") else 1
 
 
 if __name__ == "__main__":

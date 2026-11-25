@@ -2,6 +2,7 @@
 import os
 import sys
 import tempfile
+import time
 
 import pytest
 
@@ -9,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mechapes import extract as ex  # noqa: E402
 from mechapes import search as se  # noqa: E402
-from mechapes.index import Indexer, connect  # noqa: E402
+from mechapes.index import ERR_CRASH, ERR_TIMEOUT, Indexer, add_folder, connect  # noqa: E402
 from mechapes.textutil import fix_reversed_hebrew, tokenize  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -100,9 +101,9 @@ def test_phrase_and_niqqud_query(db):
 
 def test_wildcard_alternatives_exclude(db):
     res, _, _ = se.run_search(db, "ירושל*")
-    assert names(res) == ["sample.pptx"]
+    assert "sample.pptx" in names(res) and "sample.xlsx" not in names(res)
     res, _, _ = se.run_search(db, "ירושלים|המקדש")
-    assert names(res) == ["sample.pptx", "sample.xlsx"]
+    assert {"sample.pptx", "sample.xlsx"} <= set(names(res))
     res, _, _ = se.run_search(db, "משה -fox")
     assert res == []
 
@@ -116,7 +117,7 @@ def test_filters(db):
 
 def test_snippets(db):
     from mechapes.index import load_file_text
-    res, _, _ = se.run_search(db, "משה העם", mode=se.MODE_NEAR, gap=2)
+    res, q, _ = se.run_search(db, "משה העם", mode=se.MODE_NEAR, gap=2)
     r = [r for r in res if r.path.endswith(".docx")][0]
     text, starts, ends = load_file_text(db, r.file_id)
     snips = se.make_snippets(text, starts, ends, r.matches)
@@ -137,3 +138,82 @@ def test_update_detects_changes(samples, db):
     Indexer(dbfile, workers=1).run()
     res, _, missing = se.run_search(db, "מילהחדשהלגמרי")
     assert res == []
+
+
+def test_crash_and_hang_are_isolated(tmp_path, monkeypatch):
+    monkeypatch.setenv("MECHAPES_TEST_HOOK", "1")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    for i in range(6):
+        (docs / f"good{i}.txt").write_text(f"מילה{i} טובה", encoding="utf-8")
+    (docs / "a__crash__.txt").write_text("x", encoding="utf-8")
+    (docs / "b__hang__.txt").write_text("x", encoding="utf-8")
+    dbfile = str(tmp_path / "i.db")
+    con = connect(dbfile)
+    add_folder(con, str(docs))
+    t0 = time.time()
+    res = Indexer(dbfile, workers=3, timeout=2).run()
+    assert time.time() - t0 < 30
+    errs = dict(con.execute("SELECT path, error FROM files WHERE error IS NOT NULL"))
+    assert {os.path.basename(p): e for p, e in errs.items()} == {
+        "a__crash__.txt": ERR_CRASH, "b__hang__.txt": ERR_TIMEOUT}
+    assert res["errors"] == 2
+    found, _, _ = se.run_search(con, "טובה")
+    assert len(found) == 6
+
+
+def test_offline_folder_keeps_index(tmp_path):
+    docs = tmp_path / "usb"
+    docs.mkdir()
+    (docs / "a.txt").write_text("דיסק נייד", encoding="utf-8")
+    dbfile = str(tmp_path / "i.db")
+    con = connect(dbfile)
+    add_folder(con, str(docs))
+    Indexer(dbfile, workers=1).run()
+    docs.rename(tmp_path / "unplugged")
+    res = Indexer(dbfile, workers=1).run()
+    assert res["offline"] == [str(docs)]
+    assert len(se.run_search(con, "נייד")[0]) == 1
+
+
+def test_nested_folders(tmp_path):
+    (tmp_path / "a" / "b").mkdir(parents=True)
+    con = connect(str(tmp_path / "i.db"))
+    assert add_folder(con, str(tmp_path / "a" / "b")) is None
+    assert add_folder(con, str(tmp_path / "a" / "b" )) is not None   # duplicate
+    assert add_folder(con, str(tmp_path / "a")) is None              # merges b
+    assert [r[0] for r in con.execute("SELECT path FROM folders")] == [str(tmp_path / "a")]
+    assert add_folder(con, str(tmp_path / "a" / "b")) is not None    # inside a
+
+
+def test_query_punctuation_splits_like_index(db):
+    q = se.parse_query("בית-ספר ע.נ. -טיוטה משה|אהרן")
+    assert [s.alts for s in q.slots] == [["בית"], ["ספר"], ["ע"], ["נ"], ["משה", "אהרן"]]
+    assert [s.alts for s in q.excludes] == [["טיוטה"]]
+    res, _, _ = se.run_search(db, "ספר-המדע", mode=se.MODE_PHRASE)
+    assert "sample.docx" in names(res)
+
+
+def test_all_mode_lazy_matches(db):
+    res, q, _ = se.run_search(db, "משה ממצרים")
+    r = [r for r in res if r.path.endswith(".docx")][0]
+    assert r.matches is None
+    m = se.file_matches(db, q, r.file_id)
+    assert len(m) == 3  # משה x2, ממצרים x1
+
+
+def test_unordered_many_words(db):
+    res, _, _ = se.run_search(db, "העם זכור משה לאמר אל ויאמר", mode=se.MODE_NEAR,
+                              gap=0, ordered=False)
+    assert "sample.docx" in names(res)
+    res, _, _ = se.run_search(db, "העם זכור משה לאמר אל ממצרים", mode=se.MODE_NEAR,
+                              gap=0, ordered=False)
+    assert "sample.docx" not in names(res)
+
+
+def test_more_formats(samples):
+    assert "מוזמנים" in ex.extract(os.path.join(samples, "sample.eml"))
+    for name, word in (("sample.xls", "המקדש"), ("sample.ppt", "ירושלים")):
+        p = os.path.join(samples, name)
+        if os.path.exists(p):
+            assert word in ex.extract(p)

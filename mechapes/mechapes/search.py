@@ -1,12 +1,11 @@
 """Query parsing, term lookup and proximity ("skip") matching."""
-import itertools
 import re
 from bisect import bisect_left
 from dataclasses import dataclass, field
 
 from .index import unpack_ints
-from .textutil import (MAX_PREFIX_LEN, HEB_PREFIX_LETTERS, is_hebrew_word,
-                       normalize_word, prefix_variants)
+from .textutil import (_INNER_QUOTES, _MARKS, HEB_PREFIX_LETTERS, MAX_PREFIX_LEN,
+                       clean_text, is_hebrew_word, normalize_word, prefix_variants)
 
 MODE_ALL = "all"        # all words anywhere in the file
 MODE_NEAR = "near"      # up to N words between each pair of words
@@ -35,30 +34,46 @@ class Result:
     path: str
     mtime: float
     size: int
-    matches: list   # list of tuples of token positions
+    matches: list   # list of tuples of token positions (None = not computed yet)
 
 
 class QueryError(Exception):
     pass
 
 
+# A query word: like an index token, plus the wildcards * and ?
+_QWORD_RE = re.compile(
+    rf"[\w*?{_MARKS}]+(?:[{_INNER_QUOTES}][\w*?{_MARKS}]+)*", re.UNICODE)
+
+
+def _query_words(text):
+    """Split like the indexer does: בית-ספר -> בית, ספר ; ע.נ. -> ע, נ"""
+    out = []
+    for m in _QWORD_RE.finditer(text):
+        n = normalize_word(m.group())
+        if n.strip("*?"):
+            out.append(n)
+    return out
+
+
 def parse_query(q: str) -> Query:
-    # Maqaf and the usual separators split words; | separates alternatives.
-    q = q.replace("־", " ").replace(",", " ")
+    """Words separated by spaces; | separates alternatives; -word excludes."""
+    q = clean_text(q)
     slots, excludes = [], []
     for raw in q.split():
         neg = raw.startswith("-") and len(raw) > 1
         if neg:
             raw = raw[1:]
-        alts = []
-        for a in raw.split("|"):
-            keep = re.sub(r"[^\w*?֑-ׇ'\"׳״]", "", a)
-            n = normalize_word(keep)
-            if n.strip("*?"):
-                alts.append(n)
-        if not alts:
+        parts = [_query_words(a) for a in raw.split("|")]
+        parts = [p for p in parts if p]
+        if not parts:
             continue
-        (excludes if neg else slots).append(Slot(alts))
+        target = excludes if neg else slots
+        if len(parts) == 1:
+            # one written word that splits into several (בית-ספר): consecutive slots
+            target.extend(Slot([w]) for w in parts[0])
+        else:
+            target.append(Slot([w for p in parts for w in p]))
     if not slots:
         raise QueryError("לא הוזנו מילים לחיפוש")
     return Query(slots, excludes)
@@ -167,32 +182,45 @@ def match_ordered(plist, gap):
     return matches
 
 
-def match_unordered(plist, gap):
+def match_unordered(plist, gap, max_states=200_000):
+    """Like match_ordered, but the words may come in any order: find chains of
+    distinct positions p0<p1<... that use every slot once, with at most `gap`
+    words between consecutive ones. Dynamic programming over (slots used,
+    last position)."""
     k = len(plist)
-    if k <= 5:
-        found = set()
-        for perm in itertools.permutations(range(k)):
-            for m in match_ordered([plist[i] for i in perm], gap):
-                found.add(m)
-        return sorted(found)
-    # Many words: accept any window where all words fit in the span they
-    # would have with `gap` words between each.
-    span = (k - 1) * (gap + 1)
+    full = (1 << k) - 1
     events = sorted((p, i) for i, ps in enumerate(plist) for p in ps)
-    out, count, have, lo = [], 0, {}, 0
-    for hi, (p, i) in enumerate(events):
-        have[i] = have.get(i, 0) + 1
-        if have[i] == 1:
-            count += 1
-        while events[lo][0] < p - span:
-            j = events[lo][1]
-            have[j] -= 1
-            if have[j] == 0:
-                count -= 1
-            lo += 1
-        if count == k:
-            out.append(tuple(e[0] for e in events[lo:hi + 1]))
-    return out
+    # states ending at a position: pos -> {mask: predecessor (mask, pos) or None}
+    recent = []          # list of (pos, {mask: pred}) within reach
+    found = []
+    n_states = 0
+    by_pos = {}
+    for p, i in events:
+        bit = 1 << i
+        cur = by_pos.setdefault(p, {})
+        if not cur:
+            recent.append((p, cur))
+        # drop positions that are too far behind
+        while recent and recent[0][0] < p - gap - 1:
+            recent.pop(0)
+        cur.setdefault(bit, None)
+        for q, states in recent:
+            if q >= p:
+                break
+            for mask in list(states):
+                if not mask & bit and (mask | bit) not in cur:
+                    cur[mask | bit] = (mask, q)
+                    n_states += 1
+        if n_states > max_states:
+            break
+    for p, states in by_pos.items():
+        if full in states:
+            seq, mask, pos = [p], full, p
+            while states_pred := by_pos[pos].get(mask):
+                mask, pos = states_pred
+                seq.append(pos)
+            found.append(tuple(reversed(seq)))
+    return sorted(found)
 
 
 def _non_overlapping(matches):
@@ -243,27 +271,43 @@ def run_search(con, query_text, mode=MODE_ALL, gap=5, ordered=True,
             meta[fid] = (path, mtime, size)
     candidates = set(meta)
 
-    positions = [_positions(con, candidates, s.term_ids) for s in query.slots]
+    if mode == MODE_ALL:
+        # No positions needed to know a file matches: show newest first and
+        # compute the highlights only for the file the user opens.
+        order = sorted(meta, key=lambda f: -meta[f][1])[:MAX_RESULTS]
+        results = [Result(f, *meta[f], None) for f in order]
+        return results, query, []
+
     results = []
-    for fid in candidates:
-        plist = [p.get(fid, []) for p in positions]
-        if not all(plist):
-            continue
-        if mode == MODE_ALL:
-            matches = [(p,) for ps in plist for p in ps]
-            matches.sort()
-        elif mode == MODE_PHRASE:
-            matches = match_ordered(plist, 0)
-        elif ordered:
-            matches = _non_overlapping(match_ordered(plist, gap))
-        else:
-            matches = _non_overlapping(match_unordered(plist, gap))
-        if not matches:
-            continue
-        path, mtime, size = meta[fid]
-        results.append(Result(fid, path, mtime, size, matches[:MAX_MATCHES_PER_FILE]))
+    fids = sorted(meta, key=lambda f: -meta[f][1])  # newest first
+    for i in range(0, len(fids), 300):
+        chunk = fids[i:i + 300]
+        positions = [_positions(con, chunk, s.term_ids) for s in query.slots]
+        for fid in chunk:
+            plist = [p.get(fid, []) for p in positions]
+            if not all(plist):
+                continue
+            if mode == MODE_PHRASE:
+                matches = match_ordered(plist, 0)
+            elif ordered:
+                matches = _non_overlapping(match_ordered(plist, gap))
+            else:
+                matches = _non_overlapping(match_unordered(plist, gap))
+            if matches:
+                results.append(Result(fid, *meta[fid], matches[:MAX_MATCHES_PER_FILE]))
+        if len(results) >= MAX_RESULTS:
+            break
     results.sort(key=lambda r: (-len(r.matches), r.path))
     return results[:MAX_RESULTS], query, []
+
+
+def file_matches(con, query, file_id):
+    """Positions of every query word in one file ("all words" mode)."""
+    matches = []
+    for s in query.slots:
+        matches.extend((p,) for p in _positions(con, [file_id], s.term_ids).get(file_id, []))
+    matches.sort()
+    return matches[:MAX_MATCHES_PER_FILE * 4]
 
 
 # ------------------------------------------------------------ snippets

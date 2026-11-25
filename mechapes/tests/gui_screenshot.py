@@ -13,13 +13,8 @@ import tkinter as tk  # noqa: E402
 from mechapes import gui  # noqa: E402
 from mechapes.index import Indexer  # noqa: E402
 
-samples, out = sys.argv[1], sys.argv[2]
-root = tk.Tk()
-app = gui.App(root)
-Indexer.add_folder(app.con, samples)
-app.refresh_folders()
-app.update_index()
 ok = {"rows": 0}
+app = root = None
 
 
 def step2():
@@ -42,10 +37,23 @@ def step3():
     time.sleep(1)
     from PIL import ImageGrab
     x, y = root.winfo_rootx(), root.winfo_rooty()
-    ImageGrab.grab((x, y, x + root.winfo_width(), y + root.winfo_height())).save(out)
+    ImageGrab.grab((x, y, x + root.winfo_width(), y + root.winfo_height())).save(ok["out"])
     app.on_close()
 
 
-root.after(500, step2)
-root.mainloop()
-sys.exit(0 if ok["rows"] > 0 else 1)
+def main():
+    global app, root
+    samples, out = sys.argv[1], sys.argv[2]
+    ok["out"] = out
+    root = tk.Tk()
+    app = gui.App(root)
+    Indexer.add_folder(app.con, samples)
+    app.refresh_folders()
+    app.update_index()
+    root.after(500, step2)
+    root.mainloop()
+    sys.exit(0 if ok["rows"] > 0 else 1)
+
+
+if __name__ == "__main__":
+    main()

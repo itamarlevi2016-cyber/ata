@@ -1,4 +1,6 @@
 """Extract plain text from many file types. Pure Python except PDF (PyMuPDF)."""
+import email
+import email.policy
 import html
 import os
 import re
@@ -12,23 +14,28 @@ TEXT_EXT = {
     ".yml", ".py", ".js", ".ts", ".java", ".c", ".cpp", ".h", ".cs", ".sql",
     ".bat", ".ps1", ".sh", ".css", ".srt", ".vtt", ".tex", ".bib",
 }
-HTML_EXT = {".html", ".htm", ".xhtml", ".mht"}
+HTML_EXT = {".html", ".htm", ".xhtml"}
+MAIL_EXT = {".eml", ".mht", ".mhtml"}
 DOCX_EXT = {".docx", ".docm", ".dotx", ".dotm"}
 XLSX_EXT = {".xlsx", ".xlsm", ".xltx"}
 PPTX_EXT = {".pptx", ".pptm", ".ppsx"}
 ODF_EXT = {".odt", ".ods", ".odp"}
-OTHER_EXT = {".pdf", ".rtf", ".doc", ".epub"}
+OTHER_EXT = {".pdf", ".rtf", ".doc", ".epub", ".xls", ".ppt", ".msg"}
 
-SUPPORTED_EXT = (TEXT_EXT | HTML_EXT | DOCX_EXT | XLSX_EXT | PPTX_EXT
+SUPPORTED_EXT = (TEXT_EXT | HTML_EXT | MAIL_EXT | DOCX_EXT | XLSX_EXT | PPTX_EXT
                  | ODF_EXT | OTHER_EXT)
+
+# Plain-text files above this size are skipped (logs, data dumps)
+MAX_TEXT_FILE_MB = 30
 
 # Groups for the type filter in the UI
 TYPE_GROUPS = {
     "Word": DOCX_EXT | {".doc", ".rtf", ".odt"},
     "PDF": {".pdf"},
-    "Excel": XLSX_EXT | {".ods", ".csv", ".tsv"},
-    "PowerPoint": PPTX_EXT | {".odp"},
-    "טקסט / HTML": (TEXT_EXT - {".csv", ".tsv"}) | HTML_EXT | {".epub"},
+    "Excel": XLSX_EXT | {".xls", ".ods", ".csv", ".tsv"},
+    "PowerPoint": PPTX_EXT | {".ppt", ".odp"},
+    "דואר": {".eml", ".msg"},
+    "טקסט / HTML": (TEXT_EXT - {".csv", ".tsv"}) | HTML_EXT | {".epub", ".mht", ".mhtml"},
 }
 
 
@@ -50,10 +57,17 @@ def decode_bytes(data: bytes) -> str:
     try:
         return data.decode("utf-8")
     except UnicodeDecodeError:
-        return data.decode("cp1255", "replace")  # Hebrew Windows
+        pass
+    # Mostly UTF-8 with a few bad bytes -> keep UTF-8; otherwise Hebrew Windows
+    text = data.decode("utf-8", "replace")
+    if text.count("\ufffd") <= max(3, len(text) // 200):
+        return text
+    return data.decode("cp1255", "replace")
 
 
 def read_text(path):
+    if os.path.getsize(path) > MAX_TEXT_FILE_MB * 1024 * 1024:
+        raise ExtractError(f"קובץ טקסט גדול מ-{MAX_TEXT_FILE_MB}MB")
     with open(path, "rb") as f:
         return decode_bytes(f.read())
 
@@ -353,9 +367,91 @@ def extract_pdf(path):
             if len(_MARK_RE.findall(t)) > len(t) * 0.05:
                 t = page.get_text("text", flags=pymupdf.TEXT_INHIBIT_SPACES
                                   | pymupdf.TEXT_PRESERVE_WHITESPACE)
-            pages.append(t)
-    text = "\n".join(pages)
-    return fix_reversed_hebrew(text)
+            pages.append(fix_reversed_hebrew(t))
+    return "\n".join(pages)
+
+
+# ---------------------------------------------------------------- legacy Excel
+def extract_xls(path):
+    import xlrd
+    book = xlrd.open_workbook(path, on_demand=True)
+    out = []
+    try:
+        for sheet in book.sheets():
+            for r in range(sheet.nrows):
+                cells = [str(v) for v in sheet.row_values(r) if v not in ("", None)]
+                if cells:
+                    out.append("\t".join(cells))
+    finally:
+        book.release_resources()
+    return "\n".join(out)
+
+
+# ---------------------------------------------------------------- legacy PowerPoint
+def extract_ppt(path):
+    """Text atoms from a PowerPoint 97-2003 .ppt."""
+    import olefile
+    with olefile.OleFileIO(path) as ole:
+        if not ole.exists("PowerPoint Document"):
+            raise ExtractError("מבנה ppt לא מוכר")
+        data = ole.openstream("PowerPoint Document").read()
+    out = []
+    pos, end = 0, len(data)
+    while pos + 8 <= end:
+        ver_inst, rtype, rlen = struct.unpack_from("<HHI", data, pos)
+        pos += 8
+        if (ver_inst & 0x0F) == 0x0F:  # container: walk into it
+            continue
+        body = data[pos:pos + rlen]
+        if rtype == 0x0FA0:    # TextCharsAtom (UTF-16)
+            out.append(body.decode("utf-16-le", "replace"))
+        elif rtype == 0x0FA8:  # TextBytesAtom (8-bit)
+            out.append(body.decode("cp1252", "replace"))
+        elif rtype == 0x0FBA:  # CString (titles, notes)
+            out.append(body.decode("utf-16-le", "replace"))
+        pos += rlen
+    # Drop the master-slide placeholders ("Click to edit Master title style")
+    out = [t for t in out if t.strip() not in ("*", "") and not t.startswith("Click to edit Master")]
+    return "\n".join(t.replace("\r", "\n") for t in out)
+
+
+# ---------------------------------------------------------------- mail / mht
+def extract_mail(path):
+    with open(path, "rb") as f:
+        msg = email.message_from_binary_file(f, policy=email.policy.default)
+    out = []
+    for key in ("subject", "from", "to"):
+        if msg[key]:
+            out.append(str(msg[key]))
+    for part in msg.walk():
+        ctype = part.get_content_type()
+        if ctype not in ("text/plain", "text/html") or part.is_attachment():
+            continue
+        try:
+            body = part.get_content()
+        except (LookupError, ValueError):
+            payload = part.get_payload(decode=True) or b""
+            body = decode_bytes(payload)
+        if isinstance(body, bytes):
+            body = decode_bytes(body)
+        out.append(html_to_text(body) if ctype == "text/html" else body)
+    return "\n".join(out)
+
+
+def extract_msg(path):
+    """Outlook .msg: subject, sender and body streams."""
+    import olefile
+    out = []
+    with olefile.OleFileIO(path) as ole:
+        for prop in ("0037", "0C1A", "0E04", "1000"):  # subject, sender, to, body
+            for suffix, enc in (("001F", "utf-16-le"), ("001E", "cp1255")):
+                name = f"__substg1.0_{prop}{suffix}"
+                if ole.exists(name):
+                    out.append(ole.openstream(name).read().decode(enc, "replace"))
+                    break
+        if len(out) < 2 and ole.exists("__substg1.0_10130102"):  # HTML body
+            out.append(html_to_text(decode_bytes(ole.openstream("__substg1.0_10130102").read())))
+    return "\n".join(out)
 
 
 # ---------------------------------------------------------------- dispatch
@@ -381,4 +477,12 @@ def extract(path: str) -> str:
         return extract_doc(path)
     if ext == ".epub":
         return extract_epub(path)
+    if ext == ".xls":
+        return extract_xls(path)
+    if ext == ".ppt":
+        return extract_ppt(path)
+    if ext in MAIL_EXT:
+        return extract_mail(path)
+    if ext == ".msg":
+        return extract_msg(path)
     raise ExtractError("סוג קובץ לא נתמך")

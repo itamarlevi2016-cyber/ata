@@ -1,13 +1,14 @@
 """Tokenizing and normalizing text (Hebrew-aware)."""
 import re
+import unicodedata
 from array import array
 
 # Hebrew points and cantillation marks (but not the punctuation inside the
 # same Unicode block: maqaf U+05BE, paseq U+05C0, sof pasuq U+05C3,
 # nun hafukha U+05C6).
-_MARKS = "֑-ׇֽֿׁׂׅׄ"
+_MARKS = "\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7"
 # Quote-like characters that may appear inside a word: רמב"ם, ז'
-_INNER_QUOTES = "'\"׳״’”"
+_INNER_QUOTES = "'\"\u05F3\u05F4\u2019\u201D"
 
 TOKEN_RE = re.compile(
     rf"[\w{_MARKS}]+(?:[{_INNER_QUOTES}][\w{_MARKS}]+)*", re.UNICODE
@@ -17,6 +18,18 @@ _STRIP_RE = re.compile(rf"[{_MARKS}{_INNER_QUOTES}_]")
 HEB_PREFIX_LETTERS = "והבכלמש"
 MAX_PREFIX_LEN = 3
 MAX_TOKEN_LEN = 60
+
+
+# Invisible characters that would otherwise split or glue words:
+# zero-width space/joiners, LRM/RLM, bidi embeddings/isolates, soft hyphen, BOM
+_INVISIBLE_RE = re.compile("[\u200B-\u200F\u202A-\u202E\u2066-\u2069\u00AD\uFEFF]")
+
+
+def clean_text(text: str) -> str:
+    """Unicode-normalize extracted text (ligatures, Hebrew presentation
+    forms) and drop invisible formatting characters."""
+    text = _INVISIBLE_RE.sub("", text.replace("\x00", ""))
+    return unicodedata.normalize("NFKC", text)
 
 
 def normalize_word(word: str) -> str:
@@ -68,11 +81,19 @@ def fix_reversed_hebrew(text: str) -> str:
     """Some PDFs store Hebrew in visual (reversed) order. Detect that by
     counting words that *start* with a final letter (impossible in normal
     Hebrew) and, if so, reverse each line."""
-    words = re.findall(r"[א-ת]{2,}", text)
+    words = re.findall(r"[\u05D0-\u05EA]{2,}", text)
     if len(words) < 5:
         return text
     starts_final = sum(1 for w in words if w[0] in _FINALS_START)
     ends_final = sum(1 for w in words if w[-1] in _FINALS_START)
     if starts_final > ends_final and starts_final >= 3:
-        return "\n".join(line[::-1] for line in text.split("\n"))
+        return "\n".join(_reverse_line(line) for line in text.split("\n"))
     return text
+
+
+_LTR_RUN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.,:/%\-]*[A-Za-z0-9]|[A-Za-z0-9]")
+
+
+def _reverse_line(line):
+    # Reverse the line, then put Latin words and numbers back in order.
+    return _LTR_RUN_RE.sub(lambda m: m.group()[::-1], line[::-1])

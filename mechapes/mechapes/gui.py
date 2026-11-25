@@ -12,7 +12,7 @@ from tkinter import filedialog, messagebox, ttk
 from . import __version__
 from . import search as se
 from .extract import TYPE_GROUPS
-from .index import Indexer, connect, load_file_text
+from .index import Indexer, add_folder, connect, load_file_text, remove_folder
 
 APP_NAME = "מחפש"
 HELP_TEXT = """איך מחפשים
@@ -39,30 +39,25 @@ HELP_TEXT = """איך מחפשים
 
 # ------------------------------------------------------------ paths
 def data_dir():
-    """Next to the program if that folder is writable (portable use),
-    otherwise in the user's AppData."""
+    """The index lives in %LOCALAPPDATA%\\Mechapes. For portable use (e.g. on a
+    USB stick), create a folder named MechapesData next to the program."""
     base = (os.path.dirname(sys.executable) if getattr(sys, "frozen", False)
             else os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     portable = os.path.join(base, "MechapesData")
-    try:
-        os.makedirs(portable, exist_ok=True)
-        test = os.path.join(portable, ".write_test")
-        with open(test, "w") as f:
-            f.write("x")
-        os.remove(test)
+    if os.path.isdir(portable) and os.access(portable, os.W_OK):
         return portable
-    except OSError:
-        root = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~/.local/share")
-        d = os.path.join(root, "Mechapes")
-        os.makedirs(d, exist_ok=True)
-        return d
+    root = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~/.local/share")
+    d = os.path.join(root, "Mechapes")
+    os.makedirs(d, exist_ok=True)
+    return d
 
 
 def open_path(path, select=False):
     try:
         if sys.platform.startswith("win"):
             if select:
-                subprocess.Popen(["explorer", "/select,", os.path.normpath(path)])
+                # one command string: explorer needs the quotes exactly like this
+                subprocess.Popen(f'explorer /select,"{os.path.normpath(path)}"')
             else:
                 os.startfile(path)  # noqa: S606 - opening the user's own file
         elif sys.platform == "darwin":
@@ -92,6 +87,7 @@ class App:
         self.settings = self._load_settings()
         self.msgs = queue.Queue()
         self.index_thread = None
+        self.rerun_pending = False
         self.cancel_event = threading.Event()
         self.results = []
         self.current_query = None
@@ -213,6 +209,7 @@ class App:
         ttk.Button(fb, text="הסר תיקייה", command=self.remove_folder).pack(fill="x", pady=1)
         ttk.Button(fb, text="עדכן את המאגר", command=self.update_index).pack(fill="x", pady=1)
         ttk.Button(fb, text="בנה מחדש תיקייה", command=self.rebuild_folder).pack(fill="x", pady=1)
+        ttk.Button(fb, text="קבצים שלא נקראו…", command=self.show_errors).pack(fill="x", pady=1)
         self.auto_update = tk.BooleanVar(value=st.get("auto_update", True))
         ttk.Checkbutton(right, text="עדכן אוטומטית בפתיחה",
                         variable=self.auto_update).pack(anchor="e", pady=(6, 0))
@@ -304,7 +301,10 @@ class App:
         path = filedialog.askdirectory(title="בחר תיקייה להוספה למאגר")
         if not path:
             return
-        Indexer.add_folder(self.con, path)
+        msg = add_folder(self.con, path)
+        if msg:
+            messagebox.showinfo(APP_NAME, msg)
+            return
         self.refresh_folders()
         self.update_index()
 
@@ -320,7 +320,7 @@ class App:
             return
         f = self.selected_folder()
         if f and messagebox.askyesno(APP_NAME, f"להסיר את התיקייה מהמאגר?\n{f[1]}\n\n(הקבצים עצמם לא יימחקו)"):
-            Indexer.remove_folder(self.con, f[0])
+            remove_folder(self.con, f[0])
             self.unchecked.discard(f[1])
             self.refresh_folders()
 
@@ -340,8 +340,9 @@ class App:
             return True
         return False
 
-    def update_index(self, folder_ids=None):
+    def update_index(self, folder_ids=None, retry_errors=False):
         if self.index_thread and self.index_thread.is_alive():
+            self.rerun_pending = True  # run again when the current update ends
             return
         self.cancel_event.clear()
         self.progress.pack(side="left", padx=4)
@@ -353,7 +354,8 @@ class App:
 
         def work():
             try:
-                res = Indexer(self.db_path, progress, self.cancel_event).run(folder_ids)
+                res = Indexer(self.db_path, progress, self.cancel_event).run(
+                    folder_ids, retry_errors=retry_errors)
                 self.msgs.put(("done", res))
             except Exception as e:  # noqa: BLE001 - show any failure to the user
                 self.msgs.put(("error", str(e)))
@@ -362,6 +364,7 @@ class App:
         self.index_thread.start()
 
     def cancel_index(self):
+        self.rerun_pending = False
         self.cancel_event.set()
         self.status.configure(text="עוצר…")
 
@@ -383,7 +386,14 @@ class App:
                                f", {data.get('removed', 0):,} הוסרו")
                         if data.get("errors"):
                             msg += f", {data['errors']:,} לא נקראו"
+                        if data.get("cloud"):
+                            msg += f" | {data['cloud']:,} קבצים בענן בלבד (OneDrive) דולגו"
+                        if data.get("offline"):
+                            msg += " | לא נמצאו (כונן מנותק?): " + ", ".join(data["offline"])
                     self.status.configure(text=msg)
+                    if self.rerun_pending and not data.get("cancelled"):
+                        self.rerun_pending = False
+                        self.update_index()
                 elif kind == "error":
                     self.progress.pack_forget()
                     self.cancel_btn.pack_forget()
@@ -404,6 +414,32 @@ class App:
                 self.status.configure(
                     text=f"קורא קבצים {kw['done']:,} / {kw['total']:,} | {os.path.basename(kw.get('path', ''))}")
         self.root.after(150, self.poll)
+
+    def show_errors(self):
+        rows = self.con.execute(
+            "SELECT path, error FROM files WHERE error IS NOT NULL ORDER BY path").fetchall()
+        win = tk.Toplevel(self.root)
+        win.title(f"{APP_NAME} – קבצים שלא נקראו ({len(rows):,})")
+        win.geometry("900x420")
+        tv = ttk.Treeview(win, columns=("err", "path"), show="headings")
+        tv.heading("path", text="קובץ", anchor="e")
+        tv.heading("err", text="סיבה", anchor="e")
+        tv.column("path", width=560, anchor="e")
+        tv.column("err", width=300, anchor="e")
+        for i, (path, err) in enumerate(rows):
+            tv.insert("", "end", iid=str(i), values=(err, path))
+        tv.bind("<Double-1>", lambda e: tv.selection() and open_path(
+            tv.set(tv.selection()[0], "path"), select=True))
+        bar = ttk.Frame(win, padding=6)
+        bar.pack(fill="x", side="bottom")
+
+        def retry():
+            win.destroy()
+            self.update_index(retry_errors=True)
+
+        ttk.Button(bar, text="נסה לקרוא אותם שוב", command=retry).pack(side="right")
+        ttk.Button(bar, text="סגור", command=win.destroy).pack(side="left")
+        tv.pack(fill="both", expand=True)
 
     # ---------------- searching
     def do_search(self):
@@ -458,11 +494,7 @@ class App:
         if missing:
             self.status.configure(text="המילים האלה לא נמצאו באף קובץ: " + ", ".join(missing))
             return
-        for i, r in enumerate(results):
-            folder, name = os.path.split(r.path)
-            self.tree.insert("", "end", iid=str(i), values=(
-                time.strftime("%d/%m/%Y %H:%M", time.localtime(r.mtime)),
-                human_size(r.size), len(r.matches), folder, name))
+        self._fill_tree()
         msg = f"נמצאו {len(results):,} קבצים ({elapsed:.2f} שניות)"
         if len(results) >= se.MAX_RESULTS:
             msg += " – מוצגות התוצאות הראשונות בלבד, כדאי לצמצם את החיפוש"
@@ -476,18 +508,22 @@ class App:
             return
         key = {"name": lambda r: os.path.basename(r.path).lower(),
                "folder": lambda r: r.path.lower(),
-               "hits": lambda r: len(r.matches),
+               "hits": lambda r: len(r.matches or ()),
                "size": lambda r: r.size,
                "modified": lambda r: r.mtime}[col]
         rev = getattr(self, "_sort_state", None) == (col, False)
         self._sort_state = (col, rev)
         self.results.sort(key=key, reverse=rev)
         self.tree.delete(*self.tree.get_children())
+        self._fill_tree()
+
+    def _fill_tree(self):
         for i, r in enumerate(self.results):
             folder, name = os.path.split(r.path)
+            hits = "" if r.matches is None else len(r.matches)
             self.tree.insert("", "end", iid=str(i), values=(
                 time.strftime("%d/%m/%Y %H:%M", time.localtime(r.mtime)),
-                human_size(r.size), len(r.matches), folder, name))
+                human_size(r.size), hits, folder, name))
 
     def selected_result(self):
         sel = self.tree.selection()
@@ -505,6 +541,9 @@ class App:
             return
         self._clear_snip()
         self.snip_title.configure(text=r.path)
+        if r.matches is None:  # "all words" mode: find the words in this file now
+            r.matches = se.file_matches(self.con, self.current_query, r.file_id)
+            self.tree.set(self.tree.selection()[0], "hits", len(r.matches))
         text, starts, ends = load_file_text(self.con, r.file_id)
         snippets = se.make_snippets(text, starts, ends, r.matches)
         self.snip.configure(state="normal")
@@ -520,7 +559,7 @@ class App:
                 self.snip.insert("end", s[a:b], ("p", "hit"))
                 pos = b
             self.snip.insert("end", s[pos:] + "\n", "p")
-        if len(r.matches) >= se.MAX_MATCHES_PER_FILE:
+        if len(r.matches) >= se.MAX_MATCHES_PER_FILE or len(snippets) >= 60:
             self.snip.insert("end", "(מוצגות ההתאמות הראשונות בלבד)\n", "sep")
         self.snip.configure(state="disabled")
 
